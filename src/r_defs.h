@@ -20,8 +20,8 @@ typedef	struct
     int16_t	special;
     int16_t	tag;
 
-    int			linecount;
-    struct line_s** lines;	// [linecount] size
+//    int			linecount;
+//    const struct line_s** lines;	// [linecount] size
 } sector_t;
 
 //
@@ -43,14 +43,14 @@ typedef struct
     int16_t	midtexture;
 
     // Sector the SideDef is facing.
-    sector_t* sector;
+    const sector_t* sector;
 } side_t;
 
 typedef struct line_s
 {
     // Vertices, from v1 to v2.
-    vertex_t* v1;
-    vertex_t* v2;
+    const vertex_t* v1;
+    const vertex_t* v2;
 
     // Precalculated v2 - v1 for side checking.
     int16_t	dx;
@@ -74,8 +74,8 @@ typedef struct line_s
 
     // Front and back sector.
     // Note: redundant? Can be retrieved from SideDefs.
-    sector_t* frontsector;
-    sector_t* backsector;
+    const sector_t* frontsector;
+    const sector_t* backsector;
 
     // if == validcount, already checked
     //int		validcount;
@@ -89,15 +89,15 @@ typedef struct line_s
 //
 typedef struct
 {
-    vertex_t* v1;
-    vertex_t* v2;
+    const vertex_t* v1;
+    const vertex_t* v2;
 
     int16_t	offset;
 
     int16_t	angle;
 
-    side_t* sidedef;
-    line_t* linedef;
+    const side_t* sidedef;
+    const line_t* linedef;
 
     // Sector references.
     // Could be retrieved from linedef, too.
@@ -143,14 +143,14 @@ typedef struct subsector_s
 
 typedef struct
 {
-    vertex_t* vertices;
-    side_t* sides;
-    node_t* nodes;
-    subsector_t* subsectors;
-    seg_t* segs;
-    line_t* lines;
-    sector_t* sectors;
-    struct mapthing_s* things;
+    const vertex_t* vertices;
+    const side_t* sides;
+    const node_t* nodes;
+    const subsector_t* subsectors;
+    const seg_t* segs;
+    const line_t* lines;
+    const sector_t* sectors;
+    const struct mapthing_s* things;
 
     uint16_t rootnode;
 } map_t;

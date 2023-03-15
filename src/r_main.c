@@ -40,8 +40,9 @@ angle_t			xtoviewangle[SCREENWIDTH + 1];
 int		viewwidth = 256;
 int		viewheight = 224;
 
-map_t* currentlevel;
+const map_t* currentlevel;
 
+#if 0
 int32_t
 FixedMul
 (int32_t	a,
@@ -129,7 +130,7 @@ void R_InitTextureMapping(void)
 
 	clipangle = xtoviewangle[0];
 }
-
+#endif
 
 //
 // R_PointOnSide
@@ -137,7 +138,7 @@ void R_InitTextureMapping(void)
 //  check point against partition plane.
 // Returns side 0 (front) or 1 (back).
 //
-int R_PointOnSide(int16_t x, int16_t y, node_t* node)
+int R_PointOnSide(int16_t x, int16_t y, const node_t* node)
 {
     int16_t	dx;
     int16_t	dy;
@@ -189,6 +190,7 @@ int R_PointOnSide(int16_t x, int16_t y, node_t* node)
     return 1;
 }
 
+#if 0
 //
 // R_PointToAngle
 // To get a global angle from cartesian coordinates,
@@ -296,3 +298,4 @@ void R_ExecuteSetViewSize(void)
 
 	R_InitTextureMapping();
 }
+#endif

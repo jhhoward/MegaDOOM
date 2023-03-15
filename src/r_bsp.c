@@ -56,7 +56,7 @@ int16_t columnsToFill;
 
 void R_Subsector(uint16_t subSectorNum)
 {
-    subsector_t* ssector = &currentlevel->subsectors[subSectorNum];
+    const subsector_t* ssector = &currentlevel->subsectors[subSectorNum];
     int i;
     int16_t segnum;
 
@@ -70,8 +70,8 @@ void R_Subsector(uint16_t subSectorNum)
 
     for (i = 0; i < ssector->numlines; i++, segnum++)
     {
-        seg_t* seg = &currentlevel->segs[segnum];
-        line_t* linedef = seg->linedef;
+        const seg_t* seg = &currentlevel->segs[segnum];
+        const line_t* linedef = seg->linedef;
         int zoom = 5;
 
         //DrawMapDebugLine(
@@ -203,17 +203,17 @@ void R_Subsector(uint16_t subSectorNum)
         {
             //mapsidedef_t* side =  &Map.sides[linedef->sidenum[seg->side]];
             //mapsector_t* sector = &Map.sectors[side->sector];
-            side_t* side = seg->sidedef;
-            sector_t* sector = side->sector;
+            const side_t* side = seg->sidedef;
+            const sector_t* sector = side->sector;
 
             srand(side->sector + 1024);
             floorColour = (uint8_t)rand();
             ceilingColour = (uint8_t)rand();
 
-            int u1 = 120 - 128 * (sector->ceilingheight - viewz) / vy1;
-            int u2 = 120 - 128 * (sector->ceilingheight - viewz) / vy2;
-            int l1 = 120 - 128 * (sector->floorheight - viewz) / vy1;
-            int l2 = 120 - 128 * (sector->floorheight - viewz) / vy2;
+            int u1 = 64 - 128 * (sector->ceilingheight - viewz) / vy1;
+            int u2 = 64 - 128 * (sector->ceilingheight - viewz) / vy2;
+            int l1 = 64 - 128 * (sector->floorheight - viewz) / vy1;
+            int l2 = 64 - 128 * (sector->floorheight - viewz) / vy2;
 
             int16_t dsx = sx2 - sx1;
             int16_t uerror = dsx >> 1;
@@ -342,10 +342,10 @@ void R_Subsector(uint16_t subSectorNum)
 
                 if (backsector->ceilingheight < sector->ceilingheight || backsector->floorheight > sector->floorheight)
                 {
-                    u1 = 120 - 128 * (backsector->ceilingheight - viewz) / vy1;
-                    u2 = 120 - 128 * (backsector->ceilingheight - viewz) / vy2;
-                    l1 = 120 - 128 * (backsector->floorheight - viewz) / vy1;
-                    l2 = 120 - 128 * (backsector->floorheight - viewz) / vy2;
+                    u1 = 64 - 128 * (backsector->ceilingheight - viewz) / vy1;
+                    u2 = 64 - 128 * (backsector->ceilingheight - viewz) / vy2;
+                    l1 = 64 - 128 * (backsector->floorheight - viewz) / vy1;
+                    l2 = 64 - 128 * (backsector->floorheight - viewz) / vy2;
 
                     uerror = dsx >> 1;
                     lerror = dsx >> 1;
@@ -557,7 +557,7 @@ bool R_CheckBBox(int16_t* bspcoord)
 
 void R_RenderBSPNode(uint16_t nodenum)
 {
-    node_t* bsp;
+    const node_t* bsp;
     int		side;
 
     // Found a subsector?

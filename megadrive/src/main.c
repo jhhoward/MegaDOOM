@@ -1,9 +1,14 @@
 #include "genesis.h"
 
-#include "../../src/palette.inc"
+uint16_t rand(void);
+void srand(uint16_t seed);
+
+#include "../../src/generated/palette.inc"
 #include "../../src/r_bsp.c"
 #include "../../src/tables.c"
 #include "../../src/r_main.c"
+#include "../../src/Render.c"
+#include "../../project/E1M1.inc.h"
 
 
 #define FRAMEBUFFER_WIDTH 128
@@ -25,6 +30,27 @@ const TileMap framebufferTileMap =
     COMPRESSION_NONE, FRAMEBUFFER_WIDTH_TILES, FRAMEBUFFER_HEIGHT_TILES, framebufferTiles
 };
 
+void DrawMapDebugLine(int x0, int y0, int x1, int y1, uint32_t colour)
+{
+
+}
+
+static uint16_t xs = 1;
+
+uint16_t rand()
+{
+    xs ^= xs << 7;
+    xs ^= xs >> 9;
+    xs ^= xs << 8;
+    return xs;
+}
+
+void srand(uint16_t seed)
+{
+    xs = seed | 1;
+}
+
+
 void putpixel(int x, int y, u8 colour)
 {
     u8* ptr = framebuffer;
@@ -33,6 +59,28 @@ void putpixel(int x, int y, u8 colour)
     ptr += (y << 2);
     *ptr = colour;
 }
+
+void VLine(int x, int y, int count, uint8_t colour)
+{
+    u8* ptr = framebuffer;
+    ptr += (x >> 2) * (FRAMEBUFFER_HEIGHT_TILES * FRAMEBUFFER_TILE_BYTES);
+    ptr += (x & 3);
+    ptr += (y << 2);
+
+    while (count--)
+    {
+        if (y >= FRAMEBUFFER_HEIGHT)
+        //if (x < 0 || y < 0 || x >= FRAMEBUFFER_WIDTH || y >= FRAMEBUFFER_HEIGHT)
+        {
+            return;
+        }
+
+        *ptr = colour;
+        ptr += 4;
+        y++;
+    }
+}
+
 
 int main(bool hardReset)
 { 
@@ -81,20 +129,44 @@ int main(bool hardReset)
     int i = 0;
     u8 col = 0;
 
+    currentlevel = &map_E1M1;
+    viewx = currentlevel->things[0].x;
+    viewy = currentlevel->things[0].y;
+
     while(TRUE)
     {
-        i++;
-        if (i > FRAMEBUFFER_WIDTH)
+        u16 input = JOY_readJoypad(JOY_1);
+
+        if (input & BUTTON_LEFT)
         {
-            i = 0;
-            col++;
+            //viewx-= scrollSpeed;
+            viewangle += ANG1 * 5;
         }
-        putpixel(i, 10, col);
-        putpixel(i, 11, col);
-        putpixel(i, 12, col);
-        putpixel(i, 13, col);
-        putpixel(i, 14, col);
-        putpixel(i, 15, col);
+        if (input & BUTTON_RIGHT)
+        {
+            //viewx+= scrollSpeed;
+            viewangle -= ANG1 * 5;
+        }
+        if (input & BUTTON_UP)
+        {
+            viewx += finecosine[viewangle >> ANGLETOFINESHIFT] >> 5;
+            viewy += finesine[viewangle >> ANGLETOFINESHIFT] >> 5;
+        }
+        if (input & BUTTON_DOWN)
+        {
+            viewx -= finecosine[viewangle >> ANGLETOFINESHIFT] >> 5;
+            viewy -= finesine[viewangle >> ANGLETOFINESHIFT] >> 5;
+        }
+        if (input & BUTTON_A)
+        {
+            viewz += 3;
+        }
+        if (input & BUTTON_B)
+        {
+            viewz -= 3;
+        }
+
+        RenderAll();
 
         VDP_loadTileSet(&framebufferTileSet, TILE_USER_INDEX, DMA_QUEUE);
 

@@ -23,12 +23,12 @@
 #include "r_stat.h"
 #include "r_defs.h"
 
-int R_PointOnSide(int16_t x, int16_t y, node_t* node);
+int R_PointOnSide(int16_t x, int16_t y, const node_t* node);
 void R_RenderBSPNode(uint16_t nodenum);
 angle_t R_PointToAngle(int16_t x, int16_t y);
 
 void R_ExecuteSetViewSize(void);
 
-extern map_t* currentlevel;
+extern const map_t* currentlevel;
 
 #endif

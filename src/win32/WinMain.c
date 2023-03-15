@@ -1,11 +1,11 @@
 #include <SDL.h>
 #include <stdio.h>
 #include "lodepng.h"
-#include "../tables.h"
-#include "../r_local.h"
-#include "../palette.inc"
-#include "../DoomData.h"
-#include "../../project/E1M1.inc.h"
+#include "tables.h"
+#include "r_local.h"
+#include "generated/palette.inc"
+#include "DoomData.h"
+#include "../project/E1M1.inc.h"
 
 // For MD:
 // - Preprocess WAD and extract data
@@ -266,6 +266,7 @@ int main(int argc, char* argv[])
 	R_InitTables();
 	//R_ExecuteSetViewSize();
 
+	/*
 	for (int n = 0; n < 360; n++)
 	{
 		float radians = n * 3.141592654 / 180;
@@ -275,7 +276,7 @@ int main(int argc, char* argv[])
 		angle_t bam = R_PointToAngle(x, y);
 		int degrees = bam * 360 / ANG_MAX;
 		printf("%d : %d\n", n, degrees);
-	}
+	}*/
 
 	mapdata_t mapdata;
 	map_t map;

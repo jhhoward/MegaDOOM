@@ -22,7 +22,7 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 	fprintf(fs, "// Level data for %s\n", levelname);
 	
 	// Vertices
-	fprintf(fs, "vertex_t %s_vertices[] = {\n", levelname);
+	fprintf(fs, "const vertex_t %s_vertices[] = {\n", levelname);
 	for (int n = 0; n < mapdata->numVertices; n++)
 	{
 		fprintf(fs, "\t{%d,%d},\n", mapdata->vertices[n].x, mapdata->vertices[n].y);
@@ -30,7 +30,7 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 	fprintf(fs, "};\n");
 
 	// Sectors
-	fprintf(fs, "sector_t %s_sectors[] = {\n", levelname);
+	fprintf(fs, "const sector_t %s_sectors[] = {\n", levelname);
 	for (int n = 0; n < mapdata->numSectors; n++)
 	{
 		mapsector_t* sector = &mapdata->sectors[n];
@@ -47,7 +47,7 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 	fprintf(fs, "};\n");
 
 	// Subsectors
-	fprintf(fs, "subsector_t %s_subsectors[] = {\n", levelname);
+	fprintf(fs, "const subsector_t %s_subsectors[] = {\n", levelname);
 	for (int n = 0; n < mapdata->numSubsectors; n++)
 	{
 		mapsubsector_t* subsector = &mapdata->subsectors[n];
@@ -60,7 +60,7 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 
 
 	// Nodes
-	fprintf(fs, "node_t %s_nodes[] = {\n", levelname);
+	fprintf(fs, "const node_t %s_nodes[] = {\n", levelname);
 	for (int n = 0; n < mapdata->numNodes; n++)
 	{
 		mapnode_t* node = &mapdata->nodes[n];
@@ -94,7 +94,7 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 	fprintf(fs, "};\n");
 
 	// Lines
-	fprintf(fs, "line_t %s_lines[] = {\n", levelname);
+	fprintf(fs, "const line_t %s_lines[] = {\n", levelname);
 	for (int n = 0; n < mapdata->numLines; n++)
 	{
 		maplinedef_t* line = &mapdata->lines[n];
@@ -127,7 +127,7 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 	fprintf(fs, "};\n");
 
 	// Sides
-	fprintf(fs, "side_t %s_sides[] = {\n", levelname);
+	fprintf(fs, "const side_t %s_sides[] = {\n", levelname);
 	for (int n = 0; n < mapdata->numSides; n++)
 	{
 		mapsidedef_t* side = &mapdata->sides[n];
@@ -144,7 +144,7 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 	fprintf(fs, "};\n");
 
 	// Segs
-	fprintf(fs, "seg_t %s_segs[] = {\n", levelname);
+	fprintf(fs, "const seg_t %s_segs[] = {\n", levelname);
 	for (int n = 0; n < mapdata->numSegs; n++)
 	{
 		mapseg_t* seg = &mapdata->segs[n];
@@ -161,7 +161,7 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 	fprintf(fs, "\n};\n");
 
 	// Things
-	fprintf(fs, "mapthing_t %s_things[] = {\n", levelname);
+	fprintf(fs, "const mapthing_t %s_things[] = {\n", levelname);
 	for (int n = 0; n < mapdata->numThings; n++)
 	{
 		mapthing_t* thing = &mapdata->things[n];
@@ -176,7 +176,7 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 	}
 	fprintf(fs, "\n};\n");
 
-	fprintf(fs, "map_t map_%s = {\n", levelname);
+	fprintf(fs, "const map_t map_%s = {\n", levelname);
 	fprintf(fs, "\t%s_vertices,\n", levelname);
 	fprintf(fs, "\t%s_sides,\n", levelname);
 	fprintf(fs, "\t%s_nodes,\n", levelname);

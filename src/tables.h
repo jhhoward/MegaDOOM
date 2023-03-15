@@ -45,10 +45,10 @@ typedef uint16_t angle_t;
 #define ANGLETOFINESHIFT	3		
 
 // Effective size is 10240.
-extern int16_t finesine[5 * FINEANGLES / 4];
+extern const int16_t finesine[5 * FINEANGLES / 4];
 
 // Re-use data, is just PI/2 pahse shift.
-extern int16_t* finecosine;
+extern const int16_t* finecosine;
 
 
 // Effective size is 4096.

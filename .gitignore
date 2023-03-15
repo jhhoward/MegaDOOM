@@ -1,0 +1,6 @@
+project/.vs/
+project/Debug/
+sdl/SDL2/docs/
+megadrive/out/
+*.vcxproj.filters
+*.vcxproj.user

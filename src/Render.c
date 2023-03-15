@@ -1,5 +1,4 @@
 #include "doomtypes.h"
-#include <stdio.h>
 #include "Map.h"
 #include "r_local.h"
 

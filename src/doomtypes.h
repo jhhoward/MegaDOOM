@@ -16,5 +16,9 @@
 //typedef unsigned long long uint64_t;
 //typedef long long int64_t;
 
+#ifndef true
+#define true TRUE
+#define false FALSE
+#endif
 
 #endif

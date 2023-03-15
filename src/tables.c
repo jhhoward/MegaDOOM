@@ -31,8 +31,19 @@
 //    
 
 #include "doomtypes.h"
-#include <math.h>
 #include "tables.h"
+
+#if 1
+
+#include "generated/tables.inc.h"
+const int16_t* finecosine = &finesine[FINEANGLES / 4];
+
+void R_InitTables(void)
+{
+}
+
+#else
+#include <math.h>
 
 #define FRACBITS		8
 #define FRACUNIT		(1<<FRACBITS)
@@ -121,4 +132,4 @@ int SlopeDiv(uint16_t num, uint16_t den)
     }
     
 }
-
+#endif

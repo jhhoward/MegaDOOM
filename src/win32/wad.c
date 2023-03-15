@@ -124,13 +124,13 @@ void ExtractMapData(mapdata_t* src, map_t* dest)
 	dest->things = malloc(src->numThings * sizeof(mapthing_t));
 
 	// Can just memcpy vertices
-	memcpy(dest->vertices, src->vertices, src->numVertices * sizeof(vertex_t));
+	memcpy((void*) dest->vertices, src->vertices, src->numVertices * sizeof(vertex_t));
 
 	// Sides
 	for (int n = 0; n < src->numSides; n++)
 	{
 		mapsidedef_t* srcside = &src->sides[n];
-		side_t* destside = &dest->sides[n];
+		side_t* destside = (side_t*)&dest->sides[n];
 		destside->textureoffset = srcside->textureoffset;
 		destside->toptexture = srcside->toptexture[0] == '-' ? 0 : 1;
 		destside->midtexture = srcside->midtexture[0] == '-' ? 0 : 1;
@@ -143,7 +143,7 @@ void ExtractMapData(mapdata_t* src, map_t* dest)
 	for (int n = 0; n < src->numLines; n++)
 	{
 		maplinedef_t* srcline = &src->lines[n];
-		line_t* destline = &dest->lines[n];
+		line_t* destline = (line_t*)&dest->lines[n];
 		destline->v1 = &dest->vertices[srcline->v1];
 		destline->v2 = &dest->vertices[srcline->v2];
 		destline->dx = destline->v2->x - destline->v1->x;
@@ -169,7 +169,7 @@ void ExtractMapData(mapdata_t* src, map_t* dest)
 	for (int n = 0; n < src->numSegs; n++)
 	{
 		mapseg_t* srcseg = &src->segs[n];
-		seg_t* destseg = &dest->segs[n];
+		seg_t* destseg = (seg_t*) &dest->segs[n];
 		destseg->v1 = &dest->vertices[srcseg->v1];
 		destseg->v2 = &dest->vertices[srcseg->v2];
 		destseg->offset = srcseg->offset;
@@ -182,7 +182,7 @@ void ExtractMapData(mapdata_t* src, map_t* dest)
 	for (int n = 0; n < src->numSectors; n++)
 	{
 		mapsector_t* srcsector = &src->sectors[n];
-		sector_t* destsector = &dest->sectors[n];
+		sector_t* destsector = (sector_t*) &dest->sectors[n];
 
 		destsector->floorheight = srcsector->floorheight;
 		destsector->ceilingheight = srcsector->ceilingheight;
@@ -197,7 +197,7 @@ void ExtractMapData(mapdata_t* src, map_t* dest)
 	for (int n = 0; n < src->numNodes; n++)
 	{
 		mapnode_t* srcnode = &src->nodes[n];
-		node_t* destnode = &dest->nodes[n];
+		node_t* destnode = (node_t*) &dest->nodes[n];
 		// Structs are identical, just memcpy
 		memcpy(destnode, srcnode, sizeof(node_t));
 	}
@@ -206,14 +206,14 @@ void ExtractMapData(mapdata_t* src, map_t* dest)
 	for (int n = 0; n < src->numSubsectors; n++)
 	{
 		mapsubsector_t* srcsubsector = &src->subsectors[n];
-		subsector_t* destsubsector = &dest->subsectors[n];
+		subsector_t* destsubsector = (subsector_t*) &dest->subsectors[n];
 
 		destsubsector->numlines = srcsubsector->numsegs;
 		destsubsector->firstline = srcsubsector->firstseg;
 	}
 
 	// Things
-	memcpy(dest->things, src->things, src->numThings * sizeof(mapthing_t));
+	memcpy((void*) dest->things, src->things, src->numThings * sizeof(mapthing_t));
 
 	dest->rootnode = src->numNodes - 1;
 }
