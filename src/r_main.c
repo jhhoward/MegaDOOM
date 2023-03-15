@@ -1,7 +1,8 @@
-#include <stdint.h>
+#include "doomtypes.h"
 #include "Map.h"
 #include "tables.h"
 #include "i_video.h"
+#include "r_defs.h"
 
 #define FRACBITS		8
 #define FRACUNIT		(1<<FRACBITS)
@@ -38,6 +39,8 @@ angle_t			xtoviewangle[SCREENWIDTH + 1];
 
 int		viewwidth = 256;
 int		viewheight = 224;
+
+map_t* currentlevel;
 
 int32_t
 FixedMul
@@ -134,7 +137,7 @@ void R_InitTextureMapping(void)
 //  check point against partition plane.
 // Returns side 0 (front) or 1 (back).
 //
-int R_PointOnSide(int16_t x, int16_t y, mapnode_t* node)
+int R_PointOnSide(int16_t x, int16_t y, node_t* node)
 {
     int16_t	dx;
     int16_t	dy;

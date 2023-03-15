@@ -20,7 +20,7 @@
 #ifndef __R_STATE__
 #define __R_STATE__
 
-#include <stdint.h>
+#include "doomtypes.h"
 #include "tables.h"
 
 //

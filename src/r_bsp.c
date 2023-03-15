@@ -1,15 +1,14 @@
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <math.h>
+#include "doomtypes.h"
 #include "r_local.h"
 #include "tables.h"
 #include "m_bbox.h"
+#include "r_defs.h"
 
 #include "Map.h"
 
+
 void DrawDebugLine(int x0, int y0, int x1, int y1);
-void DrawMapDebugLine(int x0, int y0, int x1, int y1);
+void DrawMapDebugLine(int x0, int y0, int x1, int y1, uint32_t colour);
 
 //
 // ClipWallSegment
@@ -49,30 +48,31 @@ extern int viewangletox[FINEANGLES / 2];
 
 #define FRONT_CLIP_PLANE 4
 
-void VLine(int x, int y, int count, uint32_t colour);
+void VLine(int x, int y, int count, uint8_t colour);
 
 int16_t floorClip[256];
 int16_t ceilingClip[256];
+int16_t columnsToFill;
 
 void R_Subsector(uint16_t subSectorNum)
 {
-    mapsubsector_t* ssector = &Map.subsectors[subSectorNum];
+    subsector_t* ssector = &currentlevel->subsectors[subSectorNum];
     int i;
     int16_t segnum;
 
     //printf("Render subsector %d\n", subSectorNum);
 
-    segnum = ssector->firstseg;
+    segnum = ssector->firstline;
 
     angle_t negviewangle = -viewangle + ANG90;
     int16_t viewcos = finecosine[negviewangle >> ANGLETOFINESHIFT];
     int16_t viewsin = finesine[negviewangle >> ANGLETOFINESHIFT];
 
-    for (i = 0; i < ssector->numsegs; i++, segnum++)
+    for (i = 0; i < ssector->numlines; i++, segnum++)
     {
-        mapseg_t* seg = &Map.segs[segnum];
-        maplinedef_t* linedef = &Map.lines[seg->linedef];
-        int zoom = 3;
+        seg_t* seg = &currentlevel->segs[segnum];
+        line_t* linedef = seg->linedef;
+        int zoom = 5;
 
         //DrawMapDebugLine(
         //    320 + (Map.vertices[seg->v1].x - viewx) / zoom,
@@ -86,8 +86,8 @@ void R_Subsector(uint16_t subSectorNum)
         //    320 + (Map.vertices[seg->v2].x - viewx) / zoom,
         //    200 - (Map.vertices[seg->v2].y - viewy) / zoom);
 
-        int16_t relvx1 = (Map.vertices[seg->v1].x - viewx);
-        int16_t relvy1 = (Map.vertices[seg->v1].y - viewy);
+        int16_t relvx1 = (seg->v1->x - viewx);
+        int16_t relvy1 = (seg->v1->y - viewy);
         int16_t vx1 = ((relvx1 * viewcos) >> 8) - ((relvy1 * viewsin) >> 8);
         int16_t vy1 = ((relvx1 * viewsin) >> 8) + ((relvy1 * viewcos) >> 8);
 
@@ -97,13 +97,19 @@ void R_Subsector(uint16_t subSectorNum)
         //    continue;
         //}
 
-        int16_t relvx2 = (Map.vertices[seg->v2].x - viewx);
-        int16_t relvy2 = (Map.vertices[seg->v2].y - viewy);
+        int16_t relvx2 = (seg->v2->x - viewx);
+        int16_t relvy2 = (seg->v2->y - viewy);
         int16_t vx2 = ((relvx2 * viewcos) >> 8) - ((relvy2 * viewsin) >> 8);
         int16_t vy2 = ((relvx2 * viewsin) >> 8) + ((relvy2 * viewcos) >> 8);
 
         int16_t sx1, sx2;
-        const int maxsx = 255;
+        const int maxsx = 127;
+
+        DrawMapDebugLine(
+            320 + (vx1) / zoom,
+            200 - (vy1) / zoom,
+            320 + (vx2) / zoom,
+            200 - (vy2) / zoom, 0xff444444);
 
         //if (vx2 < -vy2)
         //{
@@ -147,7 +153,7 @@ void R_Subsector(uint16_t subSectorNum)
         }
         else
         {
-            sx2 = 128 + (128 * vx2) / vy2;
+            sx2 = 64 + (64 * vx2) / vy2;
         }
         
         if (vx1 < -vy1)
@@ -165,7 +171,7 @@ void R_Subsector(uint16_t subSectorNum)
         }
         else
         {
-            sx1 = 128 + (128 * vx1) / vy1;
+            sx1 = 64 + (64 * vx1) / vy1;
         }
 
         if (sx1 < 0)
@@ -183,24 +189,26 @@ void R_Subsector(uint16_t subSectorNum)
             320 + (vx1) / zoom,
             200 - (vy1) / zoom,
             320 + (vx2) / zoom,
-            200 - (vy2) / zoom);
+            200 - (vy2) / zoom, 0xffffffff);
 
         int shade = 128 + (seg->angle >> 9);
-        uint32_t colour = (shade) | (shade << 8) | (shade << 16);
-        uint32_t floorColour = (240) | (200 << 8) | (150 << 16);
-        uint32_t ceilingColour = (200) | (180 << 8) | (120 << 16);
+        uint8_t colour;
+        uint8_t floorColour = 0x11;
+        uint8_t ceilingColour = 0x88;
 
         srand(segnum);
-        colour = rand() | (rand() << 8) | (rand() << 16);
+        colour = (uint8_t)rand();
 
         if (linedef->sidenum[0] != -1)
         {
-            mapsidedef_t* side = &Map.sides[linedef->sidenum[seg->side]];
-            mapsector_t* sector = &Map.sectors[side->sector];
+            //mapsidedef_t* side =  &Map.sides[linedef->sidenum[seg->side]];
+            //mapsector_t* sector = &Map.sectors[side->sector];
+            side_t* side = seg->sidedef;
+            sector_t* sector = side->sector;
 
             srand(side->sector + 1024);
-            floorColour = rand() | (rand() << 8) | (rand() << 16);
-            ceilingColour = rand() | (rand() << 8) | (rand() << 16);
+            floorColour = (uint8_t)rand();
+            ceilingColour = (uint8_t)rand();
 
             int u1 = 120 - 128 * (sector->ceilingheight - viewz) / vy1;
             int u2 = 120 - 128 * (sector->ceilingheight - viewz) / vy2;
@@ -262,6 +270,7 @@ void R_Subsector(uint16_t subSectorNum)
                         {
                             VLine(x, clipTop + 1, clipBottom - clipTop - 1, ceilingColour);
                             ceilingClip[x] = floorClip[x] = 0;
+                            columnsToFill--;
                             goto fullyclipped;
                         }
                     }
@@ -280,6 +289,7 @@ void R_Subsector(uint16_t subSectorNum)
                         {
                             VLine(x, clipTop + 1, clipBottom - clipTop - 1, floorColour);
                             ceilingClip[x] = floorClip[x] = 0;
+                            columnsToFill--;
                             goto fullyclipped;
                         }
                     }
@@ -289,12 +299,13 @@ void R_Subsector(uint16_t subSectorNum)
                     //    VLine(x, ceilingClip[x] + 1, u - ceilingClip[x] + 1, ceilingColour);
                     //}
 
-                    if (side->midtexture[0] != '-')
+                    if (side->midtexture)
                     {
                         ceilingClip[x] = floorClip[x] = 0;
                         if (y2 <= y1)
                             continue;
                         VLine(x, y1, y2 - y1, colour);
+                        columnsToFill--;
                     }
                     else
                     {
@@ -320,11 +331,14 @@ void R_Subsector(uint16_t subSectorNum)
                 }
             }
 
-            if (seg->side == 0 && linedef->sidenum[1] != -1)
+            //if (seg->side == 0 && linedef->sidenum[1] != -1)
+            if(seg->linedef->backsector)
             {
                 // Connected to another sector
-                mapsidedef_t* backside = &Map.sides[linedef->sidenum[1]];
-                mapsector_t* backsector = &Map.sectors[backside->sector];
+                //mapsidedef_t* backside = &Map.sides[linedef->sidenum[1]];
+                //mapsector_t* backsector = &Map.sectors[backside->sector];
+                
+                sector_t* backsector = seg->linedef->backsector;
 
                 if (backsector->ceilingheight < sector->ceilingheight || backsector->floorheight > sector->floorheight)
                 {
@@ -420,66 +434,6 @@ void R_Subsector(uint16_t subSectorNum)
     }
 
 }
-void R_Subsector2(uint16_t subSectorNum)
-{
-    //R_Subsector2(subSectorNum);
-    mapsubsector_t* ssector = &Map.subsectors[subSectorNum];
-    int i;
-    int16_t segnum;
-
-    //printf("Render subsector %d\n", subSectorNum);
-
-    segnum = ssector->firstseg;
-
-    for (i = 0; i < ssector->numsegs; i++, segnum++)
-    {
-        mapseg_t* seg = &Map.segs[segnum];
-        int zoom = 3;
-
-        DrawMapDebugLine(
-            320 + (Map.vertices[seg->v1].x - viewx) / zoom,
-            200 - (Map.vertices[seg->v1].y - viewy) / zoom,
-            321 + (Map.vertices[seg->v1].x - viewx) / zoom,
-            201 - (Map.vertices[seg->v1].y - viewy) / zoom);
-
-        DrawMapDebugLine(
-            320 + (Map.vertices[seg->v1].x - viewx) / zoom,
-            200 - (Map.vertices[seg->v1].y - viewy) / zoom,
-            320 + (Map.vertices[seg->v2].x - viewx) / zoom,
-            200 - (Map.vertices[seg->v2].y - viewy) / zoom);
-
-        int x1, y1, x2, y2;
-
-        {
-            angle_t angle = R_PointToAngle(Map.vertices[seg->v1].x, Map.vertices[seg->v1].y);
-            angle = ((angle_t)(angle + ANG90 - viewangle)) >> ANGLETOFINESHIFT;
-            int x = viewangletox[angle];
-            int xdiff = (Map.vertices[seg->v1].x - viewx);
-            int ydiff = (Map.vertices[seg->v1].y - viewy);
-            float distance = sqrt(xdiff * xdiff + ydiff * ydiff);
-            int height = distance > 0 ? (int)(10000 / distance) : 0;
-            DrawDebugLine(x, 120 - height, x, 120 + height);
-            x1 = x;
-            y1 = 120 + height;
-        }
-        {
-            angle_t angle = R_PointToAngle(Map.vertices[seg->v2].x, Map.vertices[seg->v2].y);
-            angle = ((angle_t)(angle + ANG90 - viewangle)) >> ANGLETOFINESHIFT;
-            int x = viewangletox[angle];
-            int xdiff = (Map.vertices[seg->v2].x - viewx);
-            int ydiff = (Map.vertices[seg->v2].y - viewy);
-            float distance = sqrt(xdiff * xdiff + ydiff * ydiff);
-            int height = distance > 0 ? (int)(10000 / distance) : 0;
-            DrawDebugLine(x, 120 - height, x, 120 + height);
-            x2 = x;
-            y2 = 120 + height;
-        }
-
-        //DrawDebugLine(x1, y1, x2, y2);
-    }
-
-}
-
 
 
 bool R_CheckBBox(int16_t* bspcoord)
@@ -603,7 +557,7 @@ bool R_CheckBBox(int16_t* bspcoord)
 
 void R_RenderBSPNode(uint16_t nodenum)
 {
-    mapnode_t* bsp;
+    node_t* bsp;
     int		side;
 
     // Found a subsector?
@@ -616,13 +570,16 @@ void R_RenderBSPNode(uint16_t nodenum)
         return;
     }
 
-    bsp = &Map.nodes[nodenum];
+    bsp = &currentlevel->nodes[nodenum];
 
     // Decide which side the view point is on.
     side = R_PointOnSide(viewx, viewy, bsp);
 
     // Recursively divide front space.
     R_RenderBSPNode(bsp->children[side]);
+
+    if (columnsToFill <= 0)
+        return;
 
     // Possibly divide back space.
     if (R_CheckBBox(bsp->bbox[side ^ 1]))

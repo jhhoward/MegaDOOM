@@ -34,7 +34,7 @@
 #ifndef __TABLES__
 #define __TABLES__
 
-#include <stdint.h>
+#include "doomtypes.h"
 
 typedef uint16_t angle_t;
 

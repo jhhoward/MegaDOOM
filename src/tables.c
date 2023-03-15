@@ -30,7 +30,7 @@
 //	
 //    
 
-#include <stdint.h>
+#include "doomtypes.h"
 #include <math.h>
 #include "tables.h"
 

@@ -1,9 +1,13 @@
 #include <stdio.h>
-#include <stdint.h>
+#include "doomtypes.h"
 #include <memory.h>
 #include <malloc.h>
 #include <string.h>
-#include "../Map.h"
+#include "Map.h"
+#include "DoomData.h"
+#include "r_defs.h"
+
+
 #pragma warning(disable:4996)
 
 typedef struct
@@ -20,9 +24,7 @@ typedef struct
 	char name[8];
 } wad_file_entry_t;
 
-extern int16_t viewx, viewy;
-
-void LoadWad(const char* filename)
+void LoadMapFromWad(mapdata_t* map, const char* filename, const char* levelLabel)
 {
 	FILE* fs = fopen(filename, "rb");
 	wad_file_header_t header;
@@ -41,7 +43,6 @@ void LoadWad(const char* filename)
 
 	wad_file_entry_t* files = malloc(sizeof(wad_file_entry_t) * header.numFiles);
 	int levelIndex = -1;
-	const char* levelLabel = "E1M2";
 
 	for (int n = 0; n < header.numFiles; n++)
 	{
@@ -61,49 +62,158 @@ void LoadWad(const char* filename)
 	wad_file_entry_t* file;
 	
 	file = &files[ML_NODES + levelIndex];
-	Map.numNodes = file->lenData / sizeof(mapnode_t);
-	Map.nodes = (mapnode_t*) malloc(file->lenData);
+	map->numNodes = file->lenData / sizeof(mapnode_t);
+	map->nodes = (mapnode_t*) malloc(file->lenData);
 	fseek(fs, file->offData, SEEK_SET);
-	fread(Map.nodes, 1, file->lenData, fs);
+	fread(map->nodes, 1, file->lenData, fs);
 
 	file = &files[ML_SSECTORS + levelIndex];
-	Map.numSubsectors = file->lenData / sizeof(mapsubsector_t);
-	Map.subsectors = (mapsubsector_t*)malloc(file->lenData);
+	map->numSubsectors = file->lenData / sizeof(mapsubsector_t);
+	map->subsectors = (mapsubsector_t*)malloc(file->lenData);
 	fseek(fs, file->offData, SEEK_SET);
-	fread(Map.subsectors, 1, file->lenData, fs);
+	fread(map->subsectors, 1, file->lenData, fs);
 
 	file = &files[ML_SEGS + levelIndex];
-	Map.numSegs = file->lenData / sizeof(mapseg_t);
-	Map.segs = (mapseg_t*)malloc(file->lenData);
+	map->numSegs = file->lenData / sizeof(mapseg_t);
+	map->segs = (mapseg_t*)malloc(file->lenData);
 	fseek(fs, file->offData, SEEK_SET);
-	fread(Map.segs, 1, file->lenData, fs);
+	fread(map->segs, 1, file->lenData, fs);
 
 	file = &files[ML_VERTEXES + levelIndex];
-	Map.numVertices = file->lenData / sizeof(mapvertex_t);
-	Map.vertices = (mapvertex_t*)malloc(file->lenData);
+	map->numVertices = file->lenData / sizeof(mapvertex_t);
+	map->vertices = (mapvertex_t*)malloc(file->lenData);
 	fseek(fs, file->offData, SEEK_SET);
-	fread(Map.vertices, 1, file->lenData, fs);
+	fread(map->vertices, 1, file->lenData, fs);
 
 	file = &files[ML_LINEDEFS + levelIndex];
-	Map.numLines = file->lenData / sizeof(maplinedef_t);
-	Map.lines = (maplinedef_t*)malloc(file->lenData);
+	map->numLines = file->lenData / sizeof(maplinedef_t);
+	map->lines = (maplinedef_t*)malloc(file->lenData);
 	fseek(fs, file->offData, SEEK_SET);
-	fread(Map.lines, 1, file->lenData, fs);
+	fread(map->lines, 1, file->lenData, fs);
 
 	file = &files[ML_SIDEDEFS + levelIndex];
-	Map.numSides = file->lenData / sizeof(mapsidedef_t);
-	Map.sides = (mapsidedef_t*)malloc(file->lenData);
+	map->numSides = file->lenData / sizeof(mapsidedef_t);
+	map->sides = (mapsidedef_t*)malloc(file->lenData);
 	fseek(fs, file->offData, SEEK_SET);
-	fread(Map.sides, 1, file->lenData, fs);
+	fread(map->sides, 1, file->lenData, fs);
 
 	file = &files[ML_SECTORS + levelIndex];
-	Map.numSectors = file->lenData / sizeof(mapsector_t);
-	Map.sectors = (mapsector_t*)malloc(file->lenData);
+	map->numSectors = file->lenData / sizeof(mapsector_t);
+	map->sectors = (mapsector_t*)malloc(file->lenData);
 	fseek(fs, file->offData, SEEK_SET);
-	fread(Map.sectors, 1, file->lenData, fs);
+	fread(map->sectors, 1, file->lenData, fs);
 
-	viewx = Map.vertices[0].x;
-	viewy = Map.vertices[0].y;
+	file = &files[ML_THINGS + levelIndex];
+	map->numThings = file->lenData / sizeof(mapthing_t);
+	map->things = (mapthing_t*)malloc(file->lenData);
+	fseek(fs, file->offData, SEEK_SET);
+	fread(map->things, 1, file->lenData, fs);
 
 	fclose(fs);
+}
+
+void ExtractMapData(mapdata_t* src, map_t* dest)
+{
+	dest->lines = malloc(src->numLines * sizeof(line_t));
+	dest->nodes = malloc(src->numNodes * sizeof(node_t));
+	dest->sectors = malloc(src->numSectors * sizeof(sector_t));
+	dest->segs = malloc(src->numSegs * sizeof(seg_t));
+	dest->sides = malloc(src->numSides * sizeof(side_t));
+	dest->subsectors = malloc(src->numSubsectors * sizeof(subsector_t));
+	dest->vertices = malloc(src->numVertices * sizeof(vertex_t));
+	dest->things = malloc(src->numThings * sizeof(mapthing_t));
+
+	// Can just memcpy vertices
+	memcpy(dest->vertices, src->vertices, src->numVertices * sizeof(vertex_t));
+
+	// Sides
+	for (int n = 0; n < src->numSides; n++)
+	{
+		mapsidedef_t* srcside = &src->sides[n];
+		side_t* destside = &dest->sides[n];
+		destside->textureoffset = srcside->textureoffset;
+		destside->toptexture = srcside->toptexture[0] == '-' ? 0 : 1;
+		destside->midtexture = srcside->midtexture[0] == '-' ? 0 : 1;
+		destside->bottomtexture = srcside->bottomtexture[0] == '-' ? 0 : 1;
+		destside->rowoffset = srcside->rowoffset;
+		destside->sector = &dest->sectors[srcside->sector];
+	}
+
+	// Lines
+	for (int n = 0; n < src->numLines; n++)
+	{
+		maplinedef_t* srcline = &src->lines[n];
+		line_t* destline = &dest->lines[n];
+		destline->v1 = &dest->vertices[srcline->v1];
+		destline->v2 = &dest->vertices[srcline->v2];
+		destline->dx = destline->v2->x - destline->v1->x;
+		destline->dy = destline->v2->y - destline->v1->y;
+		destline->flags = srcline->flags;
+		destline->special = srcline->special;
+		destline->tag = srcline->tag;
+		destline->sidenum[0] = srcline->sidenum[0];
+		destline->sidenum[1] = srcline->sidenum[1];
+
+		if (srcline->sidenum[0] != -1)
+			destline->frontsector = dest->sides[srcline->sidenum[0]].sector;
+		else
+			destline->frontsector = NULL;
+
+		if (srcline->sidenum[1] != -1)
+			destline->backsector = dest->sides[srcline->sidenum[1]].sector;
+		else
+			destline->backsector = NULL;
+	}
+
+	// Segs
+	for (int n = 0; n < src->numSegs; n++)
+	{
+		mapseg_t* srcseg = &src->segs[n];
+		seg_t* destseg = &dest->segs[n];
+		destseg->v1 = &dest->vertices[srcseg->v1];
+		destseg->v2 = &dest->vertices[srcseg->v2];
+		destseg->offset = srcseg->offset;
+		destseg->angle = srcseg->angle;
+		destseg->linedef = &dest->lines[srcseg->linedef];
+		destseg->sidedef = &dest->sides[destseg->linedef->sidenum[srcseg->side]];
+	}
+
+	// Sectors
+	for (int n = 0; n < src->numSectors; n++)
+	{
+		mapsector_t* srcsector = &src->sectors[n];
+		sector_t* destsector = &dest->sectors[n];
+
+		destsector->floorheight = srcsector->floorheight;
+		destsector->ceilingheight = srcsector->ceilingheight;
+		destsector->lightlevel = srcsector->lightlevel;
+		destsector->special = srcsector->special;
+		destsector->tag = srcsector->tag;
+		destsector->floorpic = 0;
+		destsector->ceilingpic = 0;
+	}
+
+	// Nodes
+	for (int n = 0; n < src->numNodes; n++)
+	{
+		mapnode_t* srcnode = &src->nodes[n];
+		node_t* destnode = &dest->nodes[n];
+		// Structs are identical, just memcpy
+		memcpy(destnode, srcnode, sizeof(node_t));
+	}
+
+	// Subsectors
+	for (int n = 0; n < src->numSubsectors; n++)
+	{
+		mapsubsector_t* srcsubsector = &src->subsectors[n];
+		subsector_t* destsubsector = &dest->subsectors[n];
+
+		destsubsector->numlines = srcsubsector->numsegs;
+		destsubsector->firstline = srcsubsector->firstseg;
+	}
+
+	// Things
+	memcpy(dest->things, src->things, src->numThings * sizeof(mapthing_t));
+
+	dest->rootnode = src->numNodes - 1;
 }

@@ -1,0 +1,1289 @@
+SGDK 1.80 (September 2022)
+--------------------------
+
+COMPILER
+* RESCOMP
+ - added new OBJECTS resource (see rescomp.txt for more infos)
+ - added new TILEMAP resource (see rescomp.txt for more infos)
+ - added Tiled TMX map and object support (TILEMAP, MAP and OBJECT resources)
+ - added Tiled TSX tileset support (TILESET resource)
+ - added global RGB image support (see rescomp.txt for more infos)
+ - added .pal file and RGB image support for PALETTE resource
+ - added extension support so you can add your own custom resource (see rescomp.txt for more infos)
+ - better management of duplicated resources
+ - better compression logic (don't compress if gain is too low)
+ - better logic for extended attributes from tile (MAP and TILEMAP resources)
+ - improved tile indexing performance
+ - improved compilation reports
+ - some tweaks and fixes
+* XGMTOOL
+ - added support to split VGM and PCM streams in VGM file (Thanks to Vic_)
+ - added ZGM (compressed VGM) export support (Thanks to Vic_, useful for 32X dev)
+* MAKEFILE
+ - added '-fms-extensions' flag to allow usage of anonymous embedded structures and enums
+ - added '--register-prefix-optional,--bitwise-or' flags to help with assembly code (can use '|' as OR operator)
+ - added 'ext.mk' and 'ext_lib.mk' files for makefile extension and customization
+ - removed '-ggdb' flag for .s files compilation. It makes AS crashing when using 'dc.b' data declaration.
+* README
+ - added 'useful tools' section
+ - some rewrites and tweaks (thanks to MrBen89)
+ - updated tutorial section
+ - updated thanks section
+ - added special thanks section
+
+LIBRARY
+* OBJECT
+ - added new 'pool' unit for easy and fast object pool management
+ - added new 'object' unit for easy general object implementation
+* VDP
+ - renamed many constants for better coherency in naming convention (ex: TILE_USERINDEX --> TILE_USER_INDEX)
+ - renamed all GFX_xxx constants to VDP_xxx 
+ - added bit fields to VDPSprite structure for easier field manipulation (thanks to Carlos Aragones)
+ - added many methods to manipulate these fields (thanks to Carlos Aragones)
+* MAP
+ - removed 'palette' and 'tileset' fields from Map structure (better to handle that externally)
+ - fixed allocateMap(..) method
+* MEM
+ - added MEM_allocAt(..) function to allocate memory at a fixed address
+ - splitted memory.h file --> memory.h and memory_base.h (easier to include in .s file)
+* SYS
+ - faster H-int callback implementation (callback method need to be prefixed with HINTERRUPT_CALLBACK now)
+ - added TSK_init() method for easier proper multi tasking system initialization 
+ - modified random() implementation to allow reproducible numbers sequence
+* Z80
+ - added generic and customizable Z80 bus protection methods (Z80_useBusProtection / Z80_setBusProtection)
+ - added generic Z80_setForceDelayDMA() so it can be used by all sound driver (not only reserved to XGM sound driver)
+* SOUND
+ - added Fractal sound driver support (https://gitlab.com/Natsumi/Fractal-Sound)
+ - added PSG_setToneLow(..) method (only set low part of tone register)
+ - renamed PSG_init() --> PSG_reset()
+* TYPE
+ - added volatile fix16/fix32 type (vfix16, vfix32, vf16, vf32)
+ - changed 'bool' to 'u8' instead of 'u16' (don't waste RAM / ROM :p)
+ - added p16 type (short pointer for low ROM / high RAM address)
+* DMA
+ - increased a bit default DMA buffer size
+* added macros to create 'enum' type compatible with assembly (.s) files
+* several documentation fixes / cleanups / updates
+* removed old deprecated units and headers (vdp_pal and vdp_dma)
+* general cleanup, some refactoring..
+
+SAMPLE
+* rewrote 'sonic' sample with better separation of different units.
+* added new 'platformer' sample (thanks to Gerard Gascon).
+* tweaked/fixed 'scaling' and 'wobble' samples (using the new fast h-int call)
+
+SGDK 1.80 MIGRATION NOTE
+* Add extra '_' character on some constantes (i.e: TILE_USERINDEX --> TILE_USER_INDEX; TILE_FONTINDEX --> TILE_FONT_INDEX; ...)
+* Replace all GFX_xxx constants with VDP_xxx
+* Add HINTERRUPT_CALLBACK keyword before your hint callback method (see 'scaling' sample for an example)
+ 
+ 
+ SGDK 1.70 (February 2022)
+-------------------------
+
+COMPILER
+* fixed bug in sizebnd companion tool
+* RESCOMP
+ - fixed compression for BIN resource (AUTO cannot be accepted here)
+ - fixed a small bug preventing having a transparent tile with high priority or palette index > 0
+ - fixed a bug with 'opt' set to NONE in SPRITE resource
+ - fixed illegal sun 'WaveFileReader' class usage for WAV file resampling operation
+* MAKEFILE
+ - added 'EXTRA_FLAGS' entry to makefiles so we can use custom extra compilation flags
+ - added 'SGDK_GCC' define to identify SGDK compilation toolchain if needed (when used in larger build frameworks)
+ - modifications to support Linux native toolchains (thanks to Doragasu)
+* LINK
+ - now use objcopy instead of ld to generate rom_head.bin (improve compatibility with others GCC)
+* README
+ - added Doragasu references / version update
+ - added DOA game reference
+* DOCKER
+ - use unprivileged sgdk user to avoid root privilege usage (thanks to Doragasu)
+ - Modifications to support Linux native toolchains (thanks to Doragasu)
+ - minors tweaks
+
+LIBRARY
+* added multitask support - see 'task' unit for more details (thanks to Doragasu)
+* added MegaWifi support - module should be enable in config.h file (thanks to Doragasu)
+* SPRITE
+* VDP
+ - small fix to VDP_resetScreen() function to avoid a stack overflow on failure
+ - added VDP_drawTextEx(..), VDP_clearTextEx(..) and VDP_clearTextAreaEx(..) methods (can use DMA / DMA_QUEUE)
+* MAP
+ - added wrapping support (map size need to be aligned on power of 2)
+ - added MAP_scrollToEx(..) method to allow forced full map redraw
+ - fixed a bug on initial map refresh
+ - fixed a small bug on full map refresh
+* MATH
+ - added getNextPow2(..) method
+ - added casting to int to fix conversion (safer)
+* SYS
+ - added VDP_setExtInterrupt(..) method and fixed ext interrupt enable stat…
+ - added new kprintf(..) method for easier KMod debug logging
+ - minor tweak on mapper banking logic
+* DMA
+ - removed Z80 halt/resume hack before triggering DMA (was not preventing bus clash anyway)
+* PAL
+ - fixed first set palette operation not always done in vblank during fading process (CRAM dots)
+ - simpler setFadePalette(..) implementation 
+ - updated to use color value rounding instead of truncation for RGB24_TO_VDPCOLOR(..) macro
+ - added new RGB_TO_VDPCOLOR macros (thanks to emmanuel)
+* STRING
+ - modified intToStr(..) to display hexa value for too large number
+* for safety HALT_Z80_ON_IO is also enable by default (config.h file)
+* some refactoring
+* changed u16 to bool in some declarations
+* documentation fixes / cleanups / updates
+* cleanup, removed old deprecated units / headers
+
+SAMPLE
+* added linescroll sample
+* added multitasking sample (thanks to Doragasu)
+* added MegaWifi sample (thanks to Doragasu)
+* BENCHMARK
+ - updated to fix tests when using pure C (still not perfect)
+ 
+
+SGDK 1.65 (July 2021)
+---------------------
+
+COMPILER
+* rewrote sizebnd tool in Java and added auto checksum feature.
+* RESCOMP
+ - added new NEAR function to force NEAR location of binary data (read rescomp.txt file for more info)
+ - fixed a small bug on MAP resource where it was using flipped version of a tile even if tileset was containing non flipped version
+ - better optimisation process for large sprites (close to the limit of 16 hardware sprites)
+ - many small fixes, tweaks and improvements to sprite cutting process
+ - added duplicated sprite frame optimization
+ - fixed typo on 2BPP to 8BPP image conversion
+ - added information on MAP resource compilation
+ - WAV resource can now be set as FAR (bank switch)
+ - fixed sample output override for WAV resource (needed for Bad Apple sample which use a custom ADPCM2 driver)
+ - fixed a possible bug in duplicated resource symbol
+* APJ
+ - fixed cost computation (bit better compression)
+ - fixed encoding for short match with long offset
+ - more infos on encoding errors
+* LINK
+ - increased theoretical max ROM size to ~3.8GB (using bank switch)
+* README
+ - added MarsDev project reference
+ - added And-0 documentation references
+* DOCKER
+ - use lighter docker image
+ - improved / fixed docker script (thanks to all contributors for that)
+
+LIBRARY
+* SPRITE
+ - fixed a bug where some sprites wouldn't be properly hidden in rare occasion
+ - automatically update VRAM region location when VRAM mapping changed
+ - VRAM region can be remapped if needed on defrag operation
+ - added sprite validity check in 'debug' build
+* VDP
+ - VDP_resetScreen() now also reset VSRAM
+ - updated VRAM mapping for 64x64 plane size to allow full window map
+ - use new mul/div/mod functions for small performance improvement on some functions
+* MAP
+ - fixed a decoding bug when we had consecutive same row block offset
+ - fixed MAP scrolling update when using TILE/LINE horizontal scrolling mode
+* MATH
+ - added fix32Avg(..) and fix16Avg(..) methods
+ - added mulu/muls/divu/divs/modu/mods/divmodu/divmods(..) functions which allow to directly use the 68000 mul/div instruction (GCC doesn't always use them correctly)
+* SYS
+ - added ROM_SIZE definition to get ROM size
+ - added SYS_getFarDataEx(..) and SYS_getFarDataSafeEx(..) methods
+ - added SYS_isCrossingBank(..) method
+ - fixed RAM mapping for bank switching with ROM larger than 12MB
+ - reset banks only when bank switch is enabled (may help with Everdrive X3)
+ - added SYS_setVBlankCallback(..) method
+ - added SYS_computeChecksum() and SYS_isChecksumOk() methods
+* DMA
+ - lowered default PAL buffer capacity (DMA_BUFFER_SIZE_PAL_LOW) to spare memory
+ - HALT_Z80_ON_DMA is now enabled by default for the sake of safety
+ - added DMA_canQueue(..) method and small fix on transferSize calculation
+ - fixed a stupid bug in DMA_doDma(..) on 128K bank crossing
+ - removed some VDP_waitDMACompletion() check for performance reason (developer need to do it by himself)
+* PAL
+ - added TransfertMethod parameter to set palette colors methods
+ - made 'fadeCurrentPal' and 'fadeEndPal' variables visible (can be useful)
+* SOUND / XGM
+ - protected XGM_xxx methods against interrupts
+ - fixed XGM_pausePlay(..) which wasn't always muting all sound (thanks to BigEvilCorporation for the fix)
+ - fixed potential PENDING_FRM overflow (mutual change)
+ - XGM play / pause / resume commands are now exclusive (cannot be pending at same time)
+ - full YM reset on YM2612_reset()
+* BITMAP
+ - fixed VRAM organization for Bitmap mode (restore 64x32 plane size on exit)
+ - use new mul/div/mod functions for small performance improvement on BMP_scale(..) function
+* ROM HEADER
+ - updated default SRAM size to 64 KB
+* JOY
+ - use the correct bits to detect 3-button.
+ - tried to compensate 6 button read to avoid the UP+DOWN issue state (emulator or unofficial controllers)
+* small changes for better/safer soft reset behavior
+* replaced some waitVSync() by SYS_doVBlankProcess()
+* more detailed error / warning logs in debug build
+* documentation fixes and updates
+* cleanup, removed old deprecated units / headers
+
+SAMPLE
+* SONIC
+ - fixed DMA buffer size for initial MAP update
+ 
+
+SGDK 1.62 (March 2021)
+----------------------
+
+COMPILER
+* RESCOMP
+ - fixed a small bug on MAP resource compression
+ - implemented independant compression on MAP resource
+ - XGM resource are now stored as FAR (accessible through bank switch)
+ - tweaked default BALANCED sprite cutting optimization strategy to reduce a bit sprite usage over tile
+ - increased maximum SPRITE width / height to 248 pixels (it was 128 pixels)
+ - optimized SPRITE metadata size (divided size by 4) at the expense of slower sprite processing
+ - force slow sprite cutting processing when specifying a number of iteration different from default (500000)
+ - added information (rescomp.txt) about how to provide extra data (priority / palette) on tilemap for MAP and IMAGE resources
+ - added support to grayscale image
+ - better error reporting
+* BATCH
+ - several fixes to build_adv.bat file
+* MAKEFILE
+ - makefile can now define GDK variable on its own (environment variable not anymore needed)
+ - fixed copy/paste typo in makelib.gen file
+* README
+ - smalls changes to alternative OS solutions
+ - added Raster Scroll MD graphics guide reference
+ - updated credits part
+ - fixed line return
+* increased maximum ROM size to 12MB
+* removed resourcemanager tool which was not used nor complete 
+* added prelemenary docker support for easier SGDK usage on alternative OS (thanks to Steve Schnepp for it)
+  
+LIBRARY
+* SYS
+ - added SYS_getFarDataSafe(..) method / FAR_SAFE(..) macro allowing safe access to resource crossing 512 KB banks
+   SGDK methods now use FAR_SAFE(..) accessor instead of FAR(..) for bank switch mechanism
+ - fixed a bug in bank switch initialization
+ - better CPU load reporting
+ - minor change to main(..) prototype and return execution
+ - added new 'ROMHeader rom_header' variable to get easier access to ROM header infos
+* SPRITE
+ - modified sprite structures to reduce metadata size (but at the expense of a bit slower processing)
+ - added SPR_getVisibility(..) and SPR_isVisible(..) methods
+ - now automatic sprite visibility is computed using only X position as we use it only scanline sprite usage optimization
+ - made 'firstSprite' / 'lastSprite' visible
+ - improved profiling
+* DMA
+ - small tweak + some fixes when DMA is disabled
+* VDP
+ - added VDP_setHorizontalScrollVSync() and VDP_setVerticalScrollVSync() methods to do delayed scrolling update
+ - safier VDP_drawText(..) / VDP_clearText(..) methods (bounds check)
+ - prevented tilemap column update when plane width is set to 128 (not possible because auto-inc register is limited to 255)
+* MAP
+ - added priority info support to baseTile parameter in MAP_create(..)
+* MATH
+ - removed MATH_BIG_TABLES define as it's not anymore useful with the lto
+ - add clamp function (thanks de Devon Powell)
+ - fix issue with rounding helpers (fix16)
+* MEMORY
+ - added malloc(..) / free(..) so they forward to MEM_alloc(..) / MEM_free(..) methods
+* SOUND
+ - added XGM_startPlay_FAR(..) to allow to play XGM music accessible through bank switch
+* TIMER
+ - small fix on waitSubTick(..) method to take care of small wait during vblank
+* JOY
+ - added JOY_writeJoypadX(..) and JOY_writeJoypadY(...) which allow to set a specific position for mouse pointer (Thanks to LIZARDRIVE)
+* small change to 'Map' and 'Sprite' structure for better doxygen documentation reference
+
+SAMPLE
+* reworked folder structure
+* added new basic HELLO_WORLD sample
+* added BAD APPLE demo sample (to exhibit SGDK bank switching mechanism)
+* added new WOBBLE fx sample (thanks to Andreas Dietrich for it)
+* added new SCALING fx sample (thanks to Andreas Dietrich for it)
+* SPRITE sample renamed to SONIC
+* BENCHMARK
+ - better score computation for Sprite part (also now comparable to others tests)
+
+SGDK 1.62 MIGRATION NOTE
+* Replace all sprite->seqInd occurence with sprite->frameInd
+* Replace all sprite->animation->length occurence with sprite->animation->numFrame
+* Sprite frame size is now directly defined in the SpriteDefinition structure (SpriteDefinition->w, SpriteDefinition->y) as it's fixed for all frames.
+
+
+SGDK 1.6 (December 2020)
+------------------------
+
+COMPILER
+* APLIB
+ - replaced appack tool by new APJ (Java APLIB packer) tool written from scratch
+* LZ4W
+ - much faster compression speed
+ - better exit operation
+* RESCOMP
+ - added new MAP resource and MAP_xx methods (in map.h unit) to handle large maps / background scrolling easily (finally !)
+ - integrated APJ tool for faster ApLib compression
+ - added per resource size information, fixed Map resource export...
+ - we can now disable sprite cutting optimisation ('NONE' value for opt parameter)
+ - fixed a small bug on Sprite cutting optimisation process
+ - added 'optimisation' parameter to TILESET resource
+ - fixed bug on tilemap generation with base tile index used
+ - fixed a mall bug in BIN resource export
+ - fixed a small bug on ALIGN directive
+ - optimized tile parsing
+* XGMROMBUILDER
+ - now remember last used folder
+* MAKEFILE
+ - added deps file (.d) support for better dependencies handling
+ - added sources sub folders support (2 depth levels)
+ - removed useless and undesired warnings
+* README
+ - added GET STARTED part
+ - major rewrite / revamp to take benefit of Markdown format (thanks to Astrofra)
+ - others changes
+
+LIBRARY
+* MAJOR CHANGE !WARNING!:
+  Added SYS_doVBlankProcess(..) to replace automatic V-Int processing of SGDK.
+  This was done to avoid issues with missing interrupts protection and to offer more control in general.
+  So basically you should replace all your _VDP_waitVSync()_ references with _SYS_doVBlankProcess()_
+* SYS
+ - faster user callback interrupt handling
+ - modified ROM header to enable SRAM by default
+ - fixed small initialization issue
+ - minor fix on SSF2 mapper initialization
+ - added LOG_LEVEL setting allowing different level of log for debug (default = LOG_LEVEL_WARNING)
+ - removed interrupts protection where they are not anymore useful
+ - small change for more accurate detection of frame miss
+* MAP
+ Added new MAP engine (map.h unit) to handle large maps / background scrolling easily from MAP resource:
+ - Map* MAP_create(const MapDefinition* mapDef, VDPPlane plane, u16 baseTile);
+ - void MAP_scrollTo(Map* map, u32 x, u32 y);
+ - u16 MAP_getMetaTile(Map* map, u16 x, u16 y);
+ - u16 MAP_getTile(Map* map, u16 x, u16 y);
+ - void MAP_getMetaTilemapRect(Map* map, u16 x, u16 y, u16 w, u16 h, u16* dest);
+ - void MAP_getTilemapRect(Map* map, u16 x, u16 y, u16 w, u16 h, bool column, u16* dest);
+* DMA
+ - added DMA_xxxFast() methods (no 128 KB bank cross check)
+ - small tweaks for bit faster DMA queue
+ - tweaks in general to DMA methods
+ - increased default DMA queue size (we can quickly reach 64)
+* VDP 
+ - fixed a small bug on VDP_drawTextBG(..) method
+ - added VDP_waitVBlank() and VDP_waitVActive() methods
+ - added VDP_getPlaneAddress() method (was internal first)
+* STRING
+ - added support to u32/s32 type to sprintf(..) function
+ - fixed fix16ToStr(..) and fix32ToStr(..) methods
+* SOUND
+ - fixed a small bug on PCM command play (thanks to hsk)
+ - better restoring of Z80 BUS request state
+* Z80
+ - added Z80_getAndRequestBus() method
+ - added loading of a dummy driver by default to keep Z80 active on init
+* replaced some u16 parameter by bool where it makes sense to have it
+
+SAMPLE
+* Updated for SGDK 1.6 changes
+* BENCHMARK
+ - minors changes (updated to version 1.31)
+* SPRITE
+ - updated background to complete level dimension.
+ - updated to take benefit of the new MAP resource and advanced MAP methods
+ - added alternate scrolling update mode (still using new MAP unit)
+
+SGDK 1.6 MIGRATION NOTE
+* Replace all VDP_waitVSync() references with SYS_doVBlankProcess()
+* Replace all VDP_waitVInt() references with SYS_doVBlankProcess()
+
+
+SGDK 1.51 (April 2020)
+----------------------
+
+COMPILER
+* APPACK
+ - fixed build for 32 and 64 bit linux (thanks doragasu)
+* LZ4W
+ - minor fix  
+* RESCOMP
+ - added new sprite optimization options to SPRITE resource (see rescomp.txt for details)
+ - minor tweak on binary export order (can save some bytes with LZ4W compression)
+ - fixed resource duplication bug
+* XGMTOOL
+ - fixed VGM loop
+  
+LIBRARY
+* fixed corrupted library binaries which were displaying a blank screen on some MD models
+* MEMORY
+ - fixed a minor in memory packing operation
+ - added MEM_pack() here and there to avoid memory fragmentation
+* VDP
+ - fixed getAdjustedVCounterInternal(..) which could return value > 255 in some rare situation
+ - moved VDP DMA busy checking on reset (better to do it before accessing VDP)
+ - VDP_setPlaneSize(..):
+   - added constraint on plane size
+   - fixed maps start address calculation (when VRAM setup is asked)
+ - minor change in VDP_drawImageEx(..) to do setTileMap(..) operation using CPU (DMA is actually slower here)   
+* added SYS_showFrameLoad() / SYS_hideFrameLoad() methods to monitor CPU frame load.
+* always load font using CPU in reset process (safer)
+* fixed String unit build when ENABLE_NEWLIB set (thanks doragasu)
+* improved documentation in Joy unit (thanks Chilly Willy) and VDP (regarding DMA QUEUE usage specifically)
+
+SAMPLE
+* reduced memory usage on sample which use Bitmap mode by reducing DMA allocated memory
+* SPRITE
+ - added SYS_showFrameLoad() showcase
+
+
+SGDK 1.5 (April 2020)
+---------------------
+
+COMPILER
+* RESCOMP
+ - added ALIGN directive (read rescomp.txt for more information about it)
+ - added UNGROUP directive (read rescomp.txt for more information about it)
+ - added 'compression' and 'far' field to BIN resource
+ - replaced Map structure export by TileMap
+ - minor optimization in building IMAGE tilemap
+   plain tiles are now ignored (taken from system tiles) when using a base tile index offset for tilemap (mapbase parameter in IMAGE resource)
+ - more flexible resource compilation
+   - ignore palette and priority for transparent pixel
+   - sprite can have their palette not starting at index 0
+ - reorganized resource data export order for better LZ4W compression and bank switch support
+ - added support for 1bpp and 2bpp indexed color images
+ - faster LZ4W tool call (embeded in rescomp now)
+ - preserve resource order for better BIN data compression with LZ4W
+ - more constrained sprite cutting process depending chosen optimization strategy
+ - minor fix to allow using bit 7 (color index >= 128) in IMAGE resource as priority bit in tilemap
+ - simplified / fixed binary compression block with alignment
+ - fixed a bug on possible duplicated resource export
+ - fixed Circle collision type export
+ - now return -1 as exit code on error
+ - replaced FileWriter by StringBuffer (faster and safer)
+ - minor changes and improvements to rescomp.txt file
+* XGMTOOL
+ - fixed a small bug during sample conversion processing
+* XGMROMBUILDER
+ - updated to last XGMTool and XGM driver version
+* LZ4W
+ - fixed LZ4W compression which could failed in very are case
+* BINTOS
+ - fixed data section (it was .text instead of .rodata)
+* MAKEFILE
+ - updated 'release' target to generate symbol.txt file (always interesting to have)
+ - show more warnings
+* forced no inlining of memset / memcpy methods to fix LTO agressive optimization issue
+
+LIBRARY
+* SYS
+ - added bank switch support using SSF2 mapper (allow ROM > 4MB)
+   - use ENABLE_BANK_SWITCH flag in config.h file to enable bank siwtch support in SGDK
+   - added FAR(..) directive to access a resource through bank switch if required
+   - added SYS_getBank(..) / SYS_setBank(..) methods
+ - moved RAM initialization to sys.c unit and added support for bank crossing (more control on it)
+ - minors changes to reset methods (simpler)
+ - added ROM and RAM constants (yeah, why not ^^)
+* SPRITE
+ - added sprite frame change event callback (using SPR_setFrameChangeCallback(..) method)
+ - added SPR_loadAllFrames(..) to (pre)load all frames data of a SpriteDefinition to VRAM
+ - removed unpack buffer (replaced by DMA buffer and new DMA_QUEUE_COPY method)
+ - fixed a small issue with delayed update
+ - fixed a bug on SPR_setDefinition(..) (can display glitches as some sprites weren't always properly hidden)
+ - fixed internal sprite link (could occasionaly let some phantom and glitched sprites visible)
+ - added out of range index detection for animation and frame (debug build only)
+* DMA
+ - added new DMA buffer for easier and better DMA queue management
+   - added 'bufferSize' parameter to DMA_initEx(..) function
+   - added DMA_setBufferSize(..) and DMA_setBufferSizeToDefault() functions to set the temporary DMA buffer size
+   - added new DMA_QUEUE_COPY transfer method (TransferMethod enum) to copy data to a temporary buffer before transfer actually occurs
+   - added DMA_allocateAndQueueDma(..) function which return a temporary buffer and queue a DMA transfer from it
+   - added DMA_allocateTemp(..) and DMA_releaseTemp(..) methods to allocate memory from DMA temporary buffer (use that safely)
+   - added DMA_copyAndQueueDma(..) function which copy data to transfer to a temporary buffer and queue the DMA transfer
+ - added a new generic DMA_transfer(..) function
+ - added DMA_doCPUCopy(..) function to do a CPU copy to VRAM/CRAM/VSRAM
+ - added DMA_getMaxQueueSize() and DMA_setMaxQueueSize() to get and set the queue size.
+ - passed the DMA queue flush loop in assembly for better control (and also faster operation as GCC was dumb about it)
+ - safer DMA operation on DMA_doDMA(..)
+ - added DMA_initEx(..) and simplified DMA_init()
+ - added new DMA_DISABLED flag in config.h to completely disable DMA support in SGDK (for debug purpose)
+ - fix for HALT_Z80_ON_DMA (stupid typo)
+* VDP 
+ - many refactoring (see refactoring section at bottom)
+ - TILE_USERMAXINDEX now take allocated VRAM for sprite engine in account !
+ - added TILE_SPRITEINDEX constant to get base tile index for the Sprite Engine
+ - added tilemap row update methods
+   - VDP_setTileMapDataRow(..) / VDP_setTileMapDataRowEx(..)
+   - VDP_setTileMapRow(..) / VDP_setTileMapRowEx(..)
+ - added tilemap column update methods
+   - VDP_setTileMapDataColumnFast(..) / VDP_setTileMapDataColumn(..) / VDP_setTileMapDataColumnEx(..)
+   - VDP_setTileMapColumn(..) / VDP_setTileMapColumnEx(..)
+ - added TransferMethod parameter to many tilemap set methods
+ - added tilemap wrapping support to VDP_setTileMap(..) and VDP_setTileMapEx(..) methods.
+ - added setupVram parameter to VDP_setPlaneSize(..) function
+ - removed vdpSpriteCacheQueue table (replaced by new DMA_QUEUE_COPY)
+ - re-introduced VDP_loadTileData(..) method in vdp_tile.c unit (no more assembly code for this one)
+ - moved font loading in VDP_resetScreen() method (fix)
+* PALETTE
+ - fixed palette fading so it correctly trigger during vblank (avoid CRAM dot)
+ - fixed minor issue in palette fading (sometime not properly doing last fade step) 
+* MEMORY
+ - fixed MEM_getLargestFreeBlock(..) method
+ - added MEM_pack() method to help reducing memory fragmentation
+ - removed MEM_init() access as it's not safe to call it externally
+ - increased stack size to 0xA00
+* MATHS
+ - fixed getLog2Int(..) method
+ - replaced sin tabs to use FIX32/FIX16 (thanks to FireRat for the generator)
+* TYPES
+ - added new rorxx(..) / rolxx(..) functions which are correctly turned into ROR / ROL instruction when optimization are enabled
+* Z80
+ - fixed Z80 enable restoration on DMA
+* general cleanup and refactoring
+
+SAMPLE
+* Updated for SGDK 1.5 changes
+* BENCHMARK
+ - added memory information at startup
+ - some changes to adapt to last SGDK
+* SPRITE
+ - updated resources to use large backgrounds
+ - updated to support long scrolling > 512 px (vertical and horizontal) !
+ - as collision is not implemented, added physic settings using START button so we can play with vertical scrolling too
+ - enemies sprites frames preloaded and animated using new Sprite engine features
+   Showcase of SPR_loadAllFrames(..) and SPR_setFrameChangeCallback(..) methods
+* XGMPlayer
+ - updated for easier integration in XGM ROM Builder tool
+* added notes and tutorial references to README.txt
+
+REFACTORING
+* TILE_USERMAXINDEX now take allocated VRAM for sprite engine in account !
+* _voidCallback --> VoidCallback
+* _joyEventCallback --> JoyEventCallback
+* PLAN_A --> BG_A
+* PLAN_B --> BG_B
+* PLAN_WINDOW --> WINDOW
+* VDP_PLAN_A --> VDP_BG_A
+* VDP_PLAN_B --> VDP_BG_B
+* VDP_PLAN_WINDOW --> VDP_WINDOW
+* all references to 'Plan' keyword --> 'Plane'
+ - VDPPlan --> VDPPlane
+ - VDP_clearPlan --> VDP_clearPlane
+ - VDP_getTextPlan --> VDP_getTextPlane
+ - VDP_setTextPlan --> VDP_setTextPlane
+ - VDP_setAPlanAddress --> VDP_setBGAAddress
+ - VDP_setBPlanAddress --> VDP_setBGBAddress
+ - VDP_setPlanSize --> VDP_setPlaneSize
+* all references to 'Map' --> 'TileMap'
+ - Map --> TileMap
+ - unpackMap --> unpackTileMap
+ - allocateMap --> allocateTileMap
+ - VDP_setMap --> VDP_setTileMap
+ - VDP_setMapEx --> VDP_setTileMapEx
+
+
+SGDK 1.41 (September 2019)
+--------------------------
+
+COMPILER
+* RESCOMP
+ - added new sprite optimization options to SPRITE resource (see rescomp.txt for details)
+ - minor tweak on binary export order (can save some bytes with LZ4W compression)
+ - fixed resource duplication bug
+* XGMTOOL
+ - fixed VGM loop
+  
+LIBRARY
+* SYS
+ - Safer SYS_setInterruptMaskLevel() so interrupt mask is not lost after SYS_enablesInts() call
+ - fixed/updated SGDK logo display code
+ - renamed getFPS() / getFPS_f() to SYS_getFPS() / SYS_getFPSAsFloat()
+* DMA
+ - fixed possible DMA failure on some Megadrive when Z80 access 68K BUS at same time we trigger DMA
+ - minor fix on autoInc restoration after DMA_flushQueue()
+* VDP 
+ - tweaked default VRAM configuration so window can be freely used anywhere.
+ - added VDP_getAdjustedVCounter() method to have a consistent [0..255] V-Counter (avoiding rollback issue)
+ - tweaked up VDP_resetScreen() method
+ - added VDP_setHVLatching() and VDP_setDMAEnabled() methods
+* PALETTE
+ - fixed VDP_getPaletteColors() and VDP_getPalette(..) methods (regression)
+ - fixed a bug with all palette fading methods (regression)
+ - renamed vdp_pal unit to pal unit (so all palette methods are now called PAL_xxx)
+* JOY
+ - added JOY_reset() method to reset controller detection without clearing JOY state change event callback
+ - safer JOY_setSupport(..) / gun controller implementation
+ - more permissive mouse id detection in mouse pooling code
+ - fixed an issue where an EA 4-way multitap could be incorrectly detected
+* TIMER
+ - safer waitSubTick(..) implementation during VInt.
+ - fixed getSubTick() method to take care of HV counter latching when light guns are used.
+* RESOURCE
+ - added 2 alternate SGDK logo (free feel to use it)
+ - minor change on library resources name
+ - fixed version and added alias for old resource names
+* added ENABLE_NEWLIB define in config.h file for those who want to use newlib within SGDK (you need to build it by yourself)
+* changed 'u16' to 'bool' where it makes sense to use 'bool' (internally they are the same type, it's just for readability).
+* minors tweaks, changes and fixes here and there
+
+SAMPLE
+* XGMPlayer
+ - updated to make it work with last SGDK (sprite engine difference mainly)
+* SOUND
+ - reintroduced cry SFX test for XGM driver
+
+
+SGDK 1.4 (May 2019)
+-------------------
+
+COMPILER
+* RESCOMP
+ - rewrote from scratch in java for easier evolution and easy multi OS support.
+ - added smart sprite cutting (detect empty space in sprite)
+ - many changes on SPRITE resource, don't forget to read the rescomp.txt file to see changes about this resource.
+ - can now disable map optimization for IMAGE resources (see rescomp.txt for more information)
+* LZ4W
+ - added code sources (java)
+ - fixed compression using previous data block in ROM (updated packer to version 1.4)
+* BINTOS
+ - fixed a stupid bug on path.
+* added XGM ROM builder tool sources.
+* removed RESCOMP (C version), WAVTORAW, TFMCOM and Z80DASM tools.
+* added Visual Studio template.
+
+LIBRARY
+* SYS
+ - added SYS_setVIntAligned(..) method to force V-Int callback to align process on VBlank.
+   IMPORTANT: by default now SGDK *does* align the V-Int processing to VBlank so you need to disable it if you don't want it !
+ - added SYS_getCPULoad() to return CPU load estimation.
+ - added SYS_resetMissedFrames() / SYS_getMissedFrames() methods.
+* DMA
+ - simplified DMA over capacity strategy
+ - minor change in debug log message
+* SPRITE
+ - renamed SPR_init(..) to SPR_initEx(..) so now SPR_init() doesn't require any parameters by default.
+ - removed 'maxSprite' parameter from Sprite Engine initialization (alays use max available).
+ - added delayed frame update support.
+ - added SPR_FLAG_DISABLE_DELAYED_FRAME_UPDATE flag to disable the delayed frame update (when we are running out of DMA capacity).
+ - added SPR_setDelayedFrameUpdate() to change the delayed frame update state for a sprite.
+ - added SPR_FLAG_INSERT_HEAD flag to allow adding new sprite in first position (instead of last position by default)
+ - added SPR_defragVRAM() method to force VRAM defragmentation
+ - added SPR_addSpriteSafe(..) and SPR_addSpriteExSafe(..) methods (automatically do VRAM defrag if needed)
+ - fixed a bug where the last VDP sprite attribute weren't always correctly updated with visibility set to AUTO_SLOW.
+ - fixed a bug a sprite couldn't be allocated.
+ - fixed sprite visibility state when the number of used sprite changed.
+ - many changes to sprite structures (better handling of flip info, better ROM usage...)
+* VDP 
+ - added VDP_showCPULoad() method to display CPU load
+ - added VDP_waitVInt() method to wait until next VInt to happen.
+ - removed 'waitvsync' parameter for VDP_initFading(..) and VDP_doStepFading(..) methods (we always want VSync here)
+ - simplified / tweaked macros for VDP control writes
+* VRAM
+ - added VRAM_getAllocated(..) and VRAM_getLargestFreeBlock(..) methods
+* TYPE
+ - added bool type
+ - replaced u16 by bool where it needs to be
+* MATHS
+ - updated fix32Mul() and fix32Div() definition (again, trying to find the best compromize)
+ - added new missing structures as Vect2D_f32, Mat2D_f32, Vect3D_xx...
+ - added f16 and f32 as shorcut of fix16 and fix32 types.
+ - added short typedefs (V2u16 = Vect2D_u16, V2f32 = Vect2D_f32, M2f16 = Mat2D_f16, M3f32 = Mat3D_f32)
+* PALETTE
+ - removed index field from Palette structure
+* JOY
+ - added checking for mouse / multipad read operation to avoid timeout operation when mouse or multipad is not present.
+* Z80
+ - added volatile access for safety
+* TIMER
+ - improved waitMs(..) method to be more accurate on small wait.
+ - tweaked getSubTick() method (need testing, possible regression)
+* STRING
+ - fixed and optimized uintToStr() method
+* TOOL
+ - memory allocation methods for unpacking now always use deep allocation regardless of the compression used (simpler and less bug prone)
+ - fixed LZ4W decompression using previous data block
+* fixed variable initialization (last byte was not always properly initialized)
+* added HALT_Z80_ON_IO define (config.h) to force Z80 halt on IO port access.
+* new awesome SGDK logo (Thanks a tons to Lizardrive for making it !)
+* removed useless sound drivers (MVS, TFM and VGM)
+* removed old TILE_CACHE unit (replaced by VRAM unit)
+* removed useless zlib 
+* many refactoring (sorry for that, you will need to update your old code)
+* many tweaks / cleanup
+
+SAMPLE
+* updated all samples to take care of last changes made in SGDK
+* BENCHMARK
+ - tweaked big sprite test to disable the delayed sprite update (new sprite engine feature)
+ - fixed sheet size (new rescomp don't allow it)
+
+
+SGDK 1.34 (January 2018)
+------------------------
+
+LIBRARY
+* DMA
+ - added DMA queue support for all (or almost all) methods supporting DMA operation
+* SPRITE
+ - fixed timing issue when changing FRAME or ANIMATION manually.
+ - fixed sprite sorting when multiple depth were modified in a single SPR_update(..).
+ - safer sprite allocation / release.
+* MEMORY
+ - added MEM_getLargestFreeBlock() to get the largest available block of memory.
+* improved LZ4W compression (better compression rate, faster compression...)
+* minors changes on method updating tilemap through X,Y position (safer)
+* some cleanup
+
+SAMPLE
+* reworked benchmark sample to avoid out of memory error (^^)
+
+
+SGDK 1.33 (November 2017)
+-------------------------
+
+LIBRARY
+* DMA
+ - added HALT_Z80_ON_DMA flag in config.h to enable Z80 halt on DMA (avoid corruptions or sound issues on Tectoy MD).
+ - deprecated 'vdp_dma' unit now forward calls to 'dma' unit.
+ - added wait DMA checking (DMA fill or DMA copy operation) before doing a DMA operation.
+* SPRITE
+ - simplified sprite sorting (always enabled, just need to use SPR_setDepth(..) method if needed)
+ - fixed a regression which was causing 1 frame latency in sprite update.
+
+SAMPLE
+* minor change to sound sample
+
+
+SGDK 1.32 (October 2017)
+------------------------
+
+COMPILER
+* added VS project for easier compilation with Visual Studio (thanks to lab313)
+
+LIBRARY
+* TIMER:
+ - fixed getSubTick() method (no more possible rollback)
+ - minor fix in getFPS() and getFPS_f() methods
+* VDP:
+ - tweaked default VRAM memory layout
+* BITMAP:
+ - changed get/setPixelXXX(..) methods so they now work on single pixel (not anymore doubled X pixel resolution)
+ - changed drawLine(..) method so it now work on single pixel (not anymore doubled X pixel resolution).
+   WARNING: drawLine(..) is not anymore doing clipping, use BMP_clipLine(..) first for that.
+ - added get/setPixelXXXFast(..) methods for fast get/set pixel operation (no clipping check)
+* SOUND:
+ - fixed auto PCM selection when playing sample with driver 2ADPCM and 4PCM.
+ - fixed default tempo for PAL system with XGM driver
+* SPRITE:
+   WARNING: you now require to set the sprite depth to use depth sorting (not anymore using the sprite Y position).
+ - replaced SPR_FLAG_AUTO_YSORTING by SPR_FLAG_AUTO_DEPTH_SORTING
+ - replaced SPR_setYSorting(..) method by SPR_setDepthSorting(..) / SPR_setZSorting(..)
+ - replaced SPR_sortOnYPos() by SPR_sortOnDepth()
+ - added void SPR_setDepth(..) / SPR_setZ(..) methods to set sprite depth
+ - fixed VDP_updateSprites() with DMA queue operation (prevent sprite table modifications before DMA occurs).
+* STRING:
+ - added int16ToStr(..) and uint16ToStr(..) methods (faster than intToStr(..) or uintToStr(..) for 16 bit integer, thanks to clbr)
+ - optimized intToStr(..) and uintToStr(..) methods (thanks to clbr for that)
+
+SAMPLE
+* added XGM Player sample :)
+* Bench:
+ - added some pixels / line draw tests
+* Donuts:
+ - updated for new depth sorting refactoring
+
+
+SGDK 1.31 (July 2017)
+---------------------
+
+DOCUMENTATION
+* minor fix and updated to last version
+
+COMPILER
+* fixed debug build in 'build_lib' batch
+
+LIBRARY
+* JOY:
+ - fixed joy state variables declaration to avoid issues when GCC -O3 optimization level is used.
+* SPRITE:
+ - added ALWAYS_ON_TOP flag to keep a sprite above others sprites whatever is sorting order.
+ - minor fix on sprite sort
+
+
+SGDK 1.3 (June 2017)
+--------------------
+
+DOCUMENTATION
+* updated to last version
+
+COMPILER
+* Updated to GCC 6.3 (thanks a tons to Gligli for that !)
+ - many bugs fix and new features compared to old GCC 3.4.6
+ - much better assembly code generation :)
+ - added LTO (Linker Time Optimization) support
+* Modified makefile to enable LTO and improve optimization level.
+* Rescomp:
+ - updated to handle structure changes in the Sprite Engine.
+
+LIBRARY
+* DMA:
+ - minor optimization to DMA_queue(..) method (thanks to HpMan)
+* Memory:
+ - default stack size increased to 0x800 bytes (GCC 6.3 requires more stack memory :p)
+* Sprite Engine:
+ - added automatic Y sorting (per sprite)
+ - added SPR_sort(..) for generic sorting
+ - added SPR_sortOnY(..) for generic sorting
+ - by default now sprite visibility is set to always ON (faster than automatic visibility)
+ - updated 'Collision' structure (hierarchical structure)
+ - some changes to internal structures to provide better performance
+* VDP BG/Tile:
+ - fixed a minor bug in VDP_setTileMapDataEx(..) and VDP_setTileMapDataRectEx(..) methods (thanks to Alekmaul for reporting it)
+* minors fixes...
+
+SAMPLE
+* Bench:
+ - fixed math tests for GCC 6.3
+
+
+SGDK 1.22a (September 2016)
+---------------------------
+
+LIBRARY
+* VDP: reintroduced the 16 plain system tiles.
+
+
+SGDK 1.22 (September 2016)
+--------------------------
+
+DOCUMENTATION
+* minors improvements and fixes
+
+COMPILER
+* Rescomp: fixed a minor issue in sprite resource
+* XGMTool:
+ - added duration information to XD3 tag
+ - improved loop
+* added the XGM ROM builder tool.
+* removed GenRes from makefile
+
+LIBRARY
+* Sprite Engine:
+ - fixed sprite attribut update for non visible sprite
+ - fixed sprite list update in certain condition
+* Sound:
+ - moved XGM driver method in a specific unit (xgm.c)
+ - added XGM_getElapsed(..) method to retrieve elapsed XGM music playing time (in number of frame)
+ - added XGM_setLoopNumber(..) to set the wanted number of loop in XGM music play.
+ - added interrupt protection for Z80 access
+* Maths:
+ - reverted fix32Mul() and fix32Div() to previous version to avoid cumulative error
+ - added getApproximatedLog2(..) method for fast Log2 calculation (approximated)
+ - added getLog2Int(..) method for integer Log2 calculation
+* Misc:
+ - moved QSort methods to tools
+ - added generic qsort with custom comparator callback
+* VDP: more flexible VRAM tilemap configuration (window plan don't have to be first map).
+* Bitmap mode: can now set bitmap mode in window plan
+* changed to MIT license
+* refactoring
+
+SAMPLE
+* Bench: added sprite donut animation test.
+
+
+SGDK 1.21 (May 2016)
+--------------------
+
+LIBRARY
+* SPRITE: fixed a bug causing corrupted sprite after SPR_release(..) operation
+* TOOLS: reintroduced zlib_unpack(..) method (accidentally removed from header)
+
+SAMPLE
+* Bench:
+ - fixed a bug causing address error on real hardware during 'Sprite test'.
+ - added 2 tests in 'BG test'
+
+
+SGDK 1.2 (May 2016)
+-------------------
+
+DOCUMENTATION
+* several update and fixes here and there (some tags were not correctly recognized in later doxygen version).
+
+COMPILER
+* Rescomp: updated to version 1.5 (with updated documentation)
+ - updated SPRITE resource compilation to the new SGDK Sprite structures.
+ - fixed minor issue on IMAGE resource packing.
+ - now using constants for sound driver (less confusing, got annoying bug because of that).
+ - changed header 'define' name generation to avoid conflict between 2 identical named file.
+ - fixed a bug in tilemap optimization for flipped tiles.
+ - removed all packers not anymore used in SGDK.
+ - minor change to XGM resource to support extra parameter
+ - fixed a minor bug in sprite structure definition
+* XGMTool: updated to version 1.64
+ - major structure changes for faster conversion / optimization operations
+ - improved VGM to XGM conversion.
+ - added options to disable some PCM auto processing
+ - new options available to handle specific case and improve conversion process
+ - added GD3 tag support.
+ - better handling of PAL/NTSC timing
+ - fixed pal information lost during XGC conversion.
+ - more accurate loop position
+ - fixed a minor issue in offset calculation.
+ - fixed VGM loop information export (when using VGM optimization)
+* WavToRaw:
+ - fix 64-bit issues, it is still not endian safe.
+ - check for read errors.
+* Appack: minor fix for silent parameter.
+* Added new custom LZ4W packer (require Java to be installed).
+* Removed GenRes tool (not anymore used and can confuse with rescomp).
+* added GDB tool (not yet really used yet)
+* Separated 'debug' and 'release' library build for easier profile switch.
+
+LIBRARY
+* BITMAP:
+ - allow to change the plan used for bitmap rendering
+ - added buffer preservation option (severe impact on performance)
+ - fixed minors issues on reset/initialization process
+* DMA: added new DMA queue system in 'dma' unit, you can consider 'vdp_dma' unit as deprecated (still provided for backward compatibility).
+ - we can now limit the max transfer capabilities in a single frame with DMA_setMaxTransferSize(..)
+ - can now define the DMA queue size with DMA_init(..) method.
+ - added DMA_setIgnoreOverCapacity(..) to change DMA strategy when reaching max capacity.
+* GRAPHIC:
+ - added news methods for allocation and compression stuff (see TOOLS section)
+ - added dynamic VRAM allocation ('vram' unit which replace 'tilecache' unit)
+* PALETTE:
+ - fixed RGB24_TO_VDPCOLOR so it does what it says.
+ - better palette fading using rounding.
+ - fixed issue using sync fading locking interrupts (can cause XGM music lag).
+* MATHS:
+ - added abs(..) method.
+ - fixed fix32ToRoundedInt() and fix32Round() defines (added parenthesis around)
+ - replaced distance_approx(..) by getApproximatedDistance(..)
+ - changed fix32 div/mul calculation strategy for better value preservation
+* MEMORY:
+ - added MEM_getAllocated() to return current dynamically allocated memory.
+ - added MEM_dump() to dump in Gend KMod console the memory allocation table
+* SOUND:
+ - renamed Z80_DRIVER_4PCM_ENV --> Z80_DRIVER_4PCM
+* SPRITE: complete rewrite of sprite engine !
+ - many changes including the API.
+ - should be faster but will be more optimized in future.
+* STRING:
+ - added isdigit(c), strnlen(..) and the very useful sprintf(..) ma
+ - added strncpy(..) method.
+ - replaced strreplace(..) --> strreplacechar(..)
+ - fixed fix32ToStr(..) and fix16ToStr(..) methods
+* SYSTEM:
+ - tried to more more compatible with default GCC stdint.h definitions
+ - added SYS_setVIntPreCallback(..) so you can have your method called at VInt before any internal SGDK stuff are proceed.
+ - added SYS_isNTSC() and SYS_isPAL() methods for easy system determination.
+ - minor fix on SP register initialization (preserve value set in vector table)
+ - added SYS_hardReset() to force hard reset.
+* TOOLS:
+ - added new LZ4W compression (very fast unpacking but average compression level)
+ - removed RLE, RLE_MAP and UFTC compression (LZ4W performs better in almost all cases).
+ - removed UnpackEx(..) method (useless now).
+ - added setRandomSeed(u16 seed) to initialize randomizer.
+* VDP:
+ - renamed WPLAN / WINDOW / VDP_WINDOW --> VDP_PLAN_WINDOW
+ - renamed APLAN --> VDP_PLAN_A
+ - renamed BPLAN --> VDP_PLAN_B
+ - renamed SLIST / VDP_SPRITE_LIST --> VDP_SPRITE_TABLE
+ - renamed HSCRL / VDP_SCROLL_H --> VDP_HSCROLL_TABLE
+ - added planWidth / planHeight to replace VDP_getPlanWidth() / VDP_getPlanHeigth() for faster internal SGDK calculations.
+ - added windowWidth / windowHeight for faster internal SGDK calculations.
+ - added VDP_setWindowHPos(..) and VDP_setWindowVPos(..) methods to set window positions.
+ - fixed a bug with VDP_setBPlanAddress(..) method.
+* VDP BG/TILE:
+ - replaced VDP_PLAN_A / VDP_PLAN_B constants by PLAN_A / PLAN_B in some methods.
+ - some methods now support PLAN_WINDOW parameter.
+ - added VDP_clearTextAreaBG(..), VDP_clearTextLineBG(..), VDP_clearTextArea(..) methods.
+ - modified VDP_drawTextBG(..) method.
+ - others minors changes.
+* VDP SPRITE: major rewrite of 'vdp_sprite' unit (require project modifications) !
+ - replaced SpriteDef structure by VDPSprite structure (fit better hardware structure).
+ - added dynamic allocation of hardware sprite:
+   VDP_allocateSprites(..), VDP_releaseSprites(..), VDP_getAvailableSprites()
+ - VDP_updateSprites(..) can now use DMA queue.
+ - many others changes.
+* XGM driver:
+ - better handling of main BUS contention with DMA
+ - added methods to improve BUS contention when using PSG sound in music.
+ - fixed PCM play status when PCM is used from XGM music.
+ - minor fix in driver code for better music frame sync.
+ - better pause/resume support.
+ - music sync is now handled on 68000 side for more flexibility (adjustable tempo).
+* Z80:
+ - modified writeYM macros
+* memory usage optimizations.
+
+SAMPLE:
+* Bench: added new sample for general test and benchmarking.
+* Sound:
+ - minors changes about Z80 load information for XGM driver.
+* Sprite:
+ - added basic enemies (no collision yet)
+ - added basic SFX
+ - updated to last SGDK
+ - some refactoring
+
+
+SGDK 1.12 (March 2015)
+----------------------
+
+COMPILER
+* XGMTool:
+ - minors changes and fixes. 
+
+LIBRARY
+* SPRITE:
+ - added VDP_resetSpritesDirect() method. 
+* SOUND:
+ - minor fix to XGM driver (PCM in music was wrong in some case). 
+
+
+SGDK 1.11 (December 2014)
+-------------------------
+
+* CONTROLLER:
+ - fixed small issue in joystick code (Chilly Willy). 
+* SOUND:
+ - added Z80 CPU load information in XGM driver (experimental).
+* Fixed small issue in joystick code (Chilly Willy).
+
+
+SGDK 1.10 (December 2014)
+-------------------------
+
+COMPILER
+* XGMTool:
+ - removed DAC enabled command (automatically handle by the XGM driver).
+ - added DAC enabled state (XGM driver uses it when no PCM are playing).
+ - now uses the VGM 1.60 'stream id' information to allow multi PCM channel for XGM conversion.
+   Note that each channel has its own priority as VGM music does not contains PCM priority information.
+
+LIBRARY
+* VDP:
+ - VDP_fade(..) method now automatically disables interrupts if needed.
+* SPRITE:
+ - minor optimization in the Sprite Engine to quickly discard disabled sprites (visibility forced to off).
+* SOUND:
+ - added automatic DAC enabled control (XGM driver).
+ - fixed issue with music pause operation on real hardware (XGM driver).
+ - minor tweak to reduce a bit the size of the Z80 drivers.
+ - removed Z80_DRIVER_4PCM which is useless (use Z80_DRIVER_4PCM_ENV driver instead).
+* CONTROLLER:
+ - added Sega Phaser support (Chilly Willy).
+* SYSTEM:
+ - disable library debug info.
+* SAMPLE:
+ - updated 'Joy' sample to add Phaser test (Chilly Willy).
+ - updated 'Sound' sample to remove Z80_DRIVER_4PCM test and add an example of the MVS driver PCM SFX.
+
+
+SGDK 1.01 (November 2014)
+-------------------------
+
+COMPILER
+* fixed bugs in XGMTool.
+* removed linear interpolation when converting WAV file.
+* others minors changes.
+
+
+SGDK 1.00 (November 2014)
+-------------------------
+
+COMPILER
+* Rescomp:
+ - added support to XGM resource in rescomp.
+* added xgmtool to convert VGM into XGM and compile XGM file.
+* removed Genitile tool sources.
+* updated wavtoraw to support sample interpolation.
+
+LIBRARY
+* VDP:
+ - added VDP_setScanMode(u16 mode) method to change the interlaced mode.
+ - added VDP_interruptFade() method to interrupt async palette fading.
+* SPRITE:
+ - fixed a bug with SPR_init(..) method when using same definition, sometime timer could be not reseted and then animation is not working anymore.
+ - fixed declaration of VDP_setSprite(..) / VDP_setSpriteDirect(..) / VDP_setSpritePosition(..) methods.
+* SOUND:
+ - Z80 memory is cleared before loading a custom driver.
+ - added Z80_read(..) and Z80_write(..) methods for simple Z80 RAM read/write operations.
+ - added XGM driver methods:
+   u8 SND_isPlaying_XGM();
+   void SND_startPlay_XGM(const u8 *song);
+   void SND_stopPlay_XGM();
+   void SND_resumePlay_XGM();
+   u8 SND_isPlayingPCM_XGM(const u16 channel_mask);
+   void SND_setPCM_XGM(const u8 id, const u8 *sample, const u32 len);
+   void SND_setPCMFast_XGM(const u8 id, const u8 *sample, const u32 len);
+   void SND_startPlayPCM_XGM(const u8 id, const u8 priority, const u16 channel);
+   void SND_stopPlayPCM_XGM(const u16 channel);
+* MATH:
+ - minor fix in min/max defines.
+* CONTROLLER:
+ - fixed declaration of JOY_readJoypadX/Y(..) methods (they should return s16 and not u16)
+* SYSTEM:
+ - sega.s and rom_head.c files are now copied into the 'src/boot' project folder so they can easily be customized per project.
+* SAMPLE:
+ - modified sound sample to add XGM driver example.
+* some fixes in the doxygen documentation.
+* others changes and improvements.
+
+
+SGDK 0.96d (june 2014)
+----------------------
+
+LIBRARY
+* removed direct VRam Map data unpacking as it was buggy.
+
+
+SGDK 0.96c (june 2014)
+----------------------
+
+COMPILER
+* Rescomp:
+ - fixed some issues on compression.
+ - now accept string to define which compression to use (AUTO, APLIB, RLE) in resource definition. 
+
+LIBRARY
+* minors changes to Doxygen documentation. 
+
+
+SGDK 0.96 (may 2014)
+--------------------
+
+COMPILER
+* Rescomp:
+ - improved BMP image support.
+ - byte data are now output in word format to avoid the GCC bug (compilation with "-g" flag fails when byte data is encountered).
+ - fixed issue on empty sprite animation detection.
+ - fixed path separator issue on old windows system.
+ - fixed compilation issues on unix system.
+* Makefile:
+ - Added "release" and "debug" target to makefile (default is "release").
+  "debug" target allow you to use GDB interactive debugger through emulator supporting it.
+* added appack tool sources code (compatibility for linux system).
+* some cleanup in bintos tool (removed the useless sizealign command done by sizebnd tool).
+
+LIBRARY
+* VDP:
+ - fixed palette fading methods where the last frame colors weren't always correct.
+ - VDP_drawImage(..) and VDP_drawBitmap(..) now use dynamic VRAM tile index so they does not erase anymore the previous drawn image.
+   'curTileInd' variable which contains the VRAM tile index where next tile will be uploaded is public.
+* TILE:
+ - fixed somes bugs in the tile cache engine.
+ - removed the MEM_free(..) call from the VInt callback (tile cache engine).
+   So we don't need anymore to disable interrupts at each memory allocation operation for safety ;)
+* SPRITE:
+ - fixed somes bugs in the sprite engine. 
+ - added SPR_setAlwaysVisible(..) and SPR_setNeverVisible(..) to force (not) visibility on sprite (sprite engine)
+* BITMAP:
+ - minor performance improvement on the BMP_drawPolygon(..) method.
+* SOUND:
+ - fixed YM2612 write methods (can have issue on MD2 system).
+* DMA:
+ - fixed VRam Copy DMA.
+* MATH:
+- fixed 2D projection calculation in M3D_project_xxx(..) methods.
+  Now the camera distance is correctly taken in account for the final projection (adding a minor impact on performance).
+* SYSTEM:
+ - fixed soft reset issues.
+* TIMER:
+ - fixed a minor issue with getTime(..) method.
+ - waitSubTick(..) is now more accurate when called from V-Interrupt code.
+* SAMPLE:
+ - minors changes and improvements on the Sonic Sprite sample.
+ - minors changes to 3D cube flat sample.
+* DEBUG:
+ - added some KDebug log methods (KLog, KLog_Uxx, KLog_Sxx...)
+* added strcmp(..) method.
+* others changes and improvements.
+
+
+SGDK 0.95 (feb 2014)
+--------------------
+
+COMPILER
+* Major change on resource compilation:
+  A new resource compiler tool (rescomp) is used to compile all resource files.
+  It support many type of resources as BMP, PNG, WAV, PCM, VGM, TFM..
+  Read the rescomp.txt file to have more informations about it and look in the 'sound' and 'sprite' sample example.
+  You can also convert your old project by using the "rescomp -convert" command on the project folder to convert.
+- added appack tool.
+- minor fix in wavtoraw tool.
+
+LIBRARY
+* added GFX compression support (see tools.h file for doxygen documentation).
+* VDP:
+ - added VDP_getBackgroundColor() and VDP_setBackgroundColor(..) methods.
+ - added VDP_get/setTextPlan(), VDP_get/setTextPalette() and VDP_get/setTextPriority() methods to change text drawing properties.
+ - added VDP_drawBitmap(..) and VDP_drawBitmapEx(..) methods to draw Bitmap resource.
+ - added VDP_drawImage(..) and VDP_drawImageEx(..) methods to draw Image resources.
+ - added VDP_loadTileSet(..) method to load TileSet resource.
+ - added VDP_setMap(..) and VDP_setMapEx(..) methods to load Map resources.
+ - lot of refactoring in the setTileMap methods...
+ - some tweaks.
+* TILE:
+ - added new tile cache engine for easier tile allocation in VRAM.
+   See the tile_cache.h file for doxygen documentation.
+* SPRITE:
+ - added sprite engine for easier sprite manipulation.
+   See the sprite_eng.h file for doxygen documentation and the included "sprite" sample for an example.
+* SOUND:
+ - added TFC_isPlaying() command for the 68k TFM driver.
+ - fixed issue with consecutive play command on TFM Z80 driver.
+ - Improved VGM driver (thanks to kubilus1 and sigflup).
+   You can now pause, resume music and even better play PCM SFX !
+ - now clear Z80 memory on driver loading to avoid any problems with var initialization.
+* DMA:
+  - minor change to VDP_doDMAEx(..) method, be careful if you use this method, the last parameter changed.
+* JOY:
+ - added JOY_waitPressTime() and JOY_waitPressBtnTime() methods.
+ - JOY_waitPressBtn() and JOY_waitPress() now return button pressed info.
+* MEMORY:
+ - fixed a minor buf with dynamic memory allocation.
+* SYSTEM:
+ - added SYS_disableInts() and SYS_enableInts() methods.
+ - added SYS_isInInterrupt() to detect if we are in an interrupt callback.
+ - added SYS_getAndSetInterruptMaskLevel(..) method to "atomically" get and set interrupt mask level.
+ - added SYS_die(..) for fatal error handling.
+* library font is now included as an image.
+* added some logs for easier debugging (KDebug message).
+* many others smalls improvements.
+* lot of refactoring.
+
+
+SGDK 0.94 (feb 2013):
+---------------------
+
+* Major rewrite of the Bitmap engine:
+ - Fixed 256x160 resolution.
+ - Removed all specifics flags as it now always use deferred flip operation with extended blank.
+ - Simpler and easier to use.
+ - Better performance (20 FPS in NTSC, 25 FPS in PAL).
+ - Backface culling now directly handled in the BMP_drawPolygon(..) method.
+ - Removed useless FF BMP engine (too complex, incomplete..)
+ - Many others changes you will discover :)
+* Added "Bitmap" structure for better bitmap handling.
+  SGDK automatically convert 16 colors bitmap images to "Bitmap".
+* Major rewrite of Maths3D engine:
+  - Added many 3D related structures (as matrix, transform..).
+  - More flexibility.
+  - Improved performance (not much).
+* added DMA capability to VDP_setHorizontalScrollxxx(..) / VDP_setVerticalScrollTile(..) functions.
+* Added VDP_doDMAEx(..) so we can specify if we modify the VRam step.
+* Refactored palette functions.
+* Fixed QSort function.
+* Removed useless VRAM table (eat rom space for minor speed boost).
+* Minors fixes/tweaks in memset and memcpy functions.
+* Updated WavToRaw tool (now support any output rate).
+* Added Genitile 1.7 sources.
+* Minors tweaks on makefile.
+* Fixed a minor issue in rom_head (Thanks Chilly Willy).
+* Updated demo samples.
+* Others minors changes or improvements.

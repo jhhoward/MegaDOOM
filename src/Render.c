@@ -1,11 +1,11 @@
-#include <stdint.h>
-#include <stdbool.h>
+#include "doomtypes.h"
 #include <stdio.h>
 #include "Map.h"
 #include "r_local.h"
 
 extern int16_t floorClip[256];
 extern int16_t ceilingClip[256];
+extern int16_t columnsToFill;
 
 void RenderAll()
 {
@@ -15,5 +15,6 @@ void RenderAll()
         ceilingClip[n] = -1;
     }
 
-    R_RenderBSPNode(Map.numNodes - 1);
+    columnsToFill = 256;
+    R_RenderBSPNode(currentlevel->rootnode);
 }

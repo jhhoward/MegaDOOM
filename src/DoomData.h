@@ -21,7 +21,7 @@
 #ifndef __DOOMDATA__
 #define __DOOMDATA__
 
-#include <stdint.h>
+#include "doomtypes.h"
 
 //
 // Map level types.
@@ -203,7 +203,7 @@ typedef struct
 
 // Thing definition, position, orientation and type,
 // plus skill/visibility flags and attributes.
-typedef struct
+typedef struct mapthing_s
     {
         int16_t		x;
         int16_t		y;
@@ -213,6 +213,32 @@ typedef struct
     } mapthing_t;
 
 
+typedef struct
+{
+    int numVertices;
+    mapvertex_t* vertices;
+
+    int numSides;
+    mapsidedef_t* sides;
+
+    int numNodes;
+    mapnode_t* nodes;
+
+    int numSubsectors;
+    mapsubsector_t* subsectors;
+
+    int numSegs;
+    mapseg_t* segs;
+
+    int numLines;
+    maplinedef_t* lines;
+
+    int numSectors;
+    mapsector_t* sectors;
+
+    int numThings;
+    mapthing_t* things;
+} mapdata_t;
 
 
 

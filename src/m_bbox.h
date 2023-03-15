@@ -20,8 +20,7 @@
 #ifndef __M_BBOX__
 #define __M_BBOX__
 
-#include <limits.h>
-#include <stdint.h>
+#include "doomtypes.h"
 
 // Bounding box coordinate storage.
 enum

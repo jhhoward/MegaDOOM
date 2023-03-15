@@ -1,0 +1,454 @@
+ResComp 3.60 (July 2022)
+Copyright Stephane Dallongeville
+https://github.com/Stephane-D/SGDK
+
+ResComp is part of SGDK (aka Sega Genesis Dev Kit) so refer to SGDK licence for licensing.
+It allows to compile different type of resource and output them in assembly source form (GAS format).
+
+Usage
+-----
+rescomp input [output] [-noheader] [-dep <target_file>]
+    input: the input resource file (.res)
+    output: the asm output filename (if ommited then use input name with .s extension)
+    -noheader: specify that we don't want to generate the header file (.h)
+    -dep: generate dependencies file (.d) for make (experimental)
+        <target_file> allow to specify the target filename in the .d file (not the destination of the .d file itself)
+        
+Example:
+  rescomp resources.res outres.s
+  rescomp resources.res outres.s -noheader -dep
+  rescomp resources.res outres.s -dep out/res/gfx.o
+
+
+Supported resource type
+-----------------------
+- BITMAP    bitmapped image type resource, used for the Bitmap SGDK engine (do not use it as tile resource).
+- PALETTE   palette type resource, used as color input for Bitmap, Image or Sprite resource.
+- TILESET   tileset type resource, contains tiles data which can be used / shared for TILEMAP and MAP resources.
+- TILEMAP   tilemap type resource, contains raw tilemap data. It can be used to draw an image or complete (but small) plane background.
+- MAP       map type resource, optimized to draw large map / level.
+- IMAGE     image type resource, internally contains Palette, Tileset and Tilemap data. It can be used to draw an image or complete (but small) plane background.
+- SPRITE    sprite type resource, used to handle sprites with the SGDK Sprite engine.
+- XGM       XGM music type resource (.vgm or .xgm file), used to play music.
+- WAV       WAV sound type resource (.wav file), used to play sample sound data.
+- BIN       any binary data file which do not need any specific conversion or processing.
+
+Supported function
+------------------
+- ALIGN     align *binary* data for the whole resource file
+- UNGROUP   by default rescomp will group data export by type, using "UNGROUP" allow to disable that feature.
+- NEAR      force all resources from the file to be exported as NEAR ("not FAR") data.
+            By default binary data are exported as "FAR" data, that means they are located in the end of the ROM and can require
+            bankswitch mechanism if the ROM is larger than 4MB. Using "NEAR" force all binary data from the file to be located before "FAR" data in the ROM.
+
+Extensions
+----------
+Rescomp support custom resource using extensions.
+Making an extension is easy: just write your own resource type and its processor in Java and export compiled classes as 'rescomp_ext.jar'.
+Put the file in the same folder as the .res files you want to compile and rescomp should find it automatically !
+You can look at the sgdk.rescomp.resource.Palette and sgdk.rescomp.processor.PaletteProcessor source files to get an example
+about how to implement a Resource and a Processor :)
+
+            
+Important note about image format
+---------------------------------
+Many resource types use image file as input and Rescomp now supports both RGB images and indexed color images :)
+Here're some important informations to know about how to use properly these 2 image formats:
+* RGB images
+  When using RGB image rescomp does not have any information about palette so they should be defined somewhere in the image.
+  Rescomp expect the palette to be located in the top-left part of the image where each color is defined by a 8x8 tile and each sub palette (16 colors) being
+  on a separate row of tiles. You need to have the 4 sub palettes (4x16 colors) in the image even if only the first one is really used (there is no reliable
+  way to detect automatically the number of palette row).
+  See the rgb_example.png image in the sample/sonic/res/gfx folder if you want an example.
+  Note that when processing the image rescomp will automatically remove the palette part of the image to not disturb process (not adding extra tiles for instance)
+  so you shouldn't put any tileset data in the right part of the palette rows.
+* Indexed color images
+  rescomp supports 8bpp, 4bpp, 2bpp and even 1bpp indexed color image and will always directly use the palette data from the image it's *very* important to
+  properly setup the palette in the image (color at position #0 is the transparent color). Some software as Asesprite let you to setup your palette as you require.
+  An advantage of using indexed colors is that you can use color >= 128 with 8bpp image to define the priority information (more detail about it in resource description).
+
+
+PALETTE
+-------
+Take a .pal file or an image as input and transform it into SGDK Palette structure.
+See the note above about how palette is retrieved from RGB or indexed color images.
+Palette is used as color input for Bitmap, Image and Sprite resources.
+
+Syntax:
+PALETTE name file
+
+    name            name of the output Bitmap structure
+    file            path of the input image file (BMP or PNG image) or PAL file (Paint Shop Pro palette)
+                        See the note about image format at the beginning of the file
+
+
+BITMAP
+------
+Take an image as input and transform it into SGDK Bitmap structure.
+Bitmap image structure is used for the SGDK BMP (bitmap) engine, do not use it for tiled image.
+
+Syntax:
+BITMAP name img_file [compression]
+
+    name            name of the output Bitmap structure
+    img_file        path of the input image file (BMP or PNG image)
+                        See the note about image format at the beginning of the file
+    compression     compression type (use unpackBitmap(..) to unpack), accepted values:
+                       -1 / BEST / AUTO = use best compression
+                        0 / NONE        = no compression (default)
+                        1 / APLIB       = aplib library (good compression ratio but slow)
+                        2 / FAST / LZ4W = custom lz4 compression (average compression ratio but fast)
+
+
+TILESET
+-------
+Take an image or TSX file as input and transform it into SGDK TileSet structure.
+TileSet is used as tiles source for Image, Tilemap, Map and Sprite resources.
+If you use a real 'tileset format' image as input (as a font) then you should set 'opt' parameter to 'NONE'
+to avoid removing duplicated tiles (which may exist).
+
+Syntax:
+TILESET name file [compression [opt]]
+
+    name            name of the output TileSet structure
+    file            path of the input file (BMP, PNG image file or TSX Tiled file)
+                        See the note about image format at the beginning of the file
+    compression     compression type (use unpackTileSet(..) to unpack), accepted values:
+                       -1 / BEST / AUTO = use best compression
+                        0 / NONE        = no compression (default)
+                        1 / APLIB       = aplib library (good compression ratio but slow)
+                        2 / FAST / LZ4W = custom lz4 compression (average compression ratio but fast)
+    opt             define the optimisation level, accepted values:
+                        0 / NONE        = no optimisation, each tile is unique
+                        1 / ALL         = ignore duplicated and flipped tile (default)
+                        2 / DUPLICATE   = ignore duplicated tile only
+                        
+Tips:
+When using a 8bpp indexed image as input you can use the extra bits of palette to provide extra information for the TILEMAP data but you have to
+ensure that all pixels from a same tile (block of 8x8 pixels) use the same value otherwise rescomp will generate an error.
+    bit 4-5: palette index (0-3) so it allows to use the 4 available palettes to draw the tilemap / MAP.
+    bit 6: not used (ignored)
+    bit 7: priority information (0=LOW 1=HIGH)
+    
+
+TILEMAP
+-------
+Take an image or a TMX file as input and transform it into SGDK TileMap structure.
+TileMap is used to draw in background plane, it requires a tileset which can be shared with others tilemaps.
+TILEMAP resource isn't meant to be used to store large background level (eat too much space), use MAP resource for that.
+
+Syntax:
+TILEMAP name img_file tileset_id [compression [map_opt [map_base]]]
+
+    name            name of the output TileMap structure
+    img_file        path of the input image file (BMP or PNG image file)
+                        See the note about image format at the beginning of the file
+    tileset_id      base tileset resource to use (allow to share tileset along several tilemaps)
+    compression     compression type (use unpackTileMap(..) to unpack), accepted values:
+                       -1 / BEST / AUTO = use best compression
+                        0 / NONE        = no compression (default)
+                        1 / APLIB       = aplib library (good compression ratio but slow)
+                        2 / FAST / LZ4W = custom lz4 compression (average compression ratio but fast)
+    map_opt         define the tilemap optimisation level, accepted values:
+                        0 / NONE        = no optimisation, each tile is unique
+                        1 / ALL         = find duplicated and flipped tile (default)
+                        2 / DUPLICATE   = find duplicated tile only
+    map_base        define the base tilemap value, useful to set a default priority, palette and base tile index offset.
+                        Using a base tile index offset (static tile allocation) allow to use the faster VDP_setTileMapxxx(..) functions.
+                                
+TILEMAP name tmx_file layer_id [ts_compression [map_compression [map_base]]]
+
+    name                name of the output TileMap structure
+    tmx_file            path of the input TMX file (TMX Tiled file with CSV encoded map data)
+    layer_id            layer name we want to extract map data from.
+    ts_compression      compression type for tileset, accepted values:
+                           -1 / BEST / AUTO = use best compression
+                            0 / NONE        = no compression (default)
+                            1 / APLIB       = aplib library (good compression ratio but slow)
+                            2 / FAST / LZ4W = custom lz4 compression (average compression ratio but fast)
+    map_compression     compression type for map (same accepted values than 'ts_compression')
+    map_base            define the base tilemap value, useful to set a default priority, palette and base tile index offset.
+                            Using a base tile index offset (static tile allocation) allow to use the faster VDP_setTileMapxxx(..) functions.
+
+Tips:
+When using a 8bpp indexed image as input you can use the extra bits of palette to provide extra information for the TILEMAP data but you have to
+ensure that all pixels from a same tile (block of 8x8 pixels) use the same value otherwise rescomp will generate an error.
+    bit 4-5: palette index (0-3) so it allows to use the 4 available palettes to draw the tilemap / MAP.
+    bit 6: not used (ignored)
+    bit 7: priority information (0=LOW 1=HIGH)
+When using a TMX Tiled file you can define the priority information in different ways:
+- use 2 layers where the low priority layer's name is suffixed by ' low' and high prority layer is suffixed by ' high'
+- use 2 layers with the main layer define the map itself and a second layer suffixed by ' priority' containing the priority information (0/1)
+
+
+MAP
+---
+Take an image or TMX file as input and transform it into SGDK Map structure.
+Map is used to define a large background/plane data, it's different from the IMAGE resource as MAP uses an advanced encoding
+so it can encode large background while taking much less ROM space than IMAGE resource so use it to handle large level.
+
+Syntax:
+MAP name img_file tileset_id [compression [map_base]]
+
+    name            name of the output Map structure
+    img_file        path of the input image file (BMP or PNG image file)
+                        See the note about image format at the beginning of the file
+    tileset_id      base tileset resource to use (allow to share tileset along several tilemaps)
+    compression     compression type, accepted values:
+                       -1 / BEST / AUTO = use best compression
+                        0 / NONE        = no compression (default)
+                        1 / APLIB       = aplib library (good compression ratio but slow)
+                        2 / FAST / LZ4W = custom lz4 compression (average compression ratio but fast)
+    map_base        define the base tilemap value, useful to set a default priority, palette and base tile index offset.
+                        Using a base tile index offset (static tile allocation) allow to use faster MAP decoding function internally.
+                                
+MAP name tmx_file layer_id [ts_compression [map_compression [map_base]]]
+
+    name                name of the output Map structure
+    tmx_file            path of the input TMX file (TMX Tiled file with CSV encoded map data)
+    layer_id            layer name we want to extract map data from.
+    ts_compression      compression type for tileset, accepted values:
+                           -1 / BEST / AUTO = use best compression
+                            0 / NONE        = no compression (default)
+                            1 / APLIB       = aplib library (good compression ratio but slow)
+                            2 / FAST / LZ4W = custom lz4 compression (average compression ratio but fast)
+    map_compression     compression type for map (same accepted values than 'ts_compression')
+    map_base            define the base tilemap value, useful to set a default priority, palette and base tile index offset.
+                            Using a base tile index offset (static tile allocation) allow to use faster MAP decoding function internally.
+
+Tips:
+When using a 8bpp indexed image as input you can use the extra bits of palette to provide extra information for the TILEMAP data but you have to
+ensure that all pixels from a same tile (block of 8x8 pixels) use the same value otherwise rescomp will generate an error.
+    bit 4-5: palette index (0-3) so it allows to use the 4 available palettes to draw the tilemap / MAP.
+    bit 6: not used (ignored)
+    bit 7: priority information (0=LOW 1=HIGH)
+When using a TMX Tiled file you can define the priority information in different ways:
+- use 2 layers where the low priority layer's name is suffixed by ' low' and high prority layer is suffixed by ' high'
+- use 2 layers with the main layer define the map itself and a second layer suffixed by ' priority' containing the priority information (0/1)
+
+
+OBJECTS
+-------
+Take a TMX file as input and transform it into an array of Object (actually an array of object pointer).
+These objects can be used to define almost anything you want to attach to a specific MAP (entities, events, actions... whatever we can think of).
+Objects are built using the object layers of Tiled TMX file and since Tiled 1.8 you can define your own Object type letting you to build your own
+custom objects that you can import through rescomp.
+
+Here's the accepted SGDK type(s) for each 'Tiled' type:
+  Tiled   SGDK
+  bool    bool
+  color   u32
+  float   f32, f16, s32, u32, s16, u16
+  file    NOT SUPPORTED
+  int     f32, f16, s32, u32, s16, u16, s8, u8
+  Object  object (internally void*)
+  string  string (internally char*)
+  Enum    u8, u16, u32
+  
+As you can see, you can also use your own enumerations in which case you need to save them as number instead (not string) and make
+sure they perfectly match your C enums (be careful about the allocated type size for your enum, default is u32 with GCC).
+
+The Tiled objects has some default attributes: 'id', 'type', 'name', 'x' and 'y' that you can use:
+- 'id' is used internally by rescomp and Tiled and not exported as field, but you can define your own custom 'id' field if you want.
+- 'type' is only used as type filter (see the optional 'type_filter' parameter below) and not exported as field but you can define
+  your own custom 'type' field (as an integer) if needed.
+- 'name' can be exported in string format.
+  To enable export of that field you need to add a custom boolean 'exportName' field and set its value to 'true'.
+- 'x' and 'y' define the object position on the map and can be exported in any number format.
+  To enable export of these fields, you need to add a custom boolean 'exportPosition' field and set its value to 'true'.
+  
+Syntax:
+OBJECTS name tmx_file layer_id field_defs [decl_type [type_filter]]
+
+    name                name of the output array Objects structure
+    tmx_file            path of the input TMX file (TMX Tiled file)
+    layer_id            object group/layer name we want to export object from.
+    field_defs          name and type of fields we want to export (also define the order of extraction) in <name>:<type> format.
+                            Field type can be any of the usual SGDK base type: u8, s8, u16, s16, u32, s32, f16, f32, bool, string, object
+                            Some examples of 'field_defs' declaration:
+                                "type:u16;name:string;x:f32;y:f32;tileindex:u32"
+                                "type:u16;power:s8;visible:bool"
+                            Note that not found fields are just ignored so you can extract different object types at same time easily.
+    decl_type           declaration type for objects (default is "void").
+                            By default object array is untyped (void) but you can specify your own type if you want ("Object", "Entity", ...)
+    type_filter         define a type filter if we only want to extract Tiled objects of a specific type (see above).
+
+Tips:
+- You can use an integer 'index' or 'ind' field to sort your objects (ascending order).
+- You can export the tile index value corresponding to: x + (y * map_width)) in 'tileIndex' field by adding a custom boolean
+  'exportTileIndex' field and setting its value to 'true'. When you enable the 'tileIndex' export then objects are sorted (ascending order)
+  on the tile index value allowing fast tile index based searchs (be careful: 'index' or 'ind' fields has priority for sorting if they exist).
+
+
+IMAGE
+-----
+Take an image as input and transform it into SGDK Image structure.
+Image is used to directly draw image in background plane, it internally contains a Palette, TileSet and TileMap structure.
+IMAGE resource isn't meant to be used to store large background level (eat too much space), use MAP resource for that.
+
+Syntax:
+IMAGE name img_file [compression [map_opt [map_base]]]
+
+    name            name of the output Image structure
+    img_file        path of the input image file (BMP or PNG image)
+                        See the note about image format at the beginning of the file
+    compression     compression type (use unpackImage(..) to unpack), accepted values:
+                       -1 / BEST / AUTO = use best compression
+                        0 / NONE        = no compression (default)
+                        1 / APLIB       = aplib library (good compression ratio but slow)
+                        2 / FAST / LZ4W = custom lz4 compression (average compression ratio but fast)
+    map_opt         define the tilemap optimisation level, accepted values:
+                        0 / NONE        = no optimisation (each tile is unique)
+                        1 / ALL         = find duplicated and flipped tile (default)
+                        2 / DUPLICATE   = find duplicated tile only
+    map_base        define the base tilemap value, useful to set a default priority, palette and base tile index offset.
+                    Using a base tile index offset (static tile allocation) allow to use the faster VDP_xxxTileMapxxx(..) functions.
+
+Tips:
+When using a 8bpp indexed image as input you can use the extra bits of palette to provide extra information for the TILEMAP data but you have to
+ensure that all pixels from a same tile (block of 8x8 pixels) use the same value otherwise rescomp will generate an error.
+    bit 4-5: palette index (0-3) so it allows to use the 4 available palettes to draw the tilemap / MAP.
+    bit 6: not used (ignored)
+    bit 7: priority information (0=LOW 1=HIGH)
+
+
+SPRITE
+------
+Take an image as input and transform it into SGDK SpriteDefinition structure.
+SpriteDefinition is used to draw, animate and manage sprites, it internally contains severals TileSet, Palette and Animation structures.
+
+Syntax:
+SPRITE name img_file width heigth [compression [time [collision [opt [iteration]]]]]
+
+    name            name of the output SpriteDefinition structure
+    img_file        path of the input image file (BMP or PNG image)
+                        See the note about image format at the beginning of the file
+    width           width of a single sprite frame in tile (should be < 32)
+    heigth          heigth of a single sprite frame in tile (should be < 32)
+    compression     compression type, accepted values:
+                       -1 / BEST / AUTO = use best compression
+                        0 / NONE        = no compression (default)
+                        1 / APLIB       = aplib library (good compression ratio but slow, don't use it for streamed sprite)
+                        2 / FAST / LZ4W = custom lz4 compression (average compression ratio but fast, recommended for streamed sprite)
+    time            display frame time in 1/60 of second (time between each animation frame)
+                       If this value is set to 0 (default) then auto animation is disabled
+    collision       collision type: CIRCLE, BOX or NONE (NONE by default)
+    opt             sprite cutting optimization strategy, accepted values:
+                        0 / BALANCED  = balance between used tiles and hardware sprites (default)
+                        1 / SPRITE    = reduce the number of hardware sprite (using bigger sprite) at the expense of more used tiles
+                        2 / TILE      = reduce the number of tiles at the expense of more hardware sprite (using smaller sprite)
+                        3 / NONE      = no optimization (cover the whole sprite frame)
+    iteration       number of iteration for sprite cutting optimization (default = 500000)
+
+Some informations about how SpriteDefinition is generated from the input image:
+- input image dimension should be aligned on tile (multiple of 8).
+- input image is a grid where each cell represents a single animation frame and where each row define a complete sprite animation.
+- an animation cannot contains more than 255 frames.
+- cell size (frame size) = width * height (in tile) where width and height should be < 32 (maximum = 248 pixels for both width and height).
+- a frame can be composed of several internal VDP (hardware) sprites but it stricly limited to a maximum of 16 hardware sprites.
+  If the sprite is too large to fit in 16 hardware sprites (rescomp will complain about it), then you may reduce its size or split it in 2 parts.
+- rescomp detects flipped frame to avoid redundant sprite tiles.
+- rescomp detects empty frame at end of animation row to not store empty frame data.
+- rescomp try to optimize hardware sprites and vRAM usage by detecting empty areas in sprite frames.
+- rescomp detects frame copy inside an animation to generate the according animation sequence.
+- by default collision bounds are calculated by using 75% of the original sprite frame.
+
+
+XGM
+---
+Take a .vgm or .xgm music file as input and transform it into binary format usable with the SGDK SND_startPlay_XGM(..) methods.
+The XGM driver supports music play along 4 PCM channels mixing (100% running on Z80 cpu).
+
+Syntax:
+XGM name file [timing [options]]
+
+    name            XGM music variable name
+    file            path of the .vgm or .xgm music file to convert to binary data array
+    timing          define the XGM base timing
+                       -1 (default) = AUTO (NTSC or PAL depending the information in source VGM/XGM file)
+                        0           = NTSC (XGM is generated for NTSC system)
+                        1           = PAL (XGM is generated for PAL system)
+    options         optional(s) parameter(s) for xgmtool
+                        ex: "-dr -di" to disable some sample auto process (see xgmtool to get more info)
+
+
+WAV
+---
+Take a .wav sound file as input and transform it to in binary format usable with one of the SGDK PCM driver.
+
+Syntax:
+WAV name wav_file driver [out_rate [far]]
+
+    name            variable name
+    file            path of the .wav file (will be automatically converted to 8 bits signed PCM at needed rate)
+    driver          specify the Z80 driver to use:
+                        0 / PCM
+                            Single channel 8 bits signed sample driver.
+                            It can play a sample (8 bit signed) from 8 Khz up to 32 Khz rate.
+                            Method to use: SND_startPlay_PCM(..)
+                        1 / 2ADPCM
+                            2 channels 4 bits ADPCM sample driver.
+                            It can mix up to 2 ADCPM samples at a fixed 22050 Hz rate.
+                            Method to use: SND_startPlay_2ADPCM(..)
+                        2 / 3 / 4PCM
+                            4 channels 8 bits signed sample driver with volume support.
+                            It can mix up to 4 samples (8 bit signed) at a fixed 16 Khz rate.
+                            with volume support (16 levels du to memory limitation).
+                            Method to use: SND_startPlay_4PCM_ENV(..)
+                        4 / 5 / XGM
+                            XGM music with 4 channels 8 bits samples driver.
+                            It supports 4 PCM SFX at a fixed 14 Khz rate while playing XGM music.
+                            Methods to use: SND_setPCM_XGM(..) and SND_startPlayPCM_XGM(..)
+    out_rate        output PCM rate (required for Z80_DRIVER_PCM driver, ignored for others)
+                        By default the default driver output rate is used.
+    far             'far' binary data flag to put it at the end of the ROM (useful for bank switch, default = FALSE)
+
+
+BIN
+---
+Take any data file as input and transform it into binary data array accessible through SGDK.
+
+Syntax:
+BIN name file [align [size_align [fill [compression [far]]]]]
+
+    name            BIN data variable name
+    file            path of the data file to convert to binary data array
+    align           memory address alignment for generated data array (default is 2)
+    size_align      size alignment for the generated data array (default is 2)
+    fill            fill value for the size alignment (default is 0)
+    compression     compression type, accepted values:
+                        0 / NONE        = no compression
+                        1 / APLIB       = aplib library (good compression ratio but slow)
+                        2 / FAST / LZ4W = custom lz4 compression (average compression ratio but fast)
+    far             'far' binary data flag to put it at the end of the ROM (useful for bank switch, default = TRUE)
+
+
+ALIGN
+-----
+Align *binary* data for the *whole* resource file so you can have only ALIGN directive per resource (.res) file.
+ALIGN function is useful when using bank switch for ROM larger than 4MB, it allows to avoid having a block of data crossing 2 data banks.
+If you need several data alignments then you have to use several resources files.
+Note that if you omit [value] parameter by default data is aligned on 512KB as this is the bank size when using bank switch mechanism.
+
+Syntax:
+ALIGN [value]
+
+    value           specifies the minimum binary data alignment in bytes (default is 524288 = bank size)
+
+
+UNGROUP
+-------
+By default rescomp will group data export by type of data, this generally allow better LZ4W compression.
+Using UNGROUP function allow to disable that feature, that might be useful to help in bank data separation when using the bank switch mechanism.
+
+Syntax:
+UNGROUP
+
+
+NEAR
+----
+By default binary data are always exported as "FAR" data, that means they are located in the end of the ROM and can require bank switch mechanism
+if the ROM is larger than 4MB. Using NEAR function allow all binary data from the file to be located before all FAR data in the ROM.
+
+Syntax:
+NEAR

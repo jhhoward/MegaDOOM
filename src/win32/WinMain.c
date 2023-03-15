@@ -1,10 +1,11 @@
-#include <stdint.h>
-#include <stdbool.h>
 #include <SDL.h>
 #include <stdio.h>
 #include "lodepng.h"
 #include "../tables.h"
 #include "../r_local.h"
+#include "../palette.inc"
+#include "../DoomData.h"
+#include "../../project/E1M1.inc.h"
 
 // For MD:
 // - Preprocess WAD and extract data
@@ -65,6 +66,19 @@ KeyMap KeyMappings[] =
 	{ SDL_SCANCODE_X, INPUT_B },
 };
 
+uint32_t GetPixel(SDL_Surface* surface, int x, int y)
+{
+	if (x < 0 || y < 0 || x >= surface->w || y >= surface->h)
+	{
+		return 0;
+	}
+
+	int bpp = surface->format->BytesPerPixel;
+	Uint8* p = (Uint8*)surface->pixels + y * surface->pitch + x * bpp;
+
+	return *(Uint32*)p;
+}
+
 void PutPixelImmediate(SDL_Surface* surface, int x, int y, uint32_t col)
 {
 	if (x < 0 || y < 0 || x >= surface->w || y >= surface->h)
@@ -96,18 +110,20 @@ uint8_t GetInput()
 	return inputMask;
 }
 
-void LoadWad(const char* filename);
+void LoadMapFromWad(mapdata_t* map, const char* filename, const char* levelLabel);
+void ExtractMapData(mapdata_t* src, map_t* dest);
 
 void RenderAll();
 
-void DrawMapDebugLine(int x0, int y0, int x1, int y1)
+void DrawMapDebugLine(int x0, int y0, int x1, int y1, uint32_t colour)
 {
 	int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
 	int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
 	int err = dx + dy, e2; /* error value e_xy */
 
 	for (;;) {  /* loop */
-		PutPixelImmediate(debugMapWindow.screenSurface, x0, y0, 0xffffffff);
+		if(GetPixel(debugMapWindow.screenSurface, x0, y0) < colour)
+			PutPixelImmediate(debugMapWindow.screenSurface, x0, y0, colour);
 		if (x0 == x1 && y0 == y1) break;
 		e2 = 2 * err;
 		if (e2 >= dy) { err += dy; x0 += sx; } /* e_xy+e_x > 0 */
@@ -172,8 +188,10 @@ void BlitDisplayWindow(display_window_t* window)
 
 }
 
-void VLine(int x, int y, int count, uint32_t colour)
+void VLine(int x, int y, int count, uint8_t colour)
 {
+	x *= 2;
+
 	while (count--)
 	{
 		bool overdraw = false;
@@ -199,7 +217,8 @@ void VLine(int x, int y, int count, uint32_t colour)
 		}
 		else
 		{
-			PutPixelImmediate(mainWindow.screenSurface, x, y, colour | 0xff000000);
+			PutPixelImmediate(mainWindow.screenSurface, x, y, gamePalette[colour & 0xf]);
+			PutPixelImmediate(mainWindow.screenSurface, x + 1, y, gamePalette[colour >> 4]);
 		}
 		y++;
 	}
@@ -211,8 +230,8 @@ void RenderDebugMap(void)
 	int centerX = debugMapWindow.width / 2;
 	int centerY = debugMapWindow.height / 2;
 	int range = debugMapWindow.width / 2;;
-	DrawMapDebugLine(centerX, centerY, centerX + range, centerY - range);
-	DrawMapDebugLine(centerX, centerY, centerX - range, centerY - range);
+	DrawMapDebugLine(centerX, centerY, centerX + range, centerY - range, 0xffffff00);
+	DrawMapDebugLine(centerX, centerY, centerX - range, centerY - range, 0xffffff00);
 #else
 	angle_t left = viewangle - ANG45 + ANG90;
 	angle_t right = viewangle + ANG45 + ANG90;
@@ -245,7 +264,7 @@ int main(int argc, char* argv[])
 	}
 
 	R_InitTables();
-	R_ExecuteSetViewSize();
+	//R_ExecuteSetViewSize();
 
 	for (int n = 0; n < 360; n++)
 	{
@@ -258,8 +277,16 @@ int main(int argc, char* argv[])
 		printf("%d : %d\n", n, degrees);
 	}
 
-	//LoadWad("test.wad");
-	LoadWad("doom1.wad");
+	mapdata_t mapdata;
+	map_t map;
+
+	LoadMapFromWad(&mapdata, "doom1.wad", "E1M1");
+	ExtractMapData(&mapdata, &map);
+	currentlevel = &map; 
+	currentlevel = &map_E1M1;
+
+	viewx = currentlevel->things[0].x;
+	viewy = currentlevel->things[0].y;
 
 	//SDL_SetWindowPosition(AppWindow, 1900 - DISPLAY_WIDTH * 2, 1020 - DISPLAY_HEIGHT);
 
@@ -350,6 +377,13 @@ int main(int argc, char* argv[])
 		RenderAll();
 		RenderDebugMap();
 
+		for (int y = 0; y < 16; y++)
+		{
+			for (int x = 0; x < 256; x++)
+			{
+				PutPixelImmediate(debugMapWindow.screenSurface, x, y, gamePalette[x/16]);
+			}
+		}
 		//DrawDebugLine(10, 10, 50, 23);
 
 		BlitDisplayWindow(&debugMapWindow);

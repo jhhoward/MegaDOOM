@@ -1,0 +1,168 @@
+# depslib dependency file v1.0
+1556996513 source:d:\apps\sgdk\tools\xgmtool\src\gd3.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"../inc/gd3.h"
+	"../inc/xgmtool.h"
+	"../inc/util.h"
+
+1556996513 d:\apps\sgdk\tools\xgmtool\inc\gd3.h
+
+1556996513 d:\apps\sgdk\tools\xgmtool\inc\xgmtool.h
+	<stdbool.h>
+
+1556996513 d:\apps\sgdk\tools\xgmtool\inc\util.h
+	<stdio.h>
+	<stdbool.h>
+
+1556996513 source:d:\apps\sgdk\tools\xgmtool\src\psg.c
+	<stdlib.h>
+	"../inc/psg.h"
+	"../inc/vgmcom.h"
+	"../inc/util.h"
+
+1556996513 d:\apps\sgdk\tools\xgmtool\inc\psg.h
+	<stdbool.h>
+	"util.h"
+
+1624478289 d:\apps\sgdk\tools\xgmtool\inc\vgmcom.h
+	<stdbool.h>
+	"util.h"
+
+1635200382 source:d:\apps\sgdk\tools\xgmtool\src\samplebank.c
+	<stdlib.h>
+	<memory.h>
+	"../inc/samplebank.h"
+	"../inc/vgmcom.h"
+	"../inc/xgmtool.h"
+
+1556996513 d:\apps\sgdk\tools\xgmtool\inc\samplebank.h
+	"util.h"
+	"vgmcom.h"
+
+1556996513 source:d:\apps\sgdk\tools\xgmtool\src\util.c
+	<stdio.h>
+	<stdlib.h>
+	<stdbool.h>
+	<string.h>
+	<math.h>
+	"../inc/util.h"
+
+1583968906 source:d:\apps\sgdk\tools\xgmtool\src\vgm.c
+	<stdlib.h>
+	<stdbool.h>
+	<string.h>
+	<math.h>
+	"../inc/vgm.h"
+	"../inc/xgm.h"
+	"../inc/util.h"
+	"../inc/ym2612.h"
+	"../inc/psg.h"
+	"../inc/xgmtool.h"
+	"../inc/gd3.h"
+
+1556996513 d:\apps\sgdk\tools\xgmtool\inc\vgm.h
+	"samplebank.h"
+	"vgmcom.h"
+	"gd3.h"
+	"xgm.h"
+
+1556996513 d:\apps\sgdk\tools\xgmtool\inc\xgm.h
+	"util.h"
+	"gd3.h"
+	"vgm.h"
+	"xgm.h"
+	"xgmcom.h"
+	"xgmsmp.h"
+
+1556996513 d:\apps\sgdk\tools\xgmtool\inc\xgmcom.h
+	"vgmcom.h"
+	"util.h"
+	"xgm.h"
+
+1556996513 d:\apps\sgdk\tools\xgmtool\inc\xgmsmp.h
+	"samplebank.h"
+
+1556996513 d:\apps\sgdk\tools\xgmtool\inc\ym2612.h
+
+1635286934 source:d:\apps\sgdk\tools\xgmtool\src\vgmcom.c
+	<stdlib.h>
+	<stdbool.h>
+	<memory.h>
+	"../inc/vgmcom.h"
+	"../inc/util.h"
+
+1556996513 source:d:\apps\sgdk\tools\xgmtool\src\xgc.c
+	<stdlib.h>
+	<stdbool.h>
+	<memory.h>
+	"../inc/xgm.h"
+	"../inc/vgm.h"
+	"../inc/xgccom.h"
+	"../inc/xgc.h"
+	"../inc/ym2612.h"
+	"../inc/psg.h"
+	"../inc/xgmtool.h"
+	"../inc/gd3.h"
+
+1556996513 d:\apps\sgdk\tools\xgmtool\inc\xgccom.h
+
+1556996513 d:\apps\sgdk\tools\xgmtool\inc\xgc.h
+	"xgm.h"
+	"util.h"
+	"ym2612.h"
+
+1556996513 source:d:\apps\sgdk\tools\xgmtool\src\xgccom.c
+	<stdlib.h>
+	<stdbool.h>
+	<memory.h>
+	<math.h>
+	"../inc/xgmtool.h"
+	"../inc/xgmcom.h"
+	"../inc/xgm.h"
+	"../inc/xgccom.h"
+	"../inc/xgc.h"
+	"../inc/util.h"
+
+1556996513 source:d:\apps\sgdk\tools\xgmtool\src\xgm.c
+	<stdlib.h>
+	<stdbool.h>
+	<memory.h>
+	"../inc/xgm.h"
+	"../inc/vgm.h"
+	"../inc/xgccom.h"
+	"../inc/xgmtool.h"
+	"../inc/gd3.h"
+
+1556996513 source:d:\apps\sgdk\tools\xgmtool\src\xgmcom.c
+	<stdlib.h>
+	<stdbool.h>
+	<memory.h>
+	<math.h>
+	"../inc/xgmtool.h"
+	"../inc/xgmcom.h"
+	"../inc/xgm.h"
+	"../inc/util.h"
+
+1556996513 source:d:\apps\sgdk\tools\xgmtool\src\xgmsmp.c
+	<stdlib.h>
+	"../inc/xgmsmp.h"
+
+1624478289 source:d:\apps\sgdk\tools\xgmtool\src\xgmtool.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<math.h>
+	"../inc/xgmtool.h"
+	"../inc/util.h"
+	"../inc/vgm.h"
+	"../inc/xgm.h"
+	"../inc/xgc.h"
+
+1556996513 source:d:\apps\sgdk\tools\xgmtool\src\ym2612.c
+	<stdlib.h>
+	<stdbool.h>
+	"../inc/vgmcom.h"
+	"../inc/ym2612.h"
+
