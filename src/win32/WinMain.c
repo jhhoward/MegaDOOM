@@ -113,8 +113,6 @@ uint8_t GetInput()
 void LoadMapFromWad(mapdata_t* map, const char* filename, const char* levelLabel);
 void ExtractMapData(mapdata_t* src, map_t* dest);
 
-void RenderAll();
-
 void DrawMapDebugLine(int x0, int y0, int x1, int y1, uint32_t colour)
 {
 	int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
@@ -211,14 +209,26 @@ void VLine(int x, int y, int count, uint8_t colour)
 			}
 		}
 
+		overdraw = false;
 		if (overdraw && ((y ^ x) & 1))
 		{
 			PutPixelImmediate(mainWindow.screenSurface, x, y, 0xffff00ff);
 		}
 		else
 		{
-			PutPixelImmediate(mainWindow.screenSurface, x, y, gamePalette[colour & 0xf]);
-			PutPixelImmediate(mainWindow.screenSurface, x + 1, y, gamePalette[colour >> 4]);
+			if (true)
+			{
+				PutPixelImmediate(mainWindow.screenSurface, x, y, gamePalette[colour & 0xf]);
+				PutPixelImmediate(mainWindow.screenSurface, x + 1, y, gamePalette[colour >> 4]);
+			}
+			else
+			{
+				PutPixelImmediate(mainWindow.screenSurface, x, y * 2, gamePalette[colour & 0xf]);
+				PutPixelImmediate(mainWindow.screenSurface, x + 1, y * 2, gamePalette[colour >> 4]);
+
+				PutPixelImmediate(mainWindow.screenSurface, x, y * 2 + 1, gamePalette[colour & 0xf]);
+				PutPixelImmediate(mainWindow.screenSurface, x + 1, y * 2 + 1, gamePalette[colour >> 4]);
+			}
 		}
 		y++;
 	}
@@ -281,7 +291,7 @@ int main(int argc, char* argv[])
 	mapdata_t mapdata;
 	map_t map;
 
-	LoadMapFromWad(&mapdata, "doom1.wad", "E1M1");
+	LoadMapFromWad(&mapdata, "test.wad", "E1M1");
 	ExtractMapData(&mapdata, &map);
 	currentlevel = &map; 
 	currentlevel = &map_E1M1;
@@ -375,7 +385,7 @@ int main(int argc, char* argv[])
 
 		// Draw stuff here
 		//RenderBSPNode(0);
-		RenderAll();
+		R_RenderView();
 		RenderDebugMap();
 
 		for (int y = 0; y < 16; y++)

@@ -22,6 +22,7 @@
 
 #include "doomtypes.h"
 #include "tables.h"
+#include "r_defs.h"
 
 //
 // POV data.
@@ -31,5 +32,14 @@ extern int16_t		viewy;
 extern int16_t		viewz;
 
 extern angle_t		viewangle;
+
+extern int16_t floorClip[VIEWPORT_WIDTH];
+extern int16_t ceilingClip[VIEWPORT_WIDTH];
+extern int16_t columnsToFill;
+
+extern angle_t clipangle;
+extern angle_t negviewangle;
+extern int16_t viewcos;
+extern int16_t viewsin;
 
 #endif

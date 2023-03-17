@@ -2,6 +2,9 @@
 
 #include "doomtypes.h"
 
+#define VIEWPORT_WIDTH 112
+#define VIEWPORT_HEIGHT 128
+
 typedef struct
 {
     int16_t x;
@@ -94,7 +97,7 @@ typedef struct
 
     int16_t	offset;
 
-    int16_t	angle;
+    uint16_t	angle;
 
     const side_t* sidedef;
     const line_t* linedef;

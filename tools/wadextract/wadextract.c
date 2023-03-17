@@ -1,11 +1,14 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
 #include "r_defs.h"
 #include "DoomData.h"
+#include "win32/wad.h"
+#include "win32/lodepng.h"
 
 #pragma warning(disable:4996)
 
-void LoadMapFromWad(mapdata_t* map, const char* filename, const char* levelLabel);
-void ExtractMapData(mapdata_t* src, map_t* dest);
+uint32_t doompalette[256];
 
 int16_t LookupTexture(char name[8])
 {
@@ -199,6 +202,159 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 	fclose(fs);
 }
 
+typedef struct
+{
+	uint16_t width;
+	uint16_t height;
+	int16_t leftoffset;
+	int16_t topoffset;
+} patch_header_t;
+
+void ExtractPatch(wad_file_t* wad, int index)
+{
+	wad_file_entry_t* file = &wad->files[index];
+
+	uint8_t* data = wad->data + file->offData;
+	patch_header_t* header = (patch_header_t*)(data);
+	uint32_t* columnofs = (uint32_t*)(data + sizeof(patch_header_t));
+
+	uint32_t* pixels = malloc(header->width * header->height * sizeof(uint32_t));
+	memset(pixels, 0, header->width * header->height * sizeof(uint32_t));
+
+	for (int x = 0; x < header->width; x++)
+	{
+		uint8_t* ptr = data + columnofs[x];
+		uint8_t topdelta;
+		int y = 0;
+		
+		topdelta = *ptr++;
+		while (topdelta != 0xff)
+		{
+			y = topdelta;
+
+			uint8_t length = *ptr++;
+			ptr++; // padding
+
+			while (length--)
+			{
+				uint8_t pixel = *ptr++;
+				pixels[y * header->width + x] = doompalette[pixel];
+				y++;
+			}
+
+			ptr++; // padding
+			topdelta = *ptr++;
+		}
+	}
+
+	char filename[10];
+	sprintf(filename, "%d.png", index);
+	lodepng_encode32_file(filename, (uint8_t*) pixels, header->width, header->height);
+}
+
+void ExtractPatches(wad_file_t* wad)
+{
+	int start = FindWadEntry(wad, "P_START", 0);
+	int end = FindWadEntry(wad, "P_END", 0);
+
+	if (start >= 0 && end > start)
+	{
+		for (int n = start + 1; n < end; n++)
+		{
+			char name[9];
+			name[8] = 0;
+			memcpy(name, wad->files[n].name, 8);
+			printf("%d : %s\n", n, name);
+
+			if (wad->files[n].lenData > 0)
+			{
+				ExtractPatch(wad, n);
+			}
+		}
+	}
+
+	for (int n = 0; n < wad->header->numFiles; n++)
+	{
+		if (wad->files[n].name[0] == 'S' && wad->files[n].name[1] == 'T')
+		{
+			ExtractPatch(wad, n);
+		}
+	}
+}
+
+void ExtractFlat(wad_file_t* wad, int index)
+{
+	uint8_t* data = (uint8_t*) GetWadFileData(wad, index);
+	uint32_t pixels[64 * 64];
+
+	for (int n = 0; n < 64 * 64; n++)
+	{
+		pixels[n] = doompalette[data[n]];
+	}
+
+	char filename[32];
+	sprintf(filename, "%d.png", index);
+	lodepng_encode32_file(filename, (uint8_t*)pixels, 64, 64);
+
+	int r = 0, g = 0, b = 0;
+	for (int n = 0; n < 64 * 64; n++)
+	{
+		r += pixels[n] & 0xff;
+		g += (pixels[n] >> 8) & 0xff;
+		b += (pixels[n] >> 16) & 0xff;
+	}
+
+	r /= (64 * 64);
+	g /= (64 * 64);
+	b /= (64 * 64);
+	uint32_t average = 0xff000000 | (r) | (g << 8) | (b << 16);
+
+	for (int n = 0; n < 64 * 64; n++)
+	{
+		pixels[n] = average;
+	}
+
+	sprintf(filename, "%d_avg.png", index);
+	lodepng_encode32_file(filename, (uint8_t*)pixels, 64, 64);
+}
+
+void ExtractFlats(wad_file_t* wad)
+{
+	int start = FindWadEntry(wad, "F_START", 0);
+	int end = FindWadEntry(wad, "F_END", 0);
+
+	if (start >= 0 && end > start)
+	{
+		for (int n = start + 1; n < end; n++)
+		{
+			char name[9];
+			name[8] = 0;
+			memcpy(name, wad->files[n].name, 8);
+			printf("%d : %s\n", n, name);
+
+			if (wad->files[n].lenData > 0)
+			{
+				ExtractFlat(wad, n);
+			}
+		}
+	}
+}
+
+void LoadGamePalette(wad_file_t* wad)
+{
+	int index = FindWadEntry(wad, "PLAYPAL", 0);
+	if (index != -1)
+	{
+		uint8_t* pal = (uint8_t*) GetWadFileData(wad, index);
+		for (int n = 0; n < 256; n++)
+		{
+			doompalette[n] = 0xff000000 | (pal[n * 3 + 2] << 16) | (pal[n * 3 + 1] << 8) | (pal[n * 3]);
+		}
+	}
+	//unsigned width, height;
+	//lodepng_decode32_file((uint8_t**) &doompalette, &width, &height, "../tools/doompal.png");
+}
+
 int main(int argc, char* argv[])
 {
 	if (argc != 2)
@@ -207,12 +363,27 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
-	mapdata_t mapdata;
+	//mapdata_t mapdata;
+	//
+	//const char* levelname = "E1M2";
+	//LoadMapFromWad(&mapdata, argv[1], levelname);
+	//
+	//DumpMapToHeader(&mapdata, levelname);
 
-	const char* levelname = "E1M1";
-	LoadMapFromWad(&mapdata, argv[1], levelname);
+	wad_file_t* wad = LoadWad("doom1.wad");
 
-	DumpMapToHeader(&mapdata, levelname);
+	if (wad)
+	{
+		LoadGamePalette(wad);
+	
+		mapdata_t mapdata;
+		if (LoadMapDataFromWad(wad, "E1M1", &mapdata))
+		{
+			DumpMapToHeader(&mapdata, "E1M1");
+		}
 
+		ExtractPatches(wad);
+		ExtractFlats(wad);
+	}
 	return 0;
 }

@@ -6,23 +6,97 @@
 #include "Map.h"
 #include "DoomData.h"
 #include "r_defs.h"
-
+#include "wad.h"
 
 #pragma warning(disable:4996)
 
-typedef struct
+wad_file_t* LoadWad(const char* filename)
 {
-	char sig[4];
-	int32_t numFiles;
-	int32_t	offFAT;
-} wad_file_header_t;
+	FILE* fs = fopen(filename, "rb");
 
-typedef struct
+	if (!fs)
+	{
+		return NULL;
+	}
+
+	fseek(fs, 0, SEEK_END);
+
+	wad_file_t* wad = (wad_file_t*)malloc(sizeof(wad_file_t));
+
+	long datalen = ftell(fs);
+	wad->data = (uint8_t*) malloc(datalen);
+	fseek(fs, 0, SEEK_SET);
+	fread(wad->data, 1, datalen, fs);
+	fclose(fs);
+
+	wad->header = (wad_file_header_t*)(wad->data);
+	wad->files = (wad_file_entry_t*)(wad->data + wad->header->offFAT);
+
+	for (int n = 0; n < wad->header->numFiles; n++)
+	{
+		wad_file_entry_t* fileEntry = &wad->files[n];
+	
+		char fileName[9];
+		fileName[8] = '\0';
+	
+		memcpy(fileName, fileEntry->name, 8);
+		printf("File: %s length: %d offset: %d\n", fileName, fileEntry->lenData, fileEntry->offData);
+	}
+	return wad;
+}
+
+int FindWadEntry(wad_file_t* wad, const char* entryName, int start)
 {
-	int32_t offData;
-	int32_t lenData;
-	char name[8];
-} wad_file_entry_t;
+	uint32_t* name = (uint32_t*)(entryName);
+	
+	for (int n = start; n < wad->header->numFiles; n++)
+	{
+		uint32_t* entryName = (uint32_t*) wad->files[n].name;
+		if (name[0] == entryName[0] && name[1] == entryName[1])
+		{
+			return n;
+		}
+	}
+
+	return -1;
+}
+
+void* GetWadFileData(wad_file_t* wad, int index)
+{
+	return wad->data + wad->files[index].offData;
+}
+
+int32_t GetWadFileLength(wad_file_t* wad, int index)
+{
+	return wad->files[index].lenData;
+}
+
+bool LoadMapDataFromWad(wad_file_t* wad, const char* levelName, mapdata_t* map)
+{
+	int index = FindWadEntry(wad, levelName, 0);
+
+	if (index != -1)
+	{
+		map->nodes = (mapnode_t*) GetWadFileData(wad, ML_NODES + index);
+		map->numNodes = GetWadFileLength(wad, ML_NODES + index) / sizeof(mapnode_t);
+		map->subsectors = (mapsubsector_t*)GetWadFileData(wad, ML_SSECTORS + index);
+		map->numSubsectors = GetWadFileLength(wad, ML_SSECTORS + index) / sizeof(mapsubsector_t);
+		map->segs = (mapseg_t*)GetWadFileData(wad, ML_SEGS + index);
+		map->numSegs = GetWadFileLength(wad, ML_SEGS + index) / sizeof(mapseg_t);
+		map->vertices = (mapvertex_t*)GetWadFileData(wad, ML_VERTEXES + index);
+		map->numVertices = GetWadFileLength(wad, ML_VERTEXES + index) / sizeof(mapvertex_t);
+		map->lines = (maplinedef_t*)GetWadFileData(wad, ML_LINEDEFS + index);
+		map->numLines = GetWadFileLength(wad, ML_LINEDEFS + index) / sizeof(maplinedef_t);
+		map->sides = (mapsidedef_t*)GetWadFileData(wad, ML_SIDEDEFS + index);
+		map->numSides = GetWadFileLength(wad, ML_SIDEDEFS + index) / sizeof(mapsidedef_t);
+		map->sectors = (mapsector_t*)GetWadFileData(wad, ML_SECTORS + index);
+		map->numSectors = GetWadFileLength(wad, ML_SECTORS + index) / sizeof(mapsector_t);
+		map->things = (mapthing_t*)GetWadFileData(wad, ML_THINGS + index);
+		map->numThings = GetWadFileLength(wad, ML_THINGS + index) / sizeof(mapthing_t);
+		return true;
+	}
+	return false;
+}
 
 void LoadMapFromWad(mapdata_t* map, const char* filename, const char* levelLabel)
 {

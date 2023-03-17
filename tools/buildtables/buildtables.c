@@ -1,5 +1,6 @@
 #include "doomtypes.h"
 #include "tables.h"
+#include "r_defs.h"
 #include <stdio.h>
 #include <math.h>
 #pragma warning(disable:4996)
@@ -7,6 +8,11 @@
 #define M_PI 3.141592654
 #define FRACBITS		8
 #define FRACUNIT		(1<<FRACBITS)
+
+#define FRAMEBUFFER_WIDTH VIEWPORT_WIDTH
+#define FRAMEBUFFER_HEIGHT VIEWPORT_HEIGHT
+#define FRAMEBUFFER_HEIGHT_TILES (FRAMEBUFFER_HEIGHT / 8)
+#define FRAMEBUFFER_TILE_BYTES (4 * 8)
 
 int main()
 {
@@ -27,6 +33,45 @@ int main()
     }
 
     fprintf(fs, "\n};\n");
+
+    fclose(fs);
+
+    // framebuffer tables
+    fs = fopen("framebuffer.inc.h", "w");
+
+    fprintf(fs, "const u16 framebufferx[] = {\n");
+
+    for (int x = 0; x < FRAMEBUFFER_WIDTH; x++)
+    {
+        int ptr = 0;
+        ptr += (x >> 2) * (FRAMEBUFFER_HEIGHT_TILES * FRAMEBUFFER_TILE_BYTES);
+        ptr += (x & 3);
+        fprintf(fs, "%d", ptr);
+        if (x == 255)
+        {
+            fprintf(fs, "\n");
+        }
+        else
+        {
+            fprintf(fs, ", ");
+        }
+    }
+
+    fprintf(fs, "};\n\n");
+
+    fprintf(fs, "void VLine(int x, int y, int count, uint8_t colour)\n");
+    fprintf(fs, "{\n");
+    fprintf(fs, "\tu8* ptr = framebuffer + framebufferx[x];\n");
+    fprintf(fs, "\tptr += (y << 2);\n");
+    fprintf(fs, "\tswitch(count) {");
+    for (int y = FRAMEBUFFER_HEIGHT; y > 0; y--)
+    {
+        fprintf(fs, "\tcase %d:\n", y);
+        fprintf(fs, "\tptr[%d] = colour;\n", (y - 1) * 4);
+    }
+    fprintf(fs, "\tbreak;\n");
+    fprintf(fs, "\t}\n");
+    fprintf(fs, "}\n");
 
     fclose(fs);
 

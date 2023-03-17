@@ -165,6 +165,7 @@
     <ClInclude Include="..\src\r_stat.h" />
     <ClInclude Include="..\src\tables.h" />
     <ClInclude Include="..\src\doomtypes.h" />
+    <ClInclude Include="..\src\win32\wad.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

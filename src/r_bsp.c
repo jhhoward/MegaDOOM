@@ -10,6 +10,14 @@
 void DrawDebugLine(int x0, int y0, int x1, int y1);
 void DrawMapDebugLine(int x0, int y0, int x1, int y1, uint32_t colour);
 
+#ifdef WIN32
+#define DEBUG_MAP_ZOOM 5
+#define DEBUG_MAP_LINE(x1, y1, x2, y2, colour) \
+    DrawMapDebugLine(320 + (x1) / DEBUG_MAP_ZOOM, 200 - (y1) / DEBUG_MAP_ZOOM, 320 + (x2) / DEBUG_MAP_ZOOM, 200 - (y2) / DEBUG_MAP_ZOOM, colour);
+#else
+#define DEBUG_MAP_LINE(x1, y1, x2, y2, colour)
+#endif
+
 //
 // ClipWallSegment
 // Clips the given range of columns
@@ -50,9 +58,14 @@ extern int viewangletox[FINEANGLES / 2];
 
 void VLine(int x, int y, int count, uint8_t colour);
 
-int16_t floorClip[256];
-int16_t ceilingClip[256];
+int16_t floorClip[VIEWPORT_WIDTH];
+int16_t ceilingClip[VIEWPORT_WIDTH];
 int16_t columnsToFill;
+
+angle_t clipangle;
+angle_t negviewangle;
+int16_t viewcos;
+int16_t viewsin;
 
 void R_Subsector(uint16_t subSectorNum)
 {
@@ -64,27 +77,27 @@ void R_Subsector(uint16_t subSectorNum)
 
     segnum = ssector->firstline;
 
-    angle_t negviewangle = -viewangle + ANG90;
-    int16_t viewcos = finecosine[negviewangle >> ANGLETOFINESHIFT];
-    int16_t viewsin = finesine[negviewangle >> ANGLETOFINESHIFT];
-
     for (i = 0; i < ssector->numlines; i++, segnum++)
     {
         const seg_t* seg = &currentlevel->segs[segnum];
-        const line_t* linedef = seg->linedef;
-        int zoom = 5;
 
-        //DrawMapDebugLine(
-        //    320 + (Map.vertices[seg->v1].x - viewx) / zoom,
-        //    200 - (Map.vertices[seg->v1].y - viewy) / zoom,
-        //    321 + (Map.vertices[seg->v1].x - viewx) / zoom,
-        //    201 - (Map.vertices[seg->v1].y - viewy) / zoom);
-        //
-        //DrawMapDebugLine(
-        //    320 + (Map.vertices[seg->v1].x - viewx) / zoom,
-        //    200 - (Map.vertices[seg->v1].y - viewy) / zoom,
-        //    320 + (Map.vertices[seg->v2].x - viewx) / zoom,
-        //    200 - (Map.vertices[seg->v2].y - viewy) / zoom);
+        if (clipangle < ANG270)
+        {
+            if (seg->angle >= clipangle && seg->angle < clipangle + ANG90)
+            {
+                continue;
+            }
+        }
+        else
+        {
+            if (seg->angle >= clipangle || seg->angle < clipangle - ANG270)
+            {
+                continue;
+            }
+
+        }
+
+        const line_t* linedef = seg->linedef;
 
         int16_t relvx1 = (seg->v1->x - viewx);
         int16_t relvy1 = (seg->v1->y - viewy);
@@ -103,13 +116,10 @@ void R_Subsector(uint16_t subSectorNum)
         int16_t vy2 = ((relvx2 * viewsin) >> 8) + ((relvy2 * viewcos) >> 8);
 
         int16_t sx1, sx2;
-        const int maxsx = 127;
+        const int maxsx = VIEWPORT_WIDTH - 1;
 
-        DrawMapDebugLine(
-            320 + (vx1) / zoom,
-            200 - (vy1) / zoom,
-            320 + (vx2) / zoom,
-            200 - (vy2) / zoom, 0xff444444);
+
+        DEBUG_MAP_LINE(vx1, vy1, vx2, vy2, 0xff444444);
 
         //if (vx2 < -vy2)
         //{
@@ -153,7 +163,7 @@ void R_Subsector(uint16_t subSectorNum)
         }
         else
         {
-            sx2 = 64 + (64 * vx2) / vy2;
+            sx2 = (VIEWPORT_WIDTH / 2) + ((VIEWPORT_WIDTH / 2) * vx2) / vy2;
         }
         
         if (vx1 < -vy1)
@@ -171,7 +181,7 @@ void R_Subsector(uint16_t subSectorNum)
         }
         else
         {
-            sx1 = 64 + (64 * vx1) / vy1;
+            sx1 = (VIEWPORT_WIDTH / 2) + ((VIEWPORT_WIDTH / 2) * vx1) / vy1;
         }
 
         if (sx1 < 0)
@@ -185,19 +195,16 @@ void R_Subsector(uint16_t subSectorNum)
             continue;
         }
 
-        DrawMapDebugLine(
-            320 + (vx1) / zoom,
-            200 - (vy1) / zoom,
-            320 + (vx2) / zoom,
-            200 - (vy2) / zoom, 0xffffffff);
+        DEBUG_MAP_LINE(vx1, vy1, vx2, vy2, 0xffffffff);
 
         int shade = 128 + (seg->angle >> 9);
         uint8_t colour;
         uint8_t floorColour = 0x11;
         uint8_t ceilingColour = 0x88;
 
-        srand(segnum);
-        colour = (uint8_t)rand();
+        //srand(segnum);
+        //colour = (uint8_t)rand();
+        colour = (uint8_t)(segnum);
 
         if (linedef->sidenum[0] != -1)
         {
@@ -206,14 +213,16 @@ void R_Subsector(uint16_t subSectorNum)
             const side_t* side = seg->sidedef;
             const sector_t* sector = side->sector;
 
-            srand(side->sector + 1024);
-            floorColour = (uint8_t)rand();
-            ceilingColour = (uint8_t)rand();
+            floorColour = (uint8_t)(sector);
+            ceilingColour = (uint8_t)(sector + 1);
+            //srand(side->sector + 1024);
+            //floorColour = (uint8_t)rand();
+            //ceilingColour = (uint8_t)rand();
 
-            int u1 = 64 - 128 * (sector->ceilingheight - viewz) / vy1;
-            int u2 = 64 - 128 * (sector->ceilingheight - viewz) / vy2;
-            int l1 = 64 - 128 * (sector->floorheight - viewz) / vy1;
-            int l2 = 64 - 128 * (sector->floorheight - viewz) / vy2;
+            int u1 = (VIEWPORT_HEIGHT / 2) - 128 * (sector->ceilingheight - viewz) / vy1;
+            int u2 = (VIEWPORT_HEIGHT / 2) - 128 * (sector->ceilingheight - viewz) / vy2;
+            int l1 = (VIEWPORT_HEIGHT / 2) - 128 * (sector->floorheight - viewz) / vy1;
+            int l2 = (VIEWPORT_HEIGHT / 2) - 128 * (sector->floorheight - viewz) / vy2;
 
             int16_t dsx = sx2 - sx1;
             int16_t uerror = dsx >> 1;
@@ -338,14 +347,14 @@ void R_Subsector(uint16_t subSectorNum)
                 //mapsidedef_t* backside = &Map.sides[linedef->sidenum[1]];
                 //mapsector_t* backsector = &Map.sectors[backside->sector];
                 
-                sector_t* backsector = seg->linedef->backsector;
+                const sector_t* backsector = seg->linedef->backsector;
 
                 if (backsector->ceilingheight < sector->ceilingheight || backsector->floorheight > sector->floorheight)
                 {
-                    u1 = 64 - 128 * (backsector->ceilingheight - viewz) / vy1;
-                    u2 = 64 - 128 * (backsector->ceilingheight - viewz) / vy2;
-                    l1 = 64 - 128 * (backsector->floorheight - viewz) / vy1;
-                    l2 = 64 - 128 * (backsector->floorheight - viewz) / vy2;
+                    u1 = (VIEWPORT_HEIGHT / 2) - 128 * (backsector->ceilingheight - viewz) / vy1;
+                    u2 = (VIEWPORT_HEIGHT / 2) - 128 * (backsector->ceilingheight - viewz) / vy2;
+                    l1 = (VIEWPORT_HEIGHT / 2) - 128 * (backsector->floorheight - viewz) / vy1;
+                    l2 = (VIEWPORT_HEIGHT / 2) - 128 * (backsector->floorheight - viewz) / vy2;
 
                     uerror = dsx >> 1;
                     lerror = dsx >> 1;
@@ -474,13 +483,39 @@ bool R_CheckBBox(int16_t* bspcoord)
         boxy = 2;
 
     boxpos = (boxy << 2) + boxx;
-    if (boxpos == 5)
+    if (boxpos == 5)    // Camera is in the center of the bounding box
         return true;
 
-    x1 = bspcoord[checkcoord[boxpos][0]];
-    y1 = bspcoord[checkcoord[boxpos][1]];
-    x2 = bspcoord[checkcoord[boxpos][2]];
-    y2 = bspcoord[checkcoord[boxpos][3]];
+    x1 = bspcoord[checkcoord[boxpos][0]] - viewx;
+    y1 = bspcoord[checkcoord[boxpos][1]] - viewy;
+    x2 = bspcoord[checkcoord[boxpos][2]] - viewx;
+    y2 = bspcoord[checkcoord[boxpos][3]] - viewy;
+
+    int16_t vy1 = ((x1 * viewsin) >> 8) + ((y1 * viewcos) >> 8);
+    int16_t vy2 = ((x2 * viewsin) >> 8) + ((y2 * viewcos) >> 8);
+
+    // Check if box is behind the camera
+    if (vy1 < FRONT_CLIP_PLANE && vy2 < FRONT_CLIP_PLANE)
+        return false;
+
+    int16_t vx1 = ((x1 * viewcos) >> 8) - ((y1 * viewsin) >> 8);
+    int16_t vx2 = ((x2 * viewcos) >> 8) - ((y2 * viewsin) >> 8);
+
+    //const int zoom = 5;
+    ////DrawMapDebugLine(vx1, vy1, x2, vy2, 0xffcccc00);
+    //DrawMapDebugLine(
+    //                    320 + (vx1) / zoom,
+    //                    200 - (vy1) / zoom,
+    //                    320 + (vx2) / zoom,
+    //                    200 - (vy2) / zoom, 0xff4455ff);
+
+    // Check if entirely to the left of the camera's FOV
+    if (vx1 < -vy1 && vx2 < -vy2)
+        return false;
+    
+    // Check if entirely to the right of the camera's FOV
+    if (vx1 > vy1 && vx2 > vy2)
+        return false;
 
     return true;
 

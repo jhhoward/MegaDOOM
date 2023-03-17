@@ -141,6 +141,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\win32\lodepng.c" />
     <ClCompile Include="..\..\src\win32\wad.c" />
     <ClCompile Include="wadextract.c" />
   </ItemGroup>
