@@ -194,7 +194,8 @@ int main(bool hardReset)
         VDP_loadTileSet(&framebufferTileSet, TILE_USER_INDEX, DMA);
 
         // always call this method at the end of the frame
-        SYS_doVBlankProcess();
+        //SYS_doVBlankProcess();
+        SYS_doVBlankProcessEx(IMMEDIATELY);
     }
 
     return 0;

@@ -54,6 +54,9 @@ extern const int16_t* finecosine;
 // Effective size is 4096.
 extern int16_t finetangent[FINEANGLES / 2];
 
+extern const int16_t distancescale[];
+extern const int16_t reciprocal[];
+
 
 #define ANG45           0x2000
 #define ANG90           0x4000

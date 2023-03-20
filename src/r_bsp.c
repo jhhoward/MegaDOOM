@@ -52,8 +52,6 @@ int	checkcoord[12][4] =
     {2,1,3,0}
 };
 
-extern int viewangletox[FINEANGLES / 2];
-
 #define FRONT_CLIP_PLANE 4
 
 void VLine(int x, int y, int count, uint8_t colour);
@@ -66,6 +64,76 @@ angle_t clipangle;
 angle_t negviewangle;
 int16_t viewcos;
 int16_t viewsin;
+
+#define USE_DIVIDE_INSTRUCTIONS 1
+
+inline int16_t CalculateInterpolant(int16_t x, int16_t range)
+{
+    return x * reciprocal[range];
+}
+
+inline int16_t ClipValue(int16_t x1, int16_t x2, int16_t y1, int16_t y2, int16_t clipx)
+{
+#if USE_DIVIDE_INSTRUCTIONS
+    return y1 + (clipx - x1) * (y2 - y1) / (x2 - x1);
+#else
+    int16_t range = x2 - x1;
+    if (range >= 1024)
+        return y1;
+    int16_t interpolant = clipx * reciprocal[range];
+    return y1 + (((y2 - y1) * interpolant) >> 10);
+#endif
+}
+
+inline int16_t ClipFOVRight(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
+{
+#if USE_DIVIDE_INSTRUCTIONS
+    return x1 + (x2 - x1) * (x1 - y1) / ((y2 - y1) - (x2 - x1));
+#else
+    int16_t range = (y2 - y1) - (x2 - x1);
+    if (range >= 1024)
+        range = 1023;
+    int16_t num = (x2 - x1) * (x1 - y1);
+    int16_t den = reciprocal[range];
+    num >>= 8;
+    den >>= 3;
+    return x1 + (num * den);
+#endif
+}
+
+//vx1 += (FRONT_CLIP_PLANE - vy1) * (vx2 - vx1) / (vy2 - vy1);
+//vy2 = vx2 = vx1 + (vx2 - vx1) * (vx1 - vy1) / ((vy2 - vy1) - (vx2 - vx1));
+
+//vx1 = vx1 + (vx2 - vx1) * (-vx1 - vy1) / ((vy2 - vy1) + (vx2 - vx1));
+
+
+inline int16_t ScaleByDistanceX(int16_t x, int16_t z)
+{
+#if USE_DIVIDE_INSTRUCTIONS
+    return (x * VIEWPORT_HALF_WIDTH) / z;
+#else
+    while (z > 4096)
+    {
+        z >>= 1;
+        x >>= 1;
+    }
+    return (x * distancescale[z]) >> 10;
+#endif
+}
+
+inline int16_t ScaleByDistanceY(int16_t x, int16_t z)
+{
+#if USE_DIVIDE_INSTRUCTIONS
+    return (x * VIEWPORT_WIDTH) / z;
+#else
+    while (z > 4096)
+    {
+        z >>= 1;
+        x >>= 1;
+    }
+    return (x * distancescale[z]) >> 9;
+#endif
+}
 
 void R_Subsector(uint16_t subSectorNum)
 {
@@ -135,7 +203,8 @@ void R_Subsector(uint16_t subSectorNum)
                 continue;
             }
 
-            vx1 += (FRONT_CLIP_PLANE - vy1) * (vx2 - vx1) / (vy2 - vy1);
+            //vx1 += (FRONT_CLIP_PLANE - vy1) * (vx2 - vx1) / (vy2 - vy1);
+            vx1 = ClipValue(vy1, vy2, vx1, vx2, FRONT_CLIP_PLANE);
             vy1 = FRONT_CLIP_PLANE;
         }
         else if (vy2 < FRONT_CLIP_PLANE)
@@ -145,7 +214,8 @@ void R_Subsector(uint16_t subSectorNum)
                 // Segment entirely behind the clip plane
                 continue;
             }
-            vx2 += (FRONT_CLIP_PLANE - vy2) * (vx1 - vx2) / (vy1 - vy2);
+//            vx2 += (FRONT_CLIP_PLANE - vy2) * (vx1 - vx2) / (vy1 - vy2);
+            vx2 = ClipValue(vy2, vy1, vx2, vx1, FRONT_CLIP_PLANE);
             vy2 = FRONT_CLIP_PLANE;
         }
 
@@ -158,12 +228,14 @@ void R_Subsector(uint16_t subSectorNum)
             }
             // Right side needs clipping
             // x' = x0 + (x1 - x0) * ((x0 - y0) / ((y1 - y0) - (x1 - x0)))
-            vy2 = vx2 = vx1 + (vx2 - vx1) * (vx1 - vy1) / ((vy2 - vy1) - (vx2 - vx1));
+            //vy2 = vx2 = vx1 + (vx2 - vx1) * (vx1 - vy1) / ((vy2 - vy1) - (vx2 - vx1));
+            vy2 = vx2 = ClipFOVRight(vx1, vy1, vx2, vy2);
             sx2 = maxsx;
         }
         else
         {
-            sx2 = (VIEWPORT_WIDTH / 2) + ((VIEWPORT_WIDTH / 2) * vx2) / vy2;
+            //sx2 = (VIEWPORT_WIDTH / 2) + ((VIEWPORT_WIDTH / 2) * vx2) / vy2;
+            sx2 = VIEWPORT_HALF_WIDTH + ScaleByDistanceX(vx2, vy2);
         }
         
         if (vx1 < -vy1)
@@ -176,12 +248,14 @@ void R_Subsector(uint16_t subSectorNum)
             // Left side needs clipping
             // x' = x0 + (x1 - x0) * ((x0 - y0) / ((y1 - y0) - (x1 - x0)))
             vx1 = vx1 + (vx2 - vx1) * (-vx1 - vy1) / ((vy2 - vy1) + (vx2 - vx1));
+            //vx1 = vx1 + (((vx2 - vx1) * (-vx1 - vy1) * reciprocal[((vy2 - vy1) + (vx2 - vx1))]) >> 10);
             vy1 = -vx1;
             sx1 = 0;
         }
         else
         {
-            sx1 = (VIEWPORT_WIDTH / 2) + ((VIEWPORT_WIDTH / 2) * vx1) / vy1;
+            //sx1 = (VIEWPORT_WIDTH / 2) + ((VIEWPORT_WIDTH / 2) * vx1) / vy1;
+            sx1 = VIEWPORT_HALF_WIDTH + ScaleByDistanceX(vx1, vy1);
         }
 
         if (sx1 < 0)
@@ -219,10 +293,14 @@ void R_Subsector(uint16_t subSectorNum)
             //floorColour = (uint8_t)rand();
             //ceilingColour = (uint8_t)rand();
 
-            int u1 = (VIEWPORT_HEIGHT / 2) - 128 * (sector->ceilingheight - viewz) / vy1;
-            int u2 = (VIEWPORT_HEIGHT / 2) - 128 * (sector->ceilingheight - viewz) / vy2;
-            int l1 = (VIEWPORT_HEIGHT / 2) - 128 * (sector->floorheight - viewz) / vy1;
-            int l2 = (VIEWPORT_HEIGHT / 2) - 128 * (sector->floorheight - viewz) / vy2;
+            //int u1 = (VIEWPORT_HEIGHT / 2) - 128 * (sector->ceilingheight - viewz) / vy1;
+            //int u2 = (VIEWPORT_HEIGHT / 2) - 128 * (sector->ceilingheight - viewz) / vy2;
+            //int l1 = (VIEWPORT_HEIGHT / 2) - 128 * (sector->floorheight - viewz) / vy1;
+            //int l2 = (VIEWPORT_HEIGHT / 2) - 128 * (sector->floorheight - viewz) / vy2;
+            int u1 = VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(sector->ceilingheight - viewz, vy1);
+            int u2 = VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(sector->ceilingheight - viewz, vy2);
+            int l1 = VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(sector->floorheight - viewz, vy1);
+            int l2 = VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(sector->floorheight - viewz, vy2);
 
             int16_t dsx = sx2 - sx1;
             int16_t uerror = dsx >> 1;
@@ -351,10 +429,14 @@ void R_Subsector(uint16_t subSectorNum)
 
                 if (backsector->ceilingheight < sector->ceilingheight || backsector->floorheight > sector->floorheight)
                 {
-                    u1 = (VIEWPORT_HEIGHT / 2) - 128 * (backsector->ceilingheight - viewz) / vy1;
-                    u2 = (VIEWPORT_HEIGHT / 2) - 128 * (backsector->ceilingheight - viewz) / vy2;
-                    l1 = (VIEWPORT_HEIGHT / 2) - 128 * (backsector->floorheight - viewz) / vy1;
-                    l2 = (VIEWPORT_HEIGHT / 2) - 128 * (backsector->floorheight - viewz) / vy2;
+                    //u1 = (VIEWPORT_HEIGHT / 2) - 128 * (backsector->ceilingheight - viewz) / vy1;
+                    //u2 = (VIEWPORT_HEIGHT / 2) - 128 * (backsector->ceilingheight - viewz) / vy2;
+                    //l1 = (VIEWPORT_HEIGHT / 2) - 128 * (backsector->floorheight - viewz) / vy1;
+                    //l2 = (VIEWPORT_HEIGHT / 2) - 128 * (backsector->floorheight - viewz) / vy2;
+                    u1 = VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(backsector->ceilingheight - viewz, vy1);
+                    u2 = VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(backsector->ceilingheight - viewz, vy2);
+                    l1 = VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(backsector->floorheight - viewz, vy1);
+                    l2 = VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(backsector->floorheight - viewz, vy2);
 
                     uerror = dsx >> 1;
                     lerror = dsx >> 1;

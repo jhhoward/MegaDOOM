@@ -4,3 +4,5 @@ sdl/SDL2/docs/
 megadrive/out/
 *.vcxproj.filters
 *.vcxproj.user
+tools/wadextract/Debug/
+tools/buildtables/Debug/

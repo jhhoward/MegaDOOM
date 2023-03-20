@@ -34,6 +34,40 @@ int main()
 
     fprintf(fs, "\n};\n");
 
+    // distancescale
+    fprintf(fs, "const int16_t distancescale[] = {\n");
+    for (int n = 0; n < 2048; n++)
+    {
+        int result = n == 0 ? 0 : (VIEWPORT_HALF_WIDTH << 10) / n;
+        fprintf(fs, "%d", result);
+        if (n == 2047)
+        {
+            fprintf(fs, "\n");
+        }
+        else
+        {
+            fprintf(fs, ", ");
+        }
+    }
+    fprintf(fs, "};\n\n");
+
+    // reciprocal table
+    fprintf(fs, "const int16_t reciprocal[] = {\n");
+    for (int n = 0; n < 1024; n++)
+    {
+        int result = n == 0 ? 0 : 1024 / n;
+        fprintf(fs, "%d", result);
+        if (n == 1023)
+        {
+            fprintf(fs, "\n");
+        }
+        else
+        {
+            fprintf(fs, ", ");
+        }
+    }
+    fprintf(fs, "};\n\n");
+
     fclose(fs);
 
     // framebuffer tables
@@ -56,7 +90,6 @@ int main()
             fprintf(fs, ", ");
         }
     }
-
     fprintf(fs, "};\n\n");
 
     fprintf(fs, "void VLine(int x, int y, int count, uint8_t colour)\n");

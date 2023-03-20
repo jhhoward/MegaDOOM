@@ -3,7 +3,9 @@
 #include "doomtypes.h"
 
 #define VIEWPORT_WIDTH 112
+#define VIEWPORT_HALF_WIDTH (VIEWPORT_WIDTH / 2)
 #define VIEWPORT_HEIGHT 128
+#define VIEWPORT_HALF_HEIGHT (VIEWPORT_HEIGHT / 2)
 
 typedef struct
 {

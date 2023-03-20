@@ -143,7 +143,15 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\win32\lodepng.c" />
     <ClCompile Include="..\..\src\win32\wad.c" />
+    <ClCompile Include="level.c" />
+    <ClCompile Include="palette.c" />
+    <ClCompile Include="texture.c" />
     <ClCompile Include="wadextract.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="level.h" />
+    <ClInclude Include="palette.h" />
+    <ClInclude Include="texture.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

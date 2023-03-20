@@ -7,6 +7,13 @@
 #include "DoomData.h"
 #include "../project/E1M1.inc.h"
 
+typedef struct
+{
+	int width, height;
+	const uint8_t** columns;
+} texture_t;
+#include "generated/texture.inc.h"
+
 // For MD:
 // - Preprocess WAD and extract data
 // - Dump to big header / .c file as const structs / arrays of structs
@@ -234,6 +241,25 @@ void VLine(int x, int y, int count, uint8_t colour)
 	}
 }
 
+void DumpTexture(texture_t* tex)
+{
+	for (int x = 0; x < tex->width; x++)
+	{
+		for (int y = 0; y < tex->height; y++)
+		{
+			uint8_t data = (tex->columns[x])[y];
+			if (x & 1)
+			{
+				PutPixelImmediate(mainWindow.screenSurface, x, y, gamePalette[data & 0xf]);
+			}
+			else
+			{
+				PutPixelImmediate(mainWindow.screenSurface, x, y, gamePalette[data >> 4]);
+			}
+		}
+	}
+}
+
 void RenderDebugMap(void)
 {
 #if 1
@@ -291,10 +317,11 @@ int main(int argc, char* argv[])
 	mapdata_t mapdata;
 	map_t map;
 
-	LoadMapFromWad(&mapdata, "test.wad", "E1M1");
+//	LoadMapFromWad(&mapdata, "doom1.wad", "E1M4");
+	LoadMapFromWad(&mapdata, "jaguartc_fix.wad", "E1M1");
 	ExtractMapData(&mapdata, &map);
 	currentlevel = &map; 
-	currentlevel = &map_E1M1;
+	//currentlevel = &map_E1M1;
 
 	viewx = currentlevel->things[0].x;
 	viewy = currentlevel->things[0].y;
@@ -397,6 +424,8 @@ int main(int argc, char* argv[])
 		}
 		//DrawDebugLine(10, 10, 50, 23);
 
+		//DumpTexture(&texture);
+		 
 		BlitDisplayWindow(&debugMapWindow);
 		BlitDisplayWindow(&mainWindow);
 
