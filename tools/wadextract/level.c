@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 #include "r_defs.h"
 #include "DoomData.h"
@@ -149,7 +150,14 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 		fprintf(fs, "%d, ", seg->offset);
 		fprintf(fs, "%d, ", seg->angle);
 		fprintf(fs, "&%s_sides[%d], ", levelname, mapdata->lines[seg->linedef].sidenum[seg->side]);
-		fprintf(fs, "&%s_lines[%d]", levelname, seg->linedef);
+		fprintf(fs, "&%s_lines[%d], ", levelname, seg->linedef);
+
+		int dx = mapdata->vertices[seg->v2].x - mapdata->vertices[seg->v1].x;
+		int dy = mapdata->vertices[seg->v2].y - mapdata->vertices[seg->v1].y;
+		int length = (int)sqrt((dx * dx) + (dy * dy));
+		fprintf(fs, "%d", length);
+
+
 		fprintf(fs, "},\n");
 	}
 	fprintf(fs, "\n};\n");

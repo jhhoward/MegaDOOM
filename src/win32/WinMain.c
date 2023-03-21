@@ -7,13 +7,6 @@
 #include "DoomData.h"
 #include "../project/E1M1.inc.h"
 
-typedef struct
-{
-	int width, height;
-	const uint8_t** columns;
-} texture_t;
-#include "generated/texture.inc.h"
-
 // For MD:
 // - Preprocess WAD and extract data
 // - Dump to big header / .c file as const structs / arrays of structs
@@ -193,6 +186,32 @@ void BlitDisplayWindow(display_window_t* window)
 
 }
 
+void TexturedLine(const walltexture_t* texture, int16_t x, int16_t y, int16_t count, int16_t u, int16_t v, int16_t step)
+{
+	x *= 2;
+	u &= (texture->width - 1);
+
+	//int texcoord = v << 16;
+	//int step = (128 << 16) / scale;
+	int texcoord = v << 8;
+
+	for (int j = 0; j < count; j++)
+	{
+		//float alpha = (float)j / count;
+		//int texcoord = (int)(alpha * 128);
+		texcoord += step;
+//		uint8_t colourPair = (texture->columns[u])[(texcoord >> 16) & 127];
+		uint8_t colourPair = (texture->columns[u])[(int)(texcoord >> 8) & 127];
+		PutPixelImmediate(mainWindow.screenSurface, x, y, gamePalette[colourPair & 0xf]);
+		PutPixelImmediate(mainWindow.screenSurface, x + 1, y, gamePalette[colourPair >> 4]);
+		y++;
+	}
+//	while (count--)
+//	{
+//	}
+}
+
+
 void VLine(int x, int y, int count, uint8_t colour)
 {
 	x *= 2;
@@ -241,7 +260,7 @@ void VLine(int x, int y, int count, uint8_t colour)
 	}
 }
 
-void DumpTexture(texture_t* tex)
+void DumpTexture(walltexture_t* tex)
 {
 	for (int x = 0; x < tex->width; x++)
 	{
@@ -317,11 +336,11 @@ int main(int argc, char* argv[])
 	mapdata_t mapdata;
 	map_t map;
 
-//	LoadMapFromWad(&mapdata, "doom1.wad", "E1M4");
-	LoadMapFromWad(&mapdata, "jaguartc_fix.wad", "E1M1");
+//	LoadMapFromWad(&mapdata, "doom1.wad", "E1M1");
+	LoadMapFromWad(&mapdata, "test.wad", "E1M1");
 	ExtractMapData(&mapdata, &map);
 	currentlevel = &map; 
-	//currentlevel = &map_E1M1;
+//	currentlevel = &map_E1M1;
 
 	viewx = currentlevel->things[0].x;
 	viewy = currentlevel->things[0].y;

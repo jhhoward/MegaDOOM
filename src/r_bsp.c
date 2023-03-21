@@ -6,6 +6,10 @@
 
 #include "Map.h"
 
+#include "generated/texture.inc.h"
+
+void TexturedLine(const walltexture_t* texture, int16_t x, int16_t y, int16_t count, int16_t u, int16_t v, int16_t scale);
+
 
 void DrawDebugLine(int x0, int y0, int x1, int y1);
 void DrawMapDebugLine(int x0, int y0, int x1, int y1, uint32_t colour);
@@ -171,6 +175,7 @@ void R_Subsector(uint16_t subSectorNum)
         int16_t relvy1 = (seg->v1->y - viewy);
         int16_t vx1 = ((relvx1 * viewcos) >> 8) - ((relvy1 * viewsin) >> 8);
         int16_t vy1 = ((relvx1 * viewsin) >> 8) + ((relvy1 * viewcos) >> 8);
+        int16_t tx1 = 0;
 
         //if (vx1 > vy1)
         //{
@@ -182,6 +187,7 @@ void R_Subsector(uint16_t subSectorNum)
         int16_t relvy2 = (seg->v2->y - viewy);
         int16_t vx2 = ((relvx2 * viewcos) >> 8) - ((relvy2 * viewsin) >> 8);
         int16_t vy2 = ((relvx2 * viewsin) >> 8) + ((relvy2 * viewcos) >> 8);
+        int16_t tx2 = seg->length;
 
         int16_t sx1, sx2;
         const int maxsx = VIEWPORT_WIDTH - 1;
@@ -204,6 +210,7 @@ void R_Subsector(uint16_t subSectorNum)
             }
 
             //vx1 += (FRONT_CLIP_PLANE - vy1) * (vx2 - vx1) / (vy2 - vy1);
+            tx1 = ClipValue(vy1, vy2, tx1, tx2, FRONT_CLIP_PLANE);
             vx1 = ClipValue(vy1, vy2, vx1, vx2, FRONT_CLIP_PLANE);
             vy1 = FRONT_CLIP_PLANE;
         }
@@ -215,6 +222,7 @@ void R_Subsector(uint16_t subSectorNum)
                 continue;
             }
 //            vx2 += (FRONT_CLIP_PLANE - vy2) * (vx1 - vx2) / (vy1 - vy2);
+            tx2 = ClipValue(vy2, vy1, tx2, tx1, FRONT_CLIP_PLANE);
             vx2 = ClipValue(vy2, vy1, vx2, vx1, FRONT_CLIP_PLANE);
             vy2 = FRONT_CLIP_PLANE;
         }
@@ -228,8 +236,20 @@ void R_Subsector(uint16_t subSectorNum)
             }
             // Right side needs clipping
             // x' = x0 + (x1 - x0) * ((x0 - y0) / ((y1 - y0) - (x1 - x0)))
-            //vy2 = vx2 = vx1 + (vx2 - vx1) * (vx1 - vy1) / ((vy2 - vy1) - (vx2 - vx1));
-            vy2 = vx2 = ClipFOVRight(vx1, vy1, vx2, vy2);
+            int16_t clippoint = vx1 + (vx2 - vx1) * (vx1 - vy1) / ((vy2 - vy1) - (vx2 - vx1));
+
+            if (vx1 == vx2)
+            {
+                tx2 = ClipValue(vy2, vy1, tx2, tx1, clippoint);
+            }
+            else
+            {
+                tx2 = ClipValue(vx2, vx1, tx2, tx1, clippoint);
+            }
+
+            vy2 = vx2 = clippoint;
+
+            //vy2 = vx2 = ClipFOVRight(vx1, vy1, vx2, vy2);
             sx2 = maxsx;
         }
         else
@@ -247,8 +267,18 @@ void R_Subsector(uint16_t subSectorNum)
             }
             // Left side needs clipping
             // x' = x0 + (x1 - x0) * ((x0 - y0) / ((y1 - y0) - (x1 - x0)))
-            vx1 = vx1 + (vx2 - vx1) * (-vx1 - vy1) / ((vy2 - vy1) + (vx2 - vx1));
+            int16_t clippoint = vx1 + (vx2 - vx1) * (-vx1 - vy1) / ((vy2 - vy1) + (vx2 - vx1));
             //vx1 = vx1 + (((vx2 - vx1) * (-vx1 - vy1) * reciprocal[((vy2 - vy1) + (vx2 - vx1))]) >> 10);
+            if (vx1 == vx2)
+            {
+                tx1 = ClipValue(vy2, vy1, tx2, tx1, clippoint);
+            }
+            else
+            {
+                tx1 = ClipValue(vx2, vx1, tx2, tx1, clippoint);
+            }
+
+            vx1 = clippoint;
             vy1 = -vx1;
             sx1 = 0;
         }
@@ -311,6 +341,12 @@ void R_Subsector(uint16_t subSectorNum)
             int16_t l = l1;
             int16_t dl;
             int16_t lstep;
+            int16_t tx = tx1;
+            int16_t dtx = tx2 - tx1;
+            int16_t terror = dsx >> 1;
+            int16_t ty1 = 0;
+            int16_t ty2 = sector->ceilingheight - sector->floorheight;
+            int16_t dty = ty2 - ty1;
 
             if (u1 < u2)
             {
@@ -340,12 +376,17 @@ void R_Subsector(uint16_t subSectorNum)
                 int y2 = l;
                 int16_t clipTop = ceilingClip[x];
                 int16_t clipBottom = floorClip[x];
+                int16_t ty = ty1;
 
                 if (clipTop < clipBottom)// && y2 >= clipTop && y1 <= clipBottom)
                 {
                     if (y1 <= clipTop)
                     {
                         y1 = clipTop + 1;
+                        if (ty1 != ty2)
+                        {
+                            ty = ClipValue(u, l, ty1, ty2, y1);
+                        }
                     }
                     else
                     {
@@ -391,7 +432,9 @@ void R_Subsector(uint16_t subSectorNum)
                         ceilingClip[x] = floorClip[x] = 0;
                         if (y2 <= y1)
                             continue;
-                        VLine(x, y1, y2 - y1, colour);
+
+                        TexturedLine(&texture, x, y1, y2 - y1, tx, ty, (dty << 8) /  (l - u));
+                        //VLine(x, y1, y2 - y1, colour);
                         columnsToFill--;
                     }
                     else
@@ -405,6 +448,7 @@ void R_Subsector(uint16_t subSectorNum)
 
                 uerror -= du;
                 lerror -= dl;
+                terror -= dtx;
 
                 while (uerror < 0)
                 {
@@ -415,6 +459,11 @@ void R_Subsector(uint16_t subSectorNum)
                 {
                     l += lstep;
                     lerror += dsx;
+                }
+                while (terror < 0)
+                {
+                    tx++;
+                    terror += dsx;
                 }
             }
 
@@ -442,6 +491,7 @@ void R_Subsector(uint16_t subSectorNum)
                     lerror = dsx >> 1;
                     u = u1;
                     l = l1;
+                    tx = tx1;
 
                     if (u1 < u2)
                     {
@@ -469,6 +519,7 @@ void R_Subsector(uint16_t subSectorNum)
                     {
                         int y1 = u;
                         int y2 = l;
+                        int16_t ty = ty1;
                         int16_t clipTop = ceilingClip[x];
                         int16_t clipBottom = floorClip[x];
 
@@ -486,7 +537,10 @@ void R_Subsector(uint16_t subSectorNum)
                                     y1 = clipBottom;
                                 }
 
-                                VLine(x, clipTop + 1, y1 - clipTop - 1, colour);
+                                //ty = ClipValue()
+                                TexturedLine(&texture, x, clipTop + 1, y1 - clipTop, tx, ty, (dty << 8) / (l - u));
+
+                                //VLine(x, clipTop + 1, y1 - clipTop - 1, colour);
                                 ceilingClip[x] = y1 - 1;
                             }
 
@@ -505,6 +559,8 @@ void R_Subsector(uint16_t subSectorNum)
 
                         uerror -= du;
                         lerror -= dl;
+                        terror -= dtx;
+
 
                         while (uerror < 0)
                         {
@@ -515,6 +571,11 @@ void R_Subsector(uint16_t subSectorNum)
                         {
                             l += lstep;
                             lerror += dsx;
+                        }
+                        while (terror < 0)
+                        {
+                            tx++;
+                            terror += dsx;
                         }
                     }
 

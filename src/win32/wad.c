@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 #include "doomtypes.h"
 #include <memory.h>
 #include <malloc.h>
@@ -250,6 +251,10 @@ void ExtractMapData(mapdata_t* src, map_t* dest)
 		destseg->angle = srcseg->angle;
 		destseg->linedef = &dest->lines[srcseg->linedef];
 		destseg->sidedef = &dest->sides[destseg->linedef->sidenum[srcseg->side]];
+
+		int dx = destseg->v2->x - destseg->v1->x;
+		int dy = destseg->v2->y - destseg->v1->y;
+		destseg->length = (int16_t) sqrt((dx * dx) + (dy * dy));
 	}
 
 	// Sectors

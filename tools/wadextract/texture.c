@@ -8,6 +8,8 @@
 
 #pragma warning(disable:4996)
 
+const bool dumppng = false;
+
 typedef struct
 {
 	uint16_t width;
@@ -57,7 +59,7 @@ void DumpTextureToHeader(FILE* fs, const char* name, uint32_t* pixels, int width
 	}
 	fprintf(fs, "};\n\n");
 
-	fprintf(fs, "const texture_t %s = {\n\t", name);
+	fprintf(fs, "const walltexture_t %s = {\n\t", name);
 	fprintf(fs, "%d, %d, %s_columns\n", width, height, name);
 	fprintf(fs, "};\n\n");
 }
@@ -135,9 +137,13 @@ void ExtractPatch(wad_file_t* wad, int index)
 		}
 	}
 
-	char filename[10];
-	sprintf(filename, "%d.png", index);
-	lodepng_encode32_file(filename, (uint8_t*)pixels, header->width, header->height);
+
+	if (dumppng)
+	{
+		char filename[10];
+		sprintf(filename, "%d.png", index);
+		lodepng_encode32_file(filename, (uint8_t*)pixels, header->width, header->height);
+	}
 }
 
 void ExtractPatches(wad_file_t* wad)
@@ -182,8 +188,12 @@ void ExtractFlat(wad_file_t* wad, int index)
 	}
 
 	char filename[32];
-	sprintf(filename, "%d.png", index);
-	lodepng_encode32_file(filename, (uint8_t*)pixels, 64, 64);
+
+	if (dumppng)
+	{
+		sprintf(filename, "%d.png", index);
+		lodepng_encode32_file(filename, (uint8_t*)pixels, 64, 64);
+	}
 
 	int r = 0, g = 0, b = 0;
 	for (int n = 0; n < 64 * 64; n++)
@@ -203,8 +213,11 @@ void ExtractFlat(wad_file_t* wad, int index)
 		pixels[n] = average;
 	}
 
-	sprintf(filename, "%d_avg.png", index);
-	lodepng_encode32_file(filename, (uint8_t*)pixels, 64, 64);
+	if (dumppng)
+	{
+		sprintf(filename, "%d_avg.png", index);
+		lodepng_encode32_file(filename, (uint8_t*)pixels, 64, 64);
+	}
 }
 
 void ExtractFlats(wad_file_t* wad)

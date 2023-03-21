@@ -9,7 +9,7 @@ void srand(uint16_t seed);
 #include "../../src/r_main.c"
 #include "../../src/Render.c"
 #include "../../project/E1M1.inc.h"
-#include "../../project/E1M2.inc.h"
+//#include "../../project/E1M2.inc.h"
 
 
 #define FRAMEBUFFER_WIDTH VIEWPORT_WIDTH
@@ -64,6 +64,26 @@ void putpixel(int x, int y, u8 colour)
     ptr += (y << 2);
     *ptr = colour;
 }
+
+void TexturedLine(const walltexture_t* texture, int16_t x, int16_t y, int16_t count, int16_t u, int16_t v, int16_t step)
+{
+    u &= (texture->width - 1);
+
+    u8* ptr = framebuffer + framebufferx[x];
+    const u8* texptr = texture->columns[u];
+    ptr += (y << 2);
+
+
+    int texcoord = v << 8;
+
+    while(count--)
+    {
+        texcoord += step;
+        *ptr = texptr[(texcoord >> 8) & 127];
+        ptr += 4;
+    }
+}
+
 
 void VLineRef(int x, int y, int count, uint8_t colour)
 {

@@ -104,6 +104,8 @@ typedef struct
     const side_t* sidedef;
     const line_t* linedef;
 
+    int16_t length;
+
     // Sector references.
     // Could be retrieved from linedef, too.
     // backsector is NULL for one sided lines
@@ -160,3 +162,8 @@ typedef struct
     uint16_t rootnode;
 } map_t;
 
+typedef struct
+{
+    int width, height;
+    const uint8_t** columns;
+} walltexture_t;
