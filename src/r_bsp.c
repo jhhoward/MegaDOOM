@@ -639,15 +639,14 @@ void R_Subsector(uint16_t subSectorNum)
 
 typedef struct
 {
-    walltexture_t* texture;
+    const walltexture_t* texture;
     int16_t sx1, sx2;           // Screen x coordinate extents
     int16_t upper1, upper2;     // Upper y coordinates
     int16_t lower1, lower2;     // Lower y coordinates
     int16_t tx1, tx2;           // Texture x coordinates
     int16_t ty1, ty2;           // Texture y coordinates
-    bool fillCeiling;
+    bool fillFloor, fillCeiling;
     uint8_t ceilingColour;
-    bool fillFloor;
     uint8_t floorColour;
 } texturequadparams_t;
 
@@ -669,7 +668,7 @@ void R_TextureQuad(texturequadparams_t* params)
         int16_t clipTop = ceilingClip[x];
         int16_t clipBottom = floorClip[x];
         int16_t ty = params->ty1;
-        int16_t tx = (fxtx >> 9);
+        int16_t tx = (fxtx >> 8);
 
         if (clipTop < clipBottom)
         {
@@ -683,16 +682,19 @@ void R_TextureQuad(texturequadparams_t* params)
             }
             else
             {
-                if (y1 < clipBottom)
+                if (params->fillCeiling)
                 {
-                    VLine(x, clipTop + 1, y1 - clipTop - 1, params->ceilingColour);
-                }
-                else
-                {
-                    VLine(x, clipTop + 1, clipBottom - clipTop - 1, params->ceilingColour);
-                    ceilingClip[x] = floorClip[x] = 0;
-                    columnsToFill--;
-                    goto fullyclipped;
+                    if (y1 < clipBottom)
+                    {
+                        VLine(x, clipTop + 1, y1 - clipTop - 1, params->ceilingColour);
+                    }
+                    else
+                    {
+                        VLine(x, clipTop + 1, clipBottom - clipTop - 1, params->ceilingColour);
+                        ceilingClip[x] = floorClip[x] = 0;
+                        columnsToFill--;
+                        goto fullyclipped;
+                    }
                 }
             }
 
@@ -702,28 +704,43 @@ void R_TextureQuad(texturequadparams_t* params)
             }
             else
             {
-                if (y2 > clipTop)
+                if (params->fillFloor)
                 {
-                    VLine(x, y2, clipBottom - y2, params->floorColour);
-                }
-                else
-                {
-                    VLine(x, clipTop + 1, clipBottom - clipTop - 1, params->floorColour);
-                    ceilingClip[x] = floorClip[x] = 0;
-                    columnsToFill--;
-                    goto fullyclipped;
+                    if (y2 > clipTop)
+                    {
+                        VLine(x, y2, clipBottom - y2, params->floorColour);
+                    }
+                    else
+                    {
+                        VLine(x, clipTop + 1, clipBottom - clipTop - 1, params->floorColour);
+                        ceilingClip[x] = floorClip[x] = 0;
+                        columnsToFill--;
+                        goto fullyclipped;
+                    }
                 }
             }
 
             if (params->texture)
             {
-                ceilingClip[x] = floorClip[x] = 0;
+                //ceilingClip[x] = floorClip[x] = 0;
                 if (y2 <= y1)
                     continue;
 
-                TexturedLine(params->texture, x, y1, y2 - y1, tx, ty, (deltaty << 8) / ((fxlower - fxupper) >> 8));
+                if (params->fillCeiling)
+                {
+                    ceilingClip[x] = y2 - 1;
+                }
+                if (params->fillFloor)
+                {
+                    floorClip[x] = y1;
+                }
+
+                int16_t scalediv = ((fxlower - fxupper) >> 8);
+                if (scalediv == 0)
+                    scalediv = 1;
+                TexturedLine(params->texture, x, y1, y2 - y1, tx, ty, (deltaty << 8) / scalediv);
                 //VLine(x, y1, y2 - y1, colour);
-                columnsToFill--;
+//                   columnsToFill--;
             }
             else
             {
@@ -753,6 +770,7 @@ void R_Subsector(uint16_t subSectorNum)
     {
         const seg_t* seg = &currentlevel->segs[segnum];
 
+        /*
         if (clipangle < ANG270)
         {
             if (seg->angle >= clipangle && seg->angle < clipangle + ANG90)
@@ -767,7 +785,7 @@ void R_Subsector(uint16_t subSectorNum)
                 continue;
             }
 
-        }
+        }*/
 
         const line_t* linedef = seg->linedef;
 
@@ -901,124 +919,104 @@ void R_Subsector(uint16_t subSectorNum)
 
         DEBUG_MAP_LINE(vx1, vy1, vx2, vy2, 0xffffffff);
 
-        int shade = 128 + (seg->angle >> 9);
-        uint8_t colour;
-        uint8_t floorColour = 0x11;
-        uint8_t ceilingColour = 0x88;
+//        int shade = 128 + (seg->angle >> 9);
+//        uint8_t colour;
+//        uint8_t floorColour = 0x11;
+//        uint8_t ceilingColour = 0x88;
+//
+//        //srand(segnum);
+//        //colour = (uint8_t)rand();
+//        colour = (uint8_t)(segnum);
 
-        //srand(segnum);
-        //colour = (uint8_t)rand();
-        colour = (uint8_t)(segnum);
+        tx1 += seg->offset;
+        tx2 += seg->offset;
+
+        texturequadparams_t quadparams;
 
         if (linedef->sidenum[0] != -1)
         {
             const side_t* side = seg->sidedef;
             const sector_t* sector = side->sector;
 
-            floorColour = flats[sector->floorpic].colour[sector->lightlevel];
-            ceilingColour = flats[sector->ceilingpic].colour[sector->lightlevel];
+            tx1 += side->textureoffset;
+            tx2 += side->textureoffset;
 
-            int16_t u1 = VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(sector->ceilingheight - viewz, vy1);
-            int16_t u2 = VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(sector->ceilingheight - viewz, vy2);
-            int16_t l1 = VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(sector->floorheight - viewz, vy1);
-            int16_t l2 = VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(sector->floorheight - viewz, vy2);
+            quadparams.floorColour = flats[sector->floorpic].colour[sector->lightlevel];
+            quadparams.ceilingColour = flats[sector->ceilingpic].colour[sector->lightlevel];
+            quadparams.fillFloor = true;
+            quadparams.fillCeiling = true;
 
-            //   Calcualte u / z and 1 / z at each vertex and interpolate
-            //
-            //   u = (u / z) / (1 / z)
+            quadparams.upper1 = VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(sector->ceilingheight - viewz, vy1);
+            quadparams.upper2 = VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(sector->ceilingheight - viewz, vy2);
+            quadparams.lower1 = VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(sector->floorheight - viewz, vy1);
+            quadparams.lower2 = VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(sector->floorheight - viewz, vy2);
 
-            int16_t dsx = sx2 - sx1;
-            int32_t fxu = u1 << 8;
-            int32_t fxl = l1 << 8;
-            int16_t ustep = ((u2 - u1) << 8) / dsx;
-            int16_t lstep = ((l2 - l1) << 8) / dsx;
-            int16_t ty1 = 0;
-            int16_t ty2 = sector->ceilingheight - sector->floorheight;
-            int32_t fxtx = tx1 << 8;
-            int16_t txstep = ((tx2 - tx1) << 8) / dsx;
-            int16_t dty = ty2 - ty1;
+            quadparams.tx1 = tx1;
+            quadparams.tx2 = tx2;
+            quadparams.sx1 = sx1;
+            quadparams.sx2 = sx2;
+            quadparams.ty1 = 0;
+            quadparams.ty2 = sector->ceilingheight - sector->floorheight;
+            quadparams.texture = side->midtexture ? &walltextures[side->midtexture] : NULL;
 
-            for (int x = sx1; x <= sx2; x++)
+            R_TextureQuad(&quadparams);
+
+            if (seg->linedef->backsector)
             {
-                int16_t y1 = fxu >> 8;
-                int16_t y2 = fxl >> 8;
-                int16_t clipTop = ceilingClip[x];
-                int16_t clipBottom = floorClip[x];
-                int16_t ty = ty1;
-                int16_t tx = (fxtx >> 9);
+                // Connected to another sector
+                const sector_t* backsector = seg->linedef->backsector;
 
-                if (clipTop < clipBottom)// && y2 >= clipTop && y1 <= clipBottom)
+
+                if (side->toptexture && backsector->ceilingheight < sector->ceilingheight)
                 {
-                    if (y1 <= clipTop)
+                    texturequadparams_t upperquadparams;
+                    upperquadparams.fillFloor = false;
+                    upperquadparams.fillCeiling = true;
+                    upperquadparams.lower1 = VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(backsector->ceilingheight - viewz, vy1);
+                    upperquadparams.lower2 = VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(backsector->ceilingheight - viewz, vy2);
+                    upperquadparams.upper1 = quadparams.upper1;
+                    upperquadparams.upper2 = quadparams.upper2;
+                    upperquadparams.texture = &walltextures[side->toptexture];
+                    upperquadparams.tx1 = tx1;
+                    upperquadparams.tx2 = tx2;
+                    upperquadparams.sx1 = sx1;
+                    upperquadparams.sx2 = sx2;
+                    upperquadparams.ty2 = sector->ceilingheight - backsector->ceilingheight;
+
+                    if (linedef->flags & ML_DONTPEGTOP)
                     {
-                        if (y1 != y2)
-                        {
-                            ty = ClipValue(y1, y2, ty1, ty2, clipTop + 1);
-                        }
-                        y1 = clipTop + 1;
+                        upperquadparams.ty1 = 0;
                     }
                     else
                     {
-                        if (y1 < clipBottom)
-                        {
-                            VLine(x, clipTop + 1, y1 - clipTop - 1, ceilingColour);
-                        }
-                        else
-                        {
-                            VLine(x, clipTop + 1, clipBottom - clipTop - 1, ceilingColour);
-                            ceilingClip[x] = floorClip[x] = 0;
-                            columnsToFill--;
-                            goto fullyclipped;
-                        }
+                        upperquadparams.ty1 = (128 - upperquadparams.ty2) & 127;
+                        upperquadparams.ty2 += upperquadparams.ty1;
                     }
 
-                    if (y2 > clipBottom)
-                    {
-                        y2 = clipBottom;
-                    }
-                    else
-                    {
-                        if (y2 > clipTop)
-                        {
-                            VLine(x, y2, clipBottom - y2, floorColour);
-                        }
-                        else
-                        {
-                            VLine(x, clipTop + 1, clipBottom - clipTop - 1, floorColour);
-                            ceilingClip[x] = floorClip[x] = 0;
-                            columnsToFill--;
-                            goto fullyclipped;
-                        }
-                    }
-
-                    //if (u > ceilingClip[x])
-                    //{
-                    //    VLine(x, ceilingClip[x] + 1, u - ceilingClip[x] + 1, ceilingColour);
-                    //}
-
-                    if (side->midtexture)
-                    {
-                        ceilingClip[x] = floorClip[x] = 0;
-                        if (y2 <= y1)
-                            continue;
-
-                        TexturedLine(&walltextures[side->midtexture], x, y1, y2 - y1, tx, ty, (dty << 8) / ((fxl - fxu) >> 8));
-                        //VLine(x, y1, y2 - y1, colour);
-                        columnsToFill--;
-                    }
-                    else
-                    {
-                        ceilingClip[x] = y1 - 1;
-                        floorClip[x] = y2;
-                    }
+                    R_TextureQuad(&upperquadparams);
                 }
-
-            fullyclipped:
-                fxu += ustep;
-                fxl += lstep;
-                fxtx += txstep;
+                if (side->bottomtexture && backsector->floorheight > sector->floorheight)
+                {
+                    texturequadparams_t lowerquadparams;
+                    lowerquadparams.fillFloor = true;
+                    lowerquadparams.fillCeiling = false;
+                    lowerquadparams.upper1 = VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(backsector->floorheight - viewz, vy1);
+                    lowerquadparams.upper2 = VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(backsector->floorheight - viewz, vy2);
+                    lowerquadparams.lower1 = quadparams.lower1;
+                    lowerquadparams.lower2 = quadparams.lower2;
+                    lowerquadparams.texture = &walltextures[side->bottomtexture];
+                    lowerquadparams.tx1 = tx1;
+                    lowerquadparams.tx2 = tx2;
+                    lowerquadparams.sx1 = sx1;
+                    lowerquadparams.sx2 = sx2;
+                    lowerquadparams.ty1 = 0;
+                    lowerquadparams.ty2 = backsector->floorheight - sector->floorheight;
+                    R_TextureQuad(&lowerquadparams);
+                }
             }
 
+
+#if 0
             //if (seg->side == 0 && linedef->sidenum[1] != -1)
             if (seg->linedef->backsector)
             {
@@ -1102,6 +1100,7 @@ void R_Subsector(uint16_t subSectorNum)
 
                 }
             }
+#endif
 
         }
     }

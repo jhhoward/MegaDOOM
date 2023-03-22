@@ -3,7 +3,7 @@
 uint16_t rand(void);
 void srand(uint16_t seed);
 
-#include "../../src/generated/palette.inc"
+#include "../../src/generated/palette.inc.h"
 #include "../../src/r_bsp.c"
 #include "../../src/tables.c"
 #include "../../src/r_main.c"

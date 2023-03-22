@@ -300,7 +300,7 @@ void ExtractFlat(wad_file_t* wad, int index)
 		pixels[n] = doompalette[data[n]];
 	}
 
-	int r = 0, g = 0, b = 0;
+	float r = 0, g = 0, b = 0;
 	for (int n = 0; n < 64 * 64; n++)
 	{
 		r += pixels[n] & 0xff;
@@ -311,7 +311,6 @@ void ExtractFlat(wad_file_t* wad, int index)
 	r /= (64 * 64);
 	g /= (64 * 64);
 	b /= (64 * 64);
-	uint32_t average = 0xff000000 | (r) | (g << 8) | (b << 16);
 
 	if (numflats < MAX_FLATS)
 	{
@@ -343,6 +342,8 @@ void ExtractFlat(wad_file_t* wad, int index)
 		char filename[32];
 		sprintf(filename, "%d.png", index);
 		lodepng_encode32_file(filename, (uint8_t*)pixels, 64, 64);
+
+		uint32_t average = 0xff000000 | ((int)r) | ((int)g << 8) | ((int)b << 16);
 
 		for (int n = 0; n < 64 * 64; n++)
 		{
@@ -409,7 +410,7 @@ void WriteTexturesToHeader()
 		memcpy(texname, compositetexture->name, 8);
 		fprintf(fs, "const uint8_t texturedata_%s[] = {\n", texname);
 
-		for (int x = 0; x < compositetexture->width; x+=2)
+		for (int x = 0; x < compositetexture->width; x++)
 		{
 			for (int y = 0; y < compositetexture->height; y++)
 			{
@@ -432,7 +433,7 @@ void WriteTexturesToHeader()
 	for (int n = 0; n < numcompositetextures; n++)
 	{
 		memcpy(texname, compositetextures[n].name, 8);
-		fprintf(fs, "\t{ %d, %d, texturecolumns_%s },\n", compositetextures[n].width / 2, compositetextures[n].height, texname);
+		fprintf(fs, "\t{ %d, %d, texturecolumns_%s },\n", compositetextures[n].width, compositetextures[n].height, texname);
 	}
 	fprintf(fs, "};\n");
 

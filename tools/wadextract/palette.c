@@ -127,7 +127,7 @@ void LoadMegadrivePalette()
 		return;
 	}
 
-	FILE* fs = fopen("palette.inc", "wb");
+	FILE* fs = fopen("../src/generated/palette.inc.h", "wb");
 
 	fprintf(fs, "#ifdef WIN32\n");
 	fprintf(fs, "const uint32_t gamePalette[] = {\n\t0xff000000, ");

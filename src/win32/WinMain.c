@@ -3,7 +3,7 @@
 #include "lodepng.h"
 #include "tables.h"
 #include "r_local.h"
-#include "generated/palette.inc"
+#include "generated/palette.inc.h"
 #include "DoomData.h"
 #include "../project/E1M1.inc.h"
 
