@@ -24,20 +24,23 @@ int main(int argc, char* argv[])
 	//
 	//DumpMapToHeader(&mapdata, levelname);
 
-	wad_file_t* wad = LoadWad("doom1.wad");
+	wad_file_t* iwad = LoadWad("doom1.wad");
+	wad_file_t* pwad = LoadWad("test.wad");
 
-	if (wad)
+	if (iwad && pwad)
 	{
-		InitPalettes(wad);
-	
+		InitPalettes(iwad);
+
+		ExtractPatches(iwad);
+		ExtractFlats(iwad);
+		ExtractTextures(iwad);
+
 		mapdata_t mapdata;
-		if (LoadMapDataFromWad(wad, "E1M1", &mapdata))
+		if (LoadMapDataFromWad(pwad, "E1M1", &mapdata))
 		{
 			DumpMapToHeader(&mapdata, "E1M1");
 		}
 
-		ExtractPatches(wad);
-		ExtractFlats(wad);
 	}
 	return 0;
 }

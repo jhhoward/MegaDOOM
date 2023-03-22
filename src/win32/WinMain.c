@@ -340,7 +340,7 @@ int main(int argc, char* argv[])
 	LoadMapFromWad(&mapdata, "test.wad", "E1M1");
 	ExtractMapData(&mapdata, &map);
 	currentlevel = &map; 
-//	currentlevel = &map_E1M1;
+	currentlevel = &map_E1M1;
 
 	viewx = currentlevel->things[0].x;
 	viewy = currentlevel->things[0].y;

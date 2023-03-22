@@ -32,9 +32,9 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 		fprintf(fs, "\t{ %d, %d, %d, %d, %d, %d, %d },\n",
 			sector->floorheight,
 			sector->ceilingheight,
-			LookupTexture(sector->floorpic),
-			LookupTexture(sector->ceilingpic),
-			sector->lightlevel,
+			LookupFlat(sector->floorpic),
+			LookupFlat(sector->ceilingpic),
+			sector->lightlevel >> 5,
 			sector->special,
 			sector->tag
 		);
