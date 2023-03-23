@@ -121,6 +121,7 @@ void LoadMegadrivePalette()
 	uint8_t* paletteColours;
 	unsigned width, height;
 
+//	if (lodepng_decode32_file(&paletteColours, &width, &height, "../tools/tandypal.png"))
 	if (lodepng_decode32_file(&paletteColours, &width, &height, "../tools/megadoompal.png"))
 	{
 		printf("Error opening palette file\n");

@@ -410,19 +410,38 @@ void WriteTexturesToHeader()
 		memcpy(texname, compositetexture->name, 8);
 		fprintf(fs, "const uint8_t texturedata_%s[] = {\n", texname);
 
-		for (int x = 0; x < compositetexture->width; x++)
+		for (int l = 0; l < 2; l++)
 		{
-			for (int y = 0; y < compositetexture->height; y++)
+			float alpha = (l + 1) / 2.0f;
+			for (int x = 0; x < compositetexture->width; x++)
 			{
-				uint32_t pixel = compositetexture->pixels[y * compositetexture->width + x];
-				int palettedPixel = MatchBlendedColour(pixel);
-				fprintf(fs, "0x%x,", palettedPixel);
+				for (int y = 0; y < compositetexture->height; y++)
+				{
+					uint32_t pixel = compositetexture->pixels[y * compositetexture->width + x];
+					int r = pixel & 0xff;
+					int g = (pixel >> 8) & 0xff;
+					int b = (pixel >> 16) & 0xff;
+					int rlit = (int)(r * alpha);
+					int glit = (int)(g * alpha);
+					int blit = (int)(b * alpha);
+					if (rlit > 255)
+						rlit = 255;
+					if (glit > 255)
+						glit = 255;
+					if (blit > 255)
+						blit = 255;
+
+					uint32_t averagelit = 0xff000000 | (rlit) | (glit << 8) | (blit << 16);
+
+					int palettedPixel = MatchBlendedColour(averagelit);
+					fprintf(fs, "0x%x,", palettedPixel);
+				}
 			}
 		}
 
 		fprintf(fs, "};\n");
 		fprintf(fs, "const uint8_t* const texturecolumns_%s[] = {\n", texname);
-		for (int x = 0; x < compositetexture->width; x++)
+		for (int x = 0; x < compositetexture->width * 2; x++)
 		{
 			fprintf(fs, "&texturedata_%s[%d], ", texname, x * compositetexture->height);
 		}

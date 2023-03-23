@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
 		ExtractTextures(iwad);
 
 		mapdata_t mapdata;
-		if (LoadMapDataFromWad(pwad, "E1M1", &mapdata))
+		if (LoadMapDataFromWad(iwad, "E1M1", &mapdata))
 		{
 			DumpMapToHeader(&mapdata, "E1M1");
 		}

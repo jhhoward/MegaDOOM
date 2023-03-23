@@ -189,7 +189,7 @@ void BlitDisplayWindow(display_window_t* window)
 void TexturedLine(const walltexture_t* texture, int16_t x, int16_t y, int16_t count, int16_t u, int16_t v, int16_t step)
 {
 	x *= 2;
-	u &= (texture->width - 1);
+	//u &= (texture->width - 1);
 
 	//int texcoord = v << 16;
 	//int step = (128 << 16) / scale;

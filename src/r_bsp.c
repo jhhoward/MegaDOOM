@@ -648,6 +648,7 @@ typedef struct
     bool fillFloor, fillCeiling;
     uint8_t ceilingColour;
     uint8_t floorColour;
+    int16_t lightingShift;
 } texturequadparams_t;
 
 void R_TextureQuad(texturequadparams_t* params)
@@ -738,7 +739,12 @@ void R_TextureQuad(texturequadparams_t* params)
                 int16_t scalediv = ((fxlower - fxupper) >> 8);
                 if (scalediv == 0)
                     scalediv = 1;
-                TexturedLine(params->texture, x, y1, y2 - y1, tx, ty, (deltaty << 8) / scalediv);
+                TexturedLine(params->texture, x, y1, y2 - y1, (tx & (params->texture->width - 1)) + params->lightingShift, ty, (deltaty << 8) / scalediv);
+
+                if (floorClip[x] <= ceilingClip[x])
+                {
+                    columnsToFill--;
+                }
                 //VLine(x, y1, y2 - y1, colour);
 //                   columnsToFill--;
             }
@@ -938,6 +944,16 @@ void R_Subsector(uint16_t subSectorNum)
             const side_t* side = seg->sidedef;
             const sector_t* sector = side->sector;
 
+            int16_t shading;
+
+            if (sector->lightlevel < 3)
+                shading = 0;
+            else if (sector->lightlevel < 6)
+            {
+                shading = seg->angle < ANG45 || seg->angle >(ANG270 + ANG45) || (seg->angle > ANG90 + ANG45 && seg->angle < ANG180 + ANG45) ? 1 : 0;
+            }
+            else shading = 1;
+            
             tx1 += side->textureoffset;
             tx2 += side->textureoffset;
 
@@ -958,6 +974,8 @@ void R_Subsector(uint16_t subSectorNum)
             quadparams.ty1 = 0;
             quadparams.ty2 = sector->ceilingheight - sector->floorheight;
             quadparams.texture = side->midtexture ? &walltextures[side->midtexture] : NULL;
+            if (quadparams.texture)
+                quadparams.lightingShift = shading * quadparams.texture->width;
 
             R_TextureQuad(&quadparams);
 
@@ -982,6 +1000,7 @@ void R_Subsector(uint16_t subSectorNum)
                     upperquadparams.sx1 = sx1;
                     upperquadparams.sx2 = sx2;
                     upperquadparams.ty2 = sector->ceilingheight - backsector->ceilingheight;
+                    upperquadparams.lightingShift = shading * upperquadparams.texture->width;
 
                     if (linedef->flags & ML_DONTPEGTOP)
                     {
@@ -1011,6 +1030,8 @@ void R_Subsector(uint16_t subSectorNum)
                     lowerquadparams.sx2 = sx2;
                     lowerquadparams.ty1 = 0;
                     lowerquadparams.ty2 = backsector->floorheight - sector->floorheight;
+                    lowerquadparams.lightingShift = shading * lowerquadparams.texture->width;
+
                     R_TextureQuad(&lowerquadparams);
                 }
             }
