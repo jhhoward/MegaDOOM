@@ -16,7 +16,7 @@
 //	All the clipping: columns, horizontal spans, sky columns.
 //
 
-
+void VLine(int x, int y, int count, unsigned char colour);
 
 
 
@@ -227,6 +227,8 @@ void R_RenderSegLoop (void)
 
 	    if (top <= bottom)
 	    {
+			VLine(rw_x, top, bottom - top + 1, 0x77);
+
 		//ceilingplane->top[rw_x] = top;
 		//ceilingplane->bottom[rw_x] = bottom;
 	    }
@@ -245,6 +247,8 @@ void R_RenderSegLoop (void)
 		top = ceilingclip[rw_x]+1;
 	    if (top <= bottom)
 	    {
+			VLine(rw_x, top, bottom - top + 1, 0x88);
+
 		//floorplane->top[rw_x] = top;
 		//floorplane->bottom[rw_x] = bottom;
 	    }
@@ -397,7 +401,20 @@ R_StoreWallRange
     
     // calculate rw_distance for scale calculation
     rw_normalangle = curline->angle + ANG90;
-    offsetangle = abs(rw_normalangle-rw_angle1);
+    //offsetangle = abs(rw_normalangle-rw_angle1);
+	{
+		int32_t temp = (int32_t)rw_normalangle - rw_angle1;
+		if (temp < 0) temp = -temp;
+		offsetangle = (uint32_t)temp;
+	}
+	/*if (rw_normalangle > (angle_t)rw_angle1)
+	{
+		offsetangle = rw_normalangle - (angle_t)rw_angle1;
+	}
+	else
+	{
+		offsetangle = (angle_t)rw_angle1 - rw_normalangle;
+	}*/
     
     if (offsetangle > ANG90)
 	offsetangle = ANG90;

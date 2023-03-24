@@ -32,6 +32,12 @@
 
 #include "tables.h"
 
+#define USE_GENERATED_TABLES 1 
+
+#if USE_GENERATED_TABLES
+#include "generated/tables.inc.h"
+#endif
+
 // to get a global angle from cartesian coordinates, the coordinates are
 // flipped until they are in the first octant of the coordinate system, then
 // the y (<=x) is scaled and divided by x to get a tangent (slope) value
@@ -61,6 +67,7 @@ int SlopeDiv(unsigned int num, unsigned int den)
     }
 }
 
+#if !USE_GENERATED_TABLES
 const fixed_t finetangent[4096] =
 {
     -170910304,-56965752,-34178904,-24413316,-18988036,-15535599,-13145455,-11392683,
@@ -1861,9 +1868,11 @@ const fixed_t finesine[10240] =
     65531,65531,65532,65532,65533,65533,65534,65534,
     65534,65535,65535,65535,65535,65535,65535,65535
 };
+#endif
 
 const fixed_t *finecosine = &finesine[FINEANGLES/4];
 
+#if !USE_GENERATED_TABLES
 const angle_t tantoangle[2049] =
 {
     0,333772,667544,1001315,1335086,1668857,2002626,2336395,
@@ -2124,6 +2133,7 @@ const angle_t tantoangle[2049] =
     535533216,535700704,535868128,536035456,536202720,536369888,536536992,536704000,
     536870912
 };
+#endif
 
 // Now where did these came from?
 #if 0

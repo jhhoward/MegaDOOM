@@ -1,4 +1,5 @@
-#include "doomtypes.h"
+#include <stdint.h>
+#include <stdbool.h>
 #include "tables.h"
 #include "r_defs.h"
 #include <stdio.h>
@@ -6,39 +7,62 @@
 #pragma warning(disable:4996)
 
 #define M_PI 3.141592654
-#define FRACBITS		8
-#define FRACUNIT		(1<<FRACBITS)
 
-#define FRAMEBUFFER_WIDTH VIEWPORT_WIDTH
-#define FRAMEBUFFER_HEIGHT VIEWPORT_HEIGHT
+#define FRAMEBUFFER_WIDTH SCREENWIDTH
+#define FRAMEBUFFER_HEIGHT SCREENHEIGHT
 #define FRAMEBUFFER_HEIGHT_TILES (FRAMEBUFFER_HEIGHT / 8)
 #define FRAMEBUFFER_TILE_BYTES (4 * 8)
 
 int main()
 {
     int	i;
-    int16_t	t;
+    fixed_t	t;
     float	a;
 
     FILE* fs = fopen("tables.inc.h", "w");
 
-    fprintf(fs, "const int16_t finesine[10240] = {\n\t");
+    fprintf(fs, "const fixed_t finesine[%d] = {\n\t", 5 * FINEANGLES / 4);
 
     // finesine table
     for (i = 0; i < 5 * FINEANGLES / 4; i++)
     {
         a = (float)((i + 0.5) * M_PI * 2 / FINEANGLES);
-        t = (int16_t)(FRACUNIT * sin(a));
+        t = (fixed_t)(FRACUNIT * sin(a));
         fprintf(fs, "%d, ", t);
     }
 
     fprintf(fs, "\n};\n");
 
+    fprintf(fs, "const fixed_t finetangent[%d] = {\n\t", FINEANGLES / 2);
+    // viewangle tangent table
+    for (i = 0; i < FINEANGLES / 2; i++)
+    {
+        a = (i - FINEANGLES / 4 + 0.5) * M_PI * 2 / FINEANGLES;
+        float fv = FRACUNIT * tan(a);
+        t = fv;
+        // t = (int)(t / 256) * 256;
+        fprintf(fs, "%d, ", t);
+    }
+    fprintf(fs, "\n};\n");
+
+    //
+    // slope (tangent) to angle lookup
+    //
+    fprintf(fs, "const angle_t tantoangle[%d] = {\n\t", SLOPERANGE + 1);
+    for (i = 0; i <= SLOPERANGE; i++)
+    {
+        float f = atan((float)i / SLOPERANGE) / (3.141592657 * 2);
+        t = 0xffffffff * f;
+        fprintf(fs, "%d, ", t);
+    }
+    fprintf(fs, "\n};\n");
+
+#if 0
     // distancescale
     fprintf(fs, "const int16_t distancescale[] = {\n");
     for (int n = 0; n < 2048; n++)
     {
-        int result = n == 0 ? 0 : (VIEWPORT_HALF_WIDTH << 10) / n;
+        int result = n == 0 ? 0 : ((SCREENWIDTH / 2) << 10) / n;
         fprintf(fs, "%d", result);
         if (n == 2047)
         {
@@ -67,6 +91,7 @@ int main()
         }
     }
     fprintf(fs, "};\n\n");
+#endif
 
     fclose(fs);
 

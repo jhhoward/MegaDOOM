@@ -1,6 +1,8 @@
 #define GENESIS
 #include "genesis.h"
 
+#define MAP_FRACBITS FRACBITS
+
 uint16_t rand(void);
 void srand(uint16_t seed);
 
@@ -169,17 +171,17 @@ int main(bool hardReset)
     u8 col = 0;
 
     map = &map_E1M1;
-    viewx = map->things[0].x << 16;
-    viewy = map->things[0].y << 16;
-    viewz = 64 << 16;
+    viewx = map->things[0].x << MAP_FRACBITS;
+    viewy = map->things[0].y << MAP_FRACBITS;
+    viewz = 64 << FRACBITS;
     viewangle = map->things[0].angle << 16;
 
     R_Init();
 
     u32 lasttick = getTick();
 
- //   XGM_startPlay(xgm_e1m1);
-
+    XGM_startPlay(xgm_e1m1);
+     
     while(TRUE)
     {
         u16 input = JOY_readJoypad(JOY_1);
@@ -202,16 +204,29 @@ int main(bool hardReset)
                 //viewx+= scrollSpeed;
                 viewangle -= ANG1 * 5;
             }
+
+            int movespeed = FRACUNIT * 5;
             if (input & BUTTON_UP)
             {
-                viewx += finecosine[viewangle >> ANGLETOFINESHIFT] << 3;
-                viewy += finesine[viewangle >> ANGLETOFINESHIFT]  << 3;
+                viewx += FixedMul(finecosine[viewangle >> ANGLETOFINESHIFT], movespeed);
+                viewy += FixedMul(finesine[viewangle >> ANGLETOFINESHIFT], movespeed);
             }
             if (input & BUTTON_DOWN)
             {
-                viewx -= finecosine[viewangle >> ANGLETOFINESHIFT] << 3;
-                viewy -= finesine[viewangle >> ANGLETOFINESHIFT]  << 3;
+                viewx -= FixedMul(finecosine[viewangle >> ANGLETOFINESHIFT], movespeed);
+                viewy -= FixedMul(finesine[viewangle >> ANGLETOFINESHIFT], movespeed);
             }
+
+            //if (input & BUTTON_UP)
+            //{
+            //    viewx += finecosine[viewangle >> ANGLETOFINESHIFT] >> 4;
+            //    viewy += finesine[viewangle >> ANGLETOFINESHIFT]  >> 4;
+            //}
+            //if (input & BUTTON_DOWN)
+            //{
+            //    viewx -= finecosine[viewangle >> ANGLETOFINESHIFT] >> 4;
+            //    viewy -= finesine[viewangle >> ANGLETOFINESHIFT]  >> 4;
+            //}
             if (input & BUTTON_A)
             {
                 viewz += 3 << 16;
@@ -223,8 +238,9 @@ int main(bool hardReset)
         }
         lasttick = getTick();
 
-        for (int n = 0; n < FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT; n++)
-            framebuffer[n] = 0;
+        //for (int n = 0; n < FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT; n++)
+        //    framebuffer[n] = 0;
+
 //        R_RenderView();
         R_RenderPlayerView();
 

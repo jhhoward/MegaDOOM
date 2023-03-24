@@ -26,7 +26,7 @@ typedef struct
 	char name[8];
 	int width, height;
 	uint32_t* pixels;
-} patch_t;
+} loadedpatch_t;
 
 typedef struct
 {
@@ -69,7 +69,7 @@ flat_t flats[MAX_FLATS];
 name_t flatnames[MAX_FLATS];
 int numflats = 0;
 
-patch_t patches[MAX_PATCHES];
+loadedpatch_t patches[MAX_PATCHES];
 int numpatches = 0;
 
 compositetexture_t compositetextures[MAX_COMPOSITE_TEXTURES];
@@ -187,7 +187,7 @@ void ExtractPatch(wad_file_t* wad, int index)
 
 	if (numpatches < MAX_PATCHES)
 	{
-		patch_t* patch = &patches[numpatches++];
+		loadedpatch_t* patch = &patches[numpatches++];
 		patch->width = header->width;
 		patch->height = header->height;
 		patch->pixels = pixels;
@@ -456,6 +456,20 @@ void WriteTexturesToHeader()
 	}
 	fprintf(fs, "};\n");
 
+	fprintf(fs, "const fixed_t textureheight[] = { \n");
+	for (int n = 0; n < numcompositetextures; n++)
+	{
+		fprintf(fs, "0x%x, ", compositetextures[n].height << 16);
+	}
+	fprintf(fs, "};\n");
+
+	fprintf(fs, "const int texturetranslation[] = { \n");
+	for (int n = 0; n < numcompositetextures + 1; n++)
+	{
+		fprintf(fs, "0x%x, ", n);
+	}
+	fprintf(fs, "};\n");
+
 	fclose(fs);
 }
 
@@ -493,7 +507,7 @@ void ExtractTextures(wad_file_t* wad)
 
 				if (texturepatch->patchnum < numpatches)
 				{
-					patch_t* patch = &patches[texturepatch->patchnum];
+					loadedpatch_t* patch = &patches[texturepatch->patchnum];
 
 					for (int j = 0; j < patch->height; j++)
 					{
@@ -554,6 +568,6 @@ void ExtractTextures(wad_file_t* wad)
 		}
 	}
 
-	WriteTexturesToHeader();
+	//WriteTexturesToHeader();
 }
 

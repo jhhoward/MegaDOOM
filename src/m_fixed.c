@@ -56,7 +56,11 @@ fixed_t FixedDiv(fixed_t a, fixed_t b)
 	int64_t result;
 
 	result = ((int64_t) a << FRACBITS) / b;
-//    result = (a / (b >> 8) ) << 8;
+    //result = (a / (b >> 8) ) << 8;
+    //if (b >> 8)
+    //    result = ((a) / (b >> 8)) << 8;
+    //else
+    //    result = ((a << 8) / b);
 
 	return (fixed_t) result;
     }

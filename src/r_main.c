@@ -696,7 +696,9 @@ void R_ExecuteSetViewSize (void)
     centerx = viewwidth/2;
     centerxfrac = centerx<<FRACBITS;
     centeryfrac = centery<<FRACBITS;
-    projection = centerxfrac * 2;
+    projection = (centerxfrac * 12) / 5;
+
+    //projection = centerx << 3;
 
     //if (!detailshift)
     //{

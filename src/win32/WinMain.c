@@ -303,6 +303,8 @@ void RenderDebugMap(void)
 #endif
 }
 
+#define MAP_FRACBITS FRACBITS
+
 int main(int argc, char* argv[])
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -341,9 +343,9 @@ int main(int argc, char* argv[])
 	map = &loadedmap; 
 	map = &map_E1M1;
 
-	viewx = map->things[0].x << 16;
-	viewy = map->things[0].y << 16;
-	viewz = 64 << 16;
+	viewx = map->things[0].x << MAP_FRACBITS;
+	viewy = map->things[0].y << MAP_FRACBITS;
+	viewz = 64 << FRACBITS;
 
 	R_Init();
 	//SDL_SetWindowPosition(AppWindow, 1900 - DISPLAY_WIDTH * 2, 1020 - DISPLAY_HEIGHT);
@@ -408,23 +410,25 @@ int main(int argc, char* argv[])
 			//viewx+= scrollSpeed;
 			viewangle -= ANG1 * 5;
 		}
+
+		int movespeed = (FRACUNIT * 5);
 		if (input & INPUT_UP)
 		{
-			viewx += finecosine[viewangle >> ANGLETOFINESHIFT] << 2;
-			viewy += finesine[viewangle >> ANGLETOFINESHIFT] << 2 ;
+			viewx += FixedMul(finecosine[viewangle >> ANGLETOFINESHIFT], movespeed);
+			viewy += FixedMul(finesine[viewangle >> ANGLETOFINESHIFT], movespeed);
 		}
 		if (input & INPUT_DOWN)
 		{
-			viewx -= finecosine[viewangle >> ANGLETOFINESHIFT] << 2;
-			viewy -= finesine[viewangle >> ANGLETOFINESHIFT] << 2;
+			viewx -= FixedMul(finecosine[viewangle >> ANGLETOFINESHIFT], movespeed);
+			viewy -= FixedMul(finesine[viewangle >> ANGLETOFINESHIFT], movespeed);
 		}
 		if (input & INPUT_A)
 		{
-			viewz += 3 << 16;
+			viewz += 3 << FRACBITS;
 		}
 		if (input & INPUT_B)
 		{
-			viewz -= 3 << 16;
+			viewz -= 3 << FRACBITS;
 		}
 
 		ClearDisplayWindow(&debugMapWindow);
