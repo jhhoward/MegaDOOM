@@ -1,3 +1,4 @@
+#define GENESIS
 #include "genesis.h"
 
 uint16_t rand(void);
@@ -7,13 +8,22 @@ void srand(uint16_t seed);
 #include "../../src/r_bsp.c"
 #include "../../src/tables.c"
 #include "../../src/r_main.c"
-#include "../../src/Render.c"
+#include "../../src/r_segs.c"
+#include "../../src/r_plane.c"
+#include "../../src/m_bbox.c"
+#include "../../src/doomdef.c"
+#include "../../src/doomstat.c"
+#include "../../src/m_fixed.c"
+#include "../../src/r_draw.c"
+#include "../../src/r_sky.c"
+#include "../../src/r_things.c"
 #include "../../project/E1M1.inc.h"
+#include "../../src/generated/textures.inc.h"
 //#include "../../project/E1M2.inc.h"
 #include "music.h"
 
-#define FRAMEBUFFER_WIDTH VIEWPORT_WIDTH
-#define FRAMEBUFFER_HEIGHT VIEWPORT_HEIGHT
+#define FRAMEBUFFER_WIDTH SCREENWIDTH
+#define FRAMEBUFFER_HEIGHT SCREENHEIGHT
 #define FRAMEBUFFER_TILE_BYTES (4 * 8)
 #define FRAMEBUFFER_WIDTH_TILES (FRAMEBUFFER_WIDTH / 4)
 #define FRAMEBUFFER_HEIGHT_TILES (FRAMEBUFFER_HEIGHT / 8)
@@ -158,14 +168,17 @@ int main(bool hardReset)
     int i = 0;
     u8 col = 0;
 
-    currentlevel = &map_E1M1;
-    viewx = currentlevel->things[0].x;
-    viewy = currentlevel->things[0].y;
-    viewangle = currentlevel->things[0].angle;
+    map = &map_E1M1;
+    viewx = map->things[0].x << 16;
+    viewy = map->things[0].y << 16;
+    viewz = 64 << 16;
+    viewangle = map->things[0].angle << 16;
+
+    R_Init();
 
     u32 lasttick = getTick();
 
-    XGM_startPlay(xgm_e1m1);
+ //   XGM_startPlay(xgm_e1m1);
 
     while(TRUE)
     {
@@ -191,26 +204,29 @@ int main(bool hardReset)
             }
             if (input & BUTTON_UP)
             {
-                viewx += finecosine[viewangle >> ANGLETOFINESHIFT] >> 5;
-                viewy += finesine[viewangle >> ANGLETOFINESHIFT] >> 5;
+                viewx += finecosine[viewangle >> ANGLETOFINESHIFT] << 3;
+                viewy += finesine[viewangle >> ANGLETOFINESHIFT]  << 3;
             }
             if (input & BUTTON_DOWN)
             {
-                viewx -= finecosine[viewangle >> ANGLETOFINESHIFT] >> 5;
-                viewy -= finesine[viewangle >> ANGLETOFINESHIFT] >> 5;
+                viewx -= finecosine[viewangle >> ANGLETOFINESHIFT] << 3;
+                viewy -= finesine[viewangle >> ANGLETOFINESHIFT]  << 3;
             }
             if (input & BUTTON_A)
             {
-                viewz += 3;
+                viewz += 3 << 16;
             }
             if (input & BUTTON_B)
             {
-                viewz -= 3;
+                viewz -= 3 << 16;
             }
         }
         lasttick = getTick();
 
-        R_RenderView();
+        for (int n = 0; n < FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT; n++)
+            framebuffer[n] = 0;
+//        R_RenderView();
+        R_RenderPlayerView();
 
 
 //        VDP_loadTileSet(&framebufferTileSet, TILE_USER_INDEX, DMA_QUEUE);
@@ -222,4 +238,54 @@ int main(bool hardReset)
     }
 
     return 0;
+}
+
+void R_DrawColumn(void)
+{
+    int			count;
+    //pixel_t* dest;
+    fixed_t		frac;
+    fixed_t		fracstep;
+
+    count = dc_yh - dc_yl;
+
+    // Zero length, column does not exceed a pixel.
+    if (count < 0)
+        return;
+
+#ifdef RANGECHECK
+    if ((unsigned)dc_x >= SCREENWIDTH
+        || dc_yl < 0
+        || dc_yh >= SCREENHEIGHT)
+        I_Error("R_DrawColumn: %i to %i at %i", dc_yl, dc_yh, dc_x);
+#endif
+
+    // Framebuffer destination address.
+    // Use ylookup LUT to avoid multiply with ScreenWidth.
+    // Use columnofs LUT for subwindows?
+    //dest = ylookup[dc_yl] + columnofs[dc_x];
+    u8* dest = framebuffer + framebufferx[dc_x];
+    dest += (dc_yl << 2);
+
+    // Determine scaling,
+    //  which is the only mapping to be done.
+    fracstep = dc_iscale;
+    frac = dc_texturemid + (dc_yl - centery) * fracstep;
+
+    // Inner loop that does the actual texture mapping,
+    //  e.g. a DDA-lile scaling.
+    // This is as fast as it gets.
+    do
+    {
+        // Re-map color indices from wall texture column
+        //  using a lighting/special effects LUT.
+        //*dest = dc_colormap[dc_source[(frac >> FRACBITS) & 127]];
+
+        byte texel = dc_source[(frac >> FRACBITS) & 127];
+        *dest = texel;
+        dest += 4;
+
+        frac += fracstep;
+
+    } while (count--);
 }

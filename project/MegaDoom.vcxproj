@@ -144,27 +144,46 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\Map.c" />
+    <ClCompile Include="..\src\doomdef.c" />
+    <ClCompile Include="..\src\doomstat.c" />
     <ClCompile Include="..\src\m_bbox.c" />
-    <ClCompile Include="..\src\Render.c" />
+    <ClCompile Include="..\src\m_fixed.c" />
     <ClCompile Include="..\src\r_bsp.c" />
+    <ClCompile Include="..\src\r_draw.c" />
     <ClCompile Include="..\src\r_main.c" />
+    <ClCompile Include="..\src\r_plane.c" />
+    <ClCompile Include="..\src\r_segs.c" />
+    <ClCompile Include="..\src\r_sky.c" />
+    <ClCompile Include="..\src\r_things.c" />
     <ClCompile Include="..\src\tables.c" />
-    <ClCompile Include="..\src\test.c" />
     <ClCompile Include="..\src\win32\lodepng.c" />
     <ClCompile Include="..\src\win32\wad.c" />
     <ClCompile Include="..\src\win32\WinMain.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\DoomData.h" />
+    <ClInclude Include="..\src\doomdef.h" />
+    <ClInclude Include="..\src\doomstat.h" />
+    <ClInclude Include="..\src\doomtype.h" />
+    <ClInclude Include="..\src\i_timer.h" />
     <ClInclude Include="..\src\i_video.h" />
     <ClInclude Include="..\src\Map.h" />
     <ClInclude Include="..\src\m_bbox.h" />
+    <ClInclude Include="..\src\m_fixed.h" />
+    <ClInclude Include="..\src\r_bsp.h" />
+    <ClInclude Include="..\src\r_data.h" />
     <ClInclude Include="..\src\r_defs.h" />
+    <ClInclude Include="..\src\r_draw.h" />
     <ClInclude Include="..\src\r_local.h" />
+    <ClInclude Include="..\src\r_main.h" />
+    <ClInclude Include="..\src\r_plane.h" />
+    <ClInclude Include="..\src\r_segs.h" />
+    <ClInclude Include="..\src\r_sky.h" />
     <ClInclude Include="..\src\r_stat.h" />
+    <ClInclude Include="..\src\r_state.h" />
+    <ClInclude Include="..\src\r_things.h" />
     <ClInclude Include="..\src\tables.h" />
-    <ClInclude Include="..\src\doomtypes.h" />
+    <ClInclude Include="..\src\v_patch.h" />
     <ClInclude Include="..\src\win32\wad.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

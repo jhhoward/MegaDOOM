@@ -1,11 +1,13 @@
 #include <SDL.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include "lodepng.h"
 #include "tables.h"
 #include "r_local.h"
 #include "generated/palette.inc.h"
 #include "DoomData.h"
 #include "../project/E1M1.inc.h"
+#include "generated/textures.inc.h"
 
 // For MD:
 // - Preprocess WAD and extract data
@@ -143,9 +145,6 @@ void DrawDebugLine(int x0, int y0, int x1, int y1)
 		if (e2 <= dx) { err += dx; y0 += sy; } /* e_xy+e_y < 0 */
 	}
 }
-
-extern int16_t viewx, viewy;
-
 
 void OpenDisplayWindow(display_window_t* window, int width, int height, int zoom)
 {
@@ -318,7 +317,7 @@ int main(int argc, char* argv[])
 		SDL_SetWindowPosition(debugMapWindow.window, windowX + debugMapWindow.width / 2, windowY);
 	}
 
-	R_InitTables();
+	//R_InitTables();
 	//R_ExecuteSetViewSize();
 
 	/*
@@ -334,17 +333,19 @@ int main(int argc, char* argv[])
 	}*/
 
 	mapdata_t mapdata;
-	map_t map;
+	map_t loadedmap;
 
 //	LoadMapFromWad(&mapdata, "doom1.wad", "E1M1");
 	LoadMapFromWad(&mapdata, "test.wad", "E1M1");
-	ExtractMapData(&mapdata, &map);
-	currentlevel = &map; 
-	currentlevel = &map_E1M1;
+	ExtractMapData(&mapdata, &loadedmap);
+	map = &loadedmap; 
+	map = &map_E1M1;
 
-	viewx = currentlevel->things[0].x;
-	viewy = currentlevel->things[0].y;
+	viewx = map->things[0].x << 16;
+	viewy = map->things[0].y << 16;
+	viewz = 64 << 16;
 
+	R_Init();
 	//SDL_SetWindowPosition(AppWindow, 1900 - DISPLAY_WIDTH * 2, 1020 - DISPLAY_HEIGHT);
 
 	/*
@@ -409,21 +410,21 @@ int main(int argc, char* argv[])
 		}
 		if (input & INPUT_UP)
 		{
-			viewx += finecosine[viewangle >> ANGLETOFINESHIFT] >> 5;
-			viewy += finesine[viewangle >> ANGLETOFINESHIFT] >> 5;
+			viewx += finecosine[viewangle >> ANGLETOFINESHIFT] << 2;
+			viewy += finesine[viewangle >> ANGLETOFINESHIFT] << 2 ;
 		}
 		if (input & INPUT_DOWN)
 		{
-			viewx -= finecosine[viewangle >> ANGLETOFINESHIFT] >> 5;
-			viewy -= finesine[viewangle >> ANGLETOFINESHIFT] >> 5;
+			viewx -= finecosine[viewangle >> ANGLETOFINESHIFT] << 2;
+			viewy -= finesine[viewangle >> ANGLETOFINESHIFT] << 2;
 		}
 		if (input & INPUT_A)
 		{
-			viewz += 3;
+			viewz += 3 << 16;
 		}
 		if (input & INPUT_B)
 		{
-			viewz -= 3;
+			viewz -= 3 << 16;
 		}
 
 		ClearDisplayWindow(&debugMapWindow);
@@ -431,7 +432,8 @@ int main(int argc, char* argv[])
 
 		// Draw stuff here
 		//RenderBSPNode(0);
-		R_RenderView();
+		R_RenderPlayerView();
+		//R_RenderView();
 		RenderDebugMap();
 
 		for (int y = 0; y < 16; y++)
@@ -454,3 +456,54 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
+void R_DrawColumn(void)
+{
+	int			count;
+	//pixel_t* dest;
+	fixed_t		frac;
+	fixed_t		fracstep;
+
+	count = dc_yh - dc_yl;
+
+	// Zero length, column does not exceed a pixel.
+	if (count < 0)
+		return;
+
+#ifdef RANGECHECK
+	if ((unsigned)dc_x >= SCREENWIDTH
+		|| dc_yl < 0
+		|| dc_yh >= SCREENHEIGHT)
+		I_Error("R_DrawColumn: %i to %i at %i", dc_yl, dc_yh, dc_x);
+#endif
+
+	// Framebuffer destination address.
+	// Use ylookup LUT to avoid multiply with ScreenWidth.
+	// Use columnofs LUT for subwindows?
+	//dest = ylookup[dc_yl] + columnofs[dc_x];
+	uint32_t* dest = &((uint32_t*)(mainWindow.screenSurface->pixels))[dc_yl * mainWindow.width + 2 * dc_x];
+
+	// Determine scaling,
+	//  which is the only mapping to be done.
+	fracstep = dc_iscale;
+	frac = dc_texturemid + (dc_yl - centery) * fracstep;
+
+	// Inner loop that does the actual texture mapping,
+	//  e.g. a DDA-lile scaling.
+	// This is as fast as it gets.
+	do
+	{
+		// Re-map color indices from wall texture column
+		//  using a lighting/special effects LUT.
+		//*dest = dc_colormap[dc_source[(frac >> FRACBITS) & 127]];
+
+		byte pixelpair = dc_source[(frac >> FRACBITS) & 127];
+		//byte pixelpair = 0x77;
+		dest[0] = gamePalette[pixelpair & 0xf];
+		dest[1] = gamePalette[pixelpair >> 4];
+		dest += mainWindow.screenSurface->pitch / sizeof(uint32_t);
+
+		//dest += SCREENWIDTH;
+		frac += fracstep;
+
+	} while (count--);
+}

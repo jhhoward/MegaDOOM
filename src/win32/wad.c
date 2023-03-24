@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <math.h>
-#include "doomtypes.h"
 #include <memory.h>
 #include <malloc.h>
 #include <string.h>
-#include "Map.h"
-#include "DoomData.h"
+#include <stdint.h>
+#include <stdbool.h>
+#include "doomdata.h"
 #include "r_defs.h"
 #include "wad.h"
 
@@ -251,10 +251,12 @@ void ExtractMapData(mapdata_t* src, map_t* dest)
 		destseg->angle = srcseg->angle;
 		destseg->linedef = &dest->lines[srcseg->linedef];
 		destseg->sidedef = &dest->sides[destseg->linedef->sidenum[srcseg->side]];
+		destseg->frontsector = destseg->linedef->frontsector;
+		destseg->backsector = destseg->linedef->backsector;
 
-		int dx = destseg->v2->x - destseg->v1->x;
-		int dy = destseg->v2->y - destseg->v1->y;
-		destseg->length = (int16_t) sqrt((dx * dx) + (dy * dy));
+		//int dx = destseg->v2->x - destseg->v1->x;
+		//int dy = destseg->v2->y - destseg->v1->y;
+		//destseg->length = (int16_t) sqrt((dx * dx) + (dy * dy));
 	}
 
 	// Sectors
@@ -289,10 +291,11 @@ void ExtractMapData(mapdata_t* src, map_t* dest)
 
 		destsubsector->numlines = srcsubsector->numsegs;
 		destsubsector->firstline = srcsubsector->firstseg;
+		destsubsector->sector = dest->segs[srcsubsector->firstseg].sidedef->sector;
 	}
 
 	// Things
 	memcpy((void*) dest->things, src->things, src->numThings * sizeof(mapthing_t));
 
-	dest->rootnode = src->numNodes - 1;
+	dest->numnodes = src->numNodes;
 }
