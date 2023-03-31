@@ -8,8 +8,15 @@ void srand(uint16_t seed);
 #include "../../src/tables.c"
 #include "../../src/r_main.c"
 #include "../../src/Render.c"
-#include "../../project/E1M1.inc.h"
-//#include "../../project/E1M2.inc.h"
+//#include "../../src/generated/E1M1.inc.h"
+//#include "../../src/generated/E1M2.inc.h"
+//#include "../../src/generated/E1M3.inc.h"
+#include "../../src/generated/E1M4.inc.h"
+//#include "../../src/generated/E1M5.inc.h"
+//#include "../../src/generated/E1M6.inc.h"
+//#include "../../src/generated/E1M7.inc.h"
+//#include "../../src/generated/E1M8.inc.h"
+//#include "../../src/generated/E1M9.inc.h"
 #include "music.h"
 
 #define FRAMEBUFFER_WIDTH VIEWPORT_WIDTH
@@ -24,6 +31,32 @@ u8 framebuffer[FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT];
 u16 framebufferTiles[FRAMEBUFFER_WIDTH_TILES * FRAMEBUFFER_HEIGHT_TILES];
 
 #include "../../src/generated/framebuffer.inc.h"
+
+//const map_t* maps[] =
+//{
+//    &map_E1M1,
+//    &map_E1M2,
+//    &map_E1M3,
+//    &map_E1M4,
+//    &map_E1M5,
+//    &map_E1M6,
+//    &map_E1M7,
+//    &map_E1M8,
+//    &map_E1M9
+//};
+//
+//const u8 const* musictracks[] =
+//{
+//    xgm_e1m1,
+//    xgm_e1m2,
+//    xgm_e1m3,
+//    xgm_e1m4,
+//    xgm_e1m5,
+//    xgm_e1m6,
+//    xgm_e1m7,
+//    xgm_e1m8,
+//    xgm_e1m9
+//};
 
 const TileSet framebufferTileSet =
 {
@@ -65,7 +98,7 @@ void putpixel(int x, int y, u8 colour)
     *ptr = colour;
 }
 
-void TexturedLine(const walltexture_t* texture, int16_t x, int16_t y, int16_t count, int16_t u, int16_t v, int16_t step)
+void TexturedLineRef(const walltexture_t* texture, int16_t x, int16_t y, int16_t count, int16_t u, int16_t v, int16_t step)
 {
   //  u &= (texture->width - 1);
 
@@ -106,6 +139,18 @@ void VLineRef(int x, int y, int count, uint8_t colour)
     }
 }
 
+int currentlevelnum = 0;
+
+void SetLevel(int levelnum)
+{
+//    currentlevelnum = levelnum;
+//    currentlevel = maps[levelnum];
+//    viewx = currentlevel->things[0].x;
+//    viewy = currentlevel->things[0].y;
+//    viewangle = currentlevel->things[0].angle;
+//
+//    XGM_startPlay(musictracks[levelnum]);
+}
 
 int main(bool hardReset)
 { 
@@ -158,24 +203,49 @@ int main(bool hardReset)
     int i = 0;
     u8 col = 0;
 
-    currentlevel = &map_E1M1;
+//    SetLevel(0);
+    currentlevel = &map_E1M4;
     viewx = currentlevel->things[0].x;
     viewy = currentlevel->things[0].y;
     viewangle = currentlevel->things[0].angle;
 
-    u32 lasttick = getTick();
+    XGM_startPlay(xgm_e1m4);
 
-    XGM_startPlay(xgm_e1m1);
+
+    u32 lasttick = getTick();
+    u32 fpstimer = getTime(0) + 256;
+    int framecount = 0;
+    bool changelevel = false;
+
+    char fpsstring[10] = "FPS:     ";
 
     while(TRUE)
     {
         u16 input = JOY_readJoypad(JOY_1);
+
+        if (getTime(0) > fpstimer)
+        {
+            int i = 0;
+            while (framecount > 0)
+            {
+                int part = framecount % 10;
+                fpsstring[9 - i] = '0' + part;
+                i--;
+                framecount /= 10;
+            }
+            VDP_drawText(fpsstring, 0, 24);
+
+            framecount = 0;
+            fpstimer = getTime(0) + 256;
+        }
+        framecount++;
 
         int elapsed = getTick() - lasttick;
         int frames = elapsed >> 4;
         if (frames > 10)
             frames = 10;
 
+        //viewangle += ANG1;
         for (int n = 0; n < frames; n++)
         {
 
@@ -207,6 +277,26 @@ int main(bool hardReset)
             {
                 viewz -= 3;
             }
+            if (input & BUTTON_START)
+            {
+                if (!changelevel)
+                {
+                    changelevel = true;
+                }
+            }
+            else
+            {
+                if (changelevel)
+                {
+                    changelevel = false;
+                    currentlevelnum++;
+                    if (currentlevelnum == 9)
+                    {
+                        currentlevelnum = 0;
+                    }
+                    SetLevel(currentlevelnum);
+                }
+            }
         }
         lasttick = getTick();
 
@@ -217,8 +307,8 @@ int main(bool hardReset)
         VDP_loadTileSet(&framebufferTileSet, TILE_USER_INDEX, DMA);
 
         // always call this method at the end of the frame
-        //SYS_doVBlankProcess();
-        SYS_doVBlankProcessEx(IMMEDIATELY);
+        SYS_doVBlankProcess();
+        //SYS_doVBlankProcessEx(IMMEDIATELY);
     }
 
     return 0;

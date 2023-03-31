@@ -59,6 +59,7 @@ typedef struct
 	char name[8];
 	uint32_t* pixels;
 	int width, height;
+	uint32_t average;
 } compositetexture_t;
 
 #define MAX_FLATS 256
@@ -413,6 +414,7 @@ void WriteTexturesToHeader()
 		for (int l = 0; l < 2; l++)
 		{
 			float alpha = (l + 1) / 2.0f;
+			alpha = l ? 1.0f : 0.75f;
 			for (int x = 0; x < compositetexture->width; x++)
 			{
 				for (int y = 0; y < compositetexture->height; y++)
@@ -451,8 +453,19 @@ void WriteTexturesToHeader()
 	fprintf(fs, "const walltexture_t walltextures[] = { { 0, 0, 0 },\n");
 	for (int n = 0; n < numcompositetextures; n++)
 	{
-		memcpy(texname, compositetextures[n].name, 8);
-		fprintf(fs, "\t{ %d, %d, texturecolumns_%s },\n", compositetextures[n].width, compositetextures[n].height, texname);
+		compositetexture_t* compositetexture = &compositetextures[n];
+		memcpy(texname, compositetexture->name, 8);
+
+		int r = compositetexture->average & 0xff;
+		int g = (compositetexture->average >> 8) & 0xff;
+		int b = (compositetexture->average >> 16) & 0xff;
+		r /= 2;
+		g /= 2;
+		b /= 2;
+		int darkAverage = MatchBlendedColour(0xff000000 | (b << 16) | (g << 8) | r);
+		int lightAverage = MatchBlendedColour(compositetexture->average);
+
+		fprintf(fs, "\t{ %d, %d, { %d, %d }, texturecolumns_%s },\n", compositetexture->width, compositetexture->height, darkAverage, lightAverage, texname);
 	}
 	fprintf(fs, "};\n");
 
@@ -514,6 +527,24 @@ void ExtractTextures(wad_file_t* wad)
 						}
 					}
 				}
+			}
+
+			// Calculate average
+			{
+				int r = 0, g = 0, b = 0;
+				for (int n = 0; n < compositetexture->width * compositetexture->height; n++)
+				{
+					uint32_t pixel = compositetexture->pixels[n];
+					r += (pixel & 0xff);
+					g += (pixel >> 8) & 0xff;
+					b += (pixel >> 16) & 0xff;
+				}
+
+				r /= compositetexture->width * compositetexture->height;
+				g /= compositetexture->width * compositetexture->height;
+				b /= compositetexture->width * compositetexture->height;
+
+				compositetexture->average = 0xff000000 | (b << 16) | (g << 8) | (r);
 			}
 
 			if (dumppng)

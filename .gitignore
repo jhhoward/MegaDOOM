@@ -6,3 +6,4 @@ megadrive/out/
 *.vcxproj.user
 tools/wadextract/Debug/
 tools/buildtables/Debug/
+src/old/

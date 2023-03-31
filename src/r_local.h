@@ -24,6 +24,8 @@
 #include "r_defs.h"
 
 void R_RenderView(void);
+void R_ClearClipSegs(void);
+
 int R_PointOnSide(int16_t x, int16_t y, const node_t* node);
 void R_RenderBSPNode(uint16_t nodenum);
 

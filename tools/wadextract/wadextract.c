@@ -36,11 +36,16 @@ int main(int argc, char* argv[])
 		ExtractTextures(iwad);
 
 		mapdata_t mapdata;
-		if (LoadMapDataFromWad(iwad, "E1M1", &mapdata))
+		char levelname[9];
+		memset(levelname, 0, 9);
+		for (int n = 1; n < 10; n++)
 		{
-			DumpMapToHeader(&mapdata, "E1M1");
+			sprintf(levelname, "E1M%d", n);
+			if (LoadMapDataFromWad(iwad, levelname, &mapdata))
+			{
+				DumpMapToHeader(&mapdata, levelname);
+			}
 		}
-
 	}
 	return 0;
 }

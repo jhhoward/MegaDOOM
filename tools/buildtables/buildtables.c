@@ -35,10 +35,26 @@ int main()
     fprintf(fs, "\n};\n");
 
     // distancescale
-    fprintf(fs, "const int16_t distancescale[] = {\n");
+    fprintf(fs, "const int16_t distancescalex[] = {\n");
     for (int n = 0; n < 2048; n++)
     {
         int result = n == 0 ? 0 : (VIEWPORT_HALF_WIDTH << 10) / n;
+        fprintf(fs, "%d", result);
+        if (n == 2047)
+        {
+            fprintf(fs, "\n");
+        }
+        else
+        {
+            fprintf(fs, ", ");
+        }
+    }
+    fprintf(fs, "};\n\n");
+
+    fprintf(fs, "const int16_t distancescaley[] = {\n");
+    for (int n = 0; n < 2048; n++)
+    {
+        int result = n == 0 ? 0 : ((VIEWPORT_HALF_WIDTH * 3) << 10) / n;
         fprintf(fs, "%d", result);
         if (n == 2047)
         {
@@ -101,6 +117,25 @@ int main()
     {
         fprintf(fs, "\tcase %d:\n", y);
         fprintf(fs, "\tptr[%d] = colour;\n", (y - 1) * 4);
+//        fprintf(fs, "\t*ptr = colour; ptr += 4;\n");
+    }
+    fprintf(fs, "\tbreak;\n");
+    fprintf(fs, "\t}\n");
+    fprintf(fs, "}\n");
+
+    fprintf(fs, "void TexturedLine(const walltexture_t* texture, int16_t x, int16_t y, int16_t count, int16_t u, int16_t v, int16_t step)\n");
+    fprintf(fs, "{\n");
+    fprintf(fs, "\tu8* ptr = framebuffer + framebufferx[x];\n");
+    fprintf(fs, "\tptr += (y << 2);\n");
+    fprintf(fs, "\tconst u8* texptr = texture->columns[u];\n");
+    fprintf(fs, "\tint texcoord = v << 8;\n");
+
+    fprintf(fs, "\tswitch(count) {");
+    for (int y = FRAMEBUFFER_HEIGHT; y > 0; y--)
+    {
+        fprintf(fs, "\tcase %d:\n", y);
+        fprintf(fs, "\t*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;\n");
+        //        fprintf(fs, "\t*ptr = colour; ptr += 4;\n");
     }
     fprintf(fs, "\tbreak;\n");
     fprintf(fs, "\t}\n");

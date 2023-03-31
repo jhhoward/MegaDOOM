@@ -264,3 +264,268 @@ void VLine(int x, int y, int count, uint8_t colour)
 	break;
 	}
 }
+void TexturedLine(const walltexture_t* texture, int16_t x, int16_t y, int16_t count, int16_t u, int16_t v, int16_t step)
+{
+	u8* ptr = framebuffer + framebufferx[x];
+	ptr += (y << 2);
+	const u8* texptr = texture->columns[u];
+	int texcoord = v << 8;
+	switch(count) {	case 128:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 127:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 126:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 125:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 124:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 123:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 122:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 121:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 120:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 119:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 118:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 117:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 116:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 115:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 114:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 113:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 112:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 111:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 110:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 109:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 108:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 107:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 106:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 105:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 104:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 103:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 102:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 101:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 100:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 99:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 98:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 97:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 96:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 95:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 94:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 93:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 92:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 91:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 90:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 89:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 88:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 87:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 86:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 85:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 84:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 83:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 82:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 81:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 80:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 79:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 78:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 77:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 76:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 75:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 74:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 73:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 72:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 71:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 70:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 69:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 68:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 67:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 66:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 65:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 64:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 63:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 62:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 61:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 60:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 59:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 58:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 57:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 56:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 55:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 54:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 53:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 52:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 51:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 50:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 49:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 48:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 47:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 46:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 45:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 44:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 43:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 42:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 41:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 40:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 39:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 38:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 37:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 36:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 35:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 34:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 33:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 32:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 31:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 30:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 29:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 28:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 27:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 26:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 25:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 24:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 23:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 22:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 21:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 20:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 19:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 18:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 17:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 16:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 15:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 14:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 13:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 12:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 11:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 10:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 9:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 8:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 7:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 6:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 5:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 4:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 3:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 2:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	case 1:
+	*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;
+	break;
+	}
+}

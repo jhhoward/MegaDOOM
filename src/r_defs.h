@@ -165,6 +165,7 @@ typedef struct
 typedef struct
 {
     int width, height;
+    uint8_t colour[2];
     const uint8_t* const* columns;
 } walltexture_t;
 

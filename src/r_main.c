@@ -7,7 +7,7 @@
 #include "r_local.h"
 
 int16_t viewx, viewy;
-int16_t viewz = 64;
+int16_t viewz = 41;
 angle_t viewangle;
 
 const map_t* currentlevel;
@@ -26,6 +26,7 @@ void R_RenderView()
 	}
 
 	columnsToFill = VIEWPORT_WIDTH;
+    R_ClearClipSegs();
 	R_RenderBSPNode(currentlevel->rootnode);
 }
 

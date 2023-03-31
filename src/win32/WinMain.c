@@ -5,7 +5,7 @@
 #include "r_local.h"
 #include "generated/palette.inc.h"
 #include "DoomData.h"
-#include "../project/E1M1.inc.h"
+#include "generated/E1M1.inc.h"
 
 // For MD:
 // - Preprocess WAD and extract data
@@ -135,6 +135,9 @@ void DrawDebugLine(int x0, int y0, int x1, int y1)
 	int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
 	int err = dx + dy, e2; /* error value e_xy */
 
+	x0 *= 2;
+	x1 *= 2;
+
 	for (;;) {  /* loop */
 		PutPixelImmediate(mainWindow.screenSurface, x0, y0, 0xffffffff);
 		if (x0 == x1 && y0 == y1) break;
@@ -186,6 +189,8 @@ void BlitDisplayWindow(display_window_t* window)
 
 }
 
+const bool halfheight = false;
+
 void TexturedLine(const walltexture_t* texture, int16_t x, int16_t y, int16_t count, int16_t u, int16_t v, int16_t step)
 {
 	x *= 2;
@@ -202,8 +207,20 @@ void TexturedLine(const walltexture_t* texture, int16_t x, int16_t y, int16_t co
 		texcoord += step;
 //		uint8_t colourPair = (texture->columns[u])[(texcoord >> 16) & 127];
 		uint8_t colourPair = (texture->columns[u])[(int)(texcoord >> 8) & 127];
-		PutPixelImmediate(mainWindow.screenSurface, x, y, gamePalette[colourPair & 0xf]);
-		PutPixelImmediate(mainWindow.screenSurface, x + 1, y, gamePalette[colourPair >> 4]);
+
+		if (!halfheight)
+		{
+			PutPixelImmediate(mainWindow.screenSurface, x, y, gamePalette[colourPair & 0xf]);
+			PutPixelImmediate(mainWindow.screenSurface, x + 1, y, gamePalette[colourPair >> 4]);
+		}
+		else
+		{
+			PutPixelImmediate(mainWindow.screenSurface, x, y * 2, gamePalette[colourPair & 0xf]);
+			PutPixelImmediate(mainWindow.screenSurface, x + 1, y * 2, gamePalette[colourPair >> 4]);
+			PutPixelImmediate(mainWindow.screenSurface, x, y * 2 + 1, gamePalette[colourPair & 0xf]);
+			PutPixelImmediate(mainWindow.screenSurface, x + 1, y * 2 + 1, gamePalette[colourPair >> 4]);
+		}
+
 		y++;
 	}
 //	while (count--)
@@ -242,7 +259,7 @@ void VLine(int x, int y, int count, uint8_t colour)
 		}
 		else
 		{
-			if (true)
+			if (!halfheight)
 			{
 				PutPixelImmediate(mainWindow.screenSurface, x, y, gamePalette[colour & 0xf]);
 				PutPixelImmediate(mainWindow.screenSurface, x + 1, y, gamePalette[colour >> 4]);

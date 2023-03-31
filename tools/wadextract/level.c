@@ -1,3 +1,5 @@
+#include <memory.h>
+#include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
 #include "r_defs.h"
@@ -9,8 +11,8 @@
 
 void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 {
-	char filename[50];
-	sprintf_s(filename, 50, "%s.inc.h", levelname);
+	char filename[100];
+	sprintf_s(filename, 50, "../src/generated/%s.inc.h", levelname);
 
 	FILE* fs = fopen(filename, "w");
 
