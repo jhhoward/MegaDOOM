@@ -7,6 +7,10 @@
 #include "DoomData.h"
 #include "generated/E1M1.inc.h"
 
+#include "generated/textures.inc.h"
+#include "generated/flats.inc.h"
+
+
 // For MD:
 // - Preprocess WAD and extract data
 // - Dump to big header / .c file as const structs / arrays of structs
@@ -191,7 +195,7 @@ void BlitDisplayWindow(display_window_t* window)
 
 const bool halfheight = false;
 
-void TexturedLine(const walltexture_t* texture, int16_t x, int16_t y, int16_t count, int16_t u, int16_t v, int16_t step)
+void TexturedLine(const uint8_t* texptr, int16_t x, int16_t y, int16_t count, int16_t u, int16_t v, int16_t step)
 {
 	x *= 2;
 	//u &= (texture->width - 1);
@@ -206,7 +210,7 @@ void TexturedLine(const walltexture_t* texture, int16_t x, int16_t y, int16_t co
 		//int texcoord = (int)(alpha * 128);
 		texcoord += step;
 //		uint8_t colourPair = (texture->columns[u])[(texcoord >> 16) & 127];
-		uint8_t colourPair = (texture->columns[u])[(int)(texcoord >> 8) & 127];
+		uint8_t colourPair = texptr[(int)(texcoord >> 8) & 127];
 
 		if (!halfheight)
 		{
@@ -279,7 +283,7 @@ void VLine(int x, int y, int count, uint8_t colour)
 
 void DumpTexture(walltexture_t* tex)
 {
-	for (int x = 0; x < tex->width; x++)
+	/*for (int x = 0; x < tex->width; x++)
 	{
 		for (int y = 0; y < tex->height; y++)
 		{
@@ -293,7 +297,7 @@ void DumpTexture(walltexture_t* tex)
 				PutPixelImmediate(mainWindow.screenSurface, x, y, gamePalette[data >> 4]);
 			}
 		}
-	}
+	}*/
 }
 
 void RenderDebugMap(void)

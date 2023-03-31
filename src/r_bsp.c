@@ -6,10 +6,11 @@
 
 #include "Map.h"
 
-#include "generated/textures.inc.h"
-#include "generated/flats.inc.h"
+extern const uint8_t textureatlas[];
+extern const walltexture_t walltextures[];
+extern const flat_t flats[];
 
-void TexturedLine(const walltexture_t* texture, int16_t x, int16_t y, int16_t count, int16_t u, int16_t v, int16_t scale);
+void TexturedLine(const uint8_t* texptr, int16_t x, int16_t y, int16_t count, int16_t u, int16_t v, int16_t step);
 
 
 void DrawDebugLine(int x0, int y0, int x1, int y1);
@@ -131,7 +132,7 @@ inline int32_t ScaleByDistanceX(int16_t x, int16_t z)
 #endif
 }
 
-inline int16_t ScaleByDistanceY(int16_t x, int16_t z)
+inline int32_t ScaleByDistanceY(int16_t x, int16_t z)
 {
 #if USE_DIVIDE_INSTRUCTIONS 
     return (x * VIEWPORT_WIDTH) / z;
@@ -141,150 +142,8 @@ inline int16_t ScaleByDistanceY(int16_t x, int16_t z)
         z >>= 1;
         x >>= 1;
     }
-    return (x * distancescaley[z]) >> 10;
+    return (x * distancescaley[z]);
 #endif
-}
-
-typedef struct
-{
-    const walltexture_t* texture;
-    int16_t sx1, sx2;           // Screen x coordinate extents
-    int16_t upper1, upper2;     // Upper y coordinates
-    int16_t lower1, lower2;     // Lower y coordinates
-    int16_t tx1, tx2;           // Texture x coordinates
-    int16_t ty1, ty2;           // Texture y coordinates
-    bool fillFloor, fillCeiling;
-    uint8_t ceilingColour;
-    uint8_t floorColour;
-    int16_t lightingShift;
-} texturequadparams_t;
-
-#define TEXQUAD_FIXSHIFT 11
-
-void R_TextureQuad(texturequadparams_t* params)
-{
-    int16_t deltasx = params->sx2 - params->sx1;
-    int32_t fxupper = params->upper1 << TEXQUAD_FIXSHIFT;
-    int32_t fxlower = params->lower1 << TEXQUAD_FIXSHIFT;
-    int16_t upperstep = ((params->upper2 - params->upper1) << TEXQUAD_FIXSHIFT) / deltasx;
-    int16_t lowerstep = ((params->lower2 - params->lower1) << TEXQUAD_FIXSHIFT) / deltasx;
-    int32_t fxtx = params->tx1 << TEXQUAD_FIXSHIFT;
-    int16_t txstep = ((params->tx2 - params->tx1) << TEXQUAD_FIXSHIFT) / deltasx;
-    int16_t deltaty = params->ty2 - params->ty1;
-
-    fxtx = txstep = 0;
-
-    if (params->sx1 < 0)
-    {
-        fxupper -= upperstep * params->sx1;
-        fxlower -= lowerstep * params->sx1;
-        fxtx -= txstep * params->sx1;
-        params->sx1 = 0;
-    }
-    if (params->sx2 >= VIEWPORT_WIDTH)
-    {
-        params->sx2 = VIEWPORT_WIDTH - 1;
-    }
-
-    for (int x = params->sx1; x <= params->sx2; x++)
-    {
-        int16_t y1 = fxupper >> TEXQUAD_FIXSHIFT;
-        int16_t y2 = fxlower >> TEXQUAD_FIXSHIFT;
-        int16_t clipTop = ceilingClip[x];
-        int16_t clipBottom = floorClip[x];
-        int16_t ty = params->ty1;
-        int16_t tx = (fxtx >> TEXQUAD_FIXSHIFT);
-
-        if (clipTop < clipBottom)
-        {
-            if (y1 <= clipTop)
-            {
-                if (y1 != y2)
-                {
-                    ty = ClipValue(y1, y2, params->ty1, params->ty2, clipTop + 1);
-                }
-                y1 = clipTop + 1;
-            }
-            else
-            {
-                if (params->fillCeiling)
-                {
-                    if (y1 < clipBottom)
-                    {
-                        VLine(x, clipTop + 1, y1 - clipTop - 1, params->ceilingColour);
-                    }
-                    else
-                    {
-                        VLine(x, clipTop + 1, clipBottom - clipTop - 1, params->ceilingColour);
-                        ceilingClip[x] = floorClip[x] = 0;
-                        columnsToFill--;
-                        goto fullyclipped;
-                    }
-                }
-            }
-
-            if (y2 > clipBottom)
-            {
-                y2 = clipBottom;
-            }
-            else
-            {
-                if (params->fillFloor)
-                {
-                    if (y2 > clipTop)
-                    {
-                        VLine(x, y2, clipBottom - y2, params->floorColour);
-                    }
-                    else
-                    {
-                        VLine(x, clipTop + 1, clipBottom - clipTop - 1, params->floorColour);
-                        ceilingClip[x] = floorClip[x] = 0;
-                        columnsToFill--;
-                        goto fullyclipped;
-                    }
-                }
-            }
-
-            if (params->texture)
-            {
-                //ceilingClip[x] = floorClip[x] = 0;
-                if (y2 <= y1)
-                    continue;
-
-                if (params->fillCeiling)
-                {
-                    ceilingClip[x] = y2 - 1;
-                }
-                if (params->fillFloor)
-                {
-                    floorClip[x] = y1;
-                }
-
-                int16_t scalediv = ((fxlower - fxupper) >> TEXQUAD_FIXSHIFT);
-                if (scalediv == 0)
-                    scalediv = 1;
-                TexturedLine(params->texture, x, y1, y2 - y1, (tx & (params->texture->width - 1)) + params->lightingShift, ty, (deltaty << 8) / scalediv);
-                //VLine(x, y1, y2 - y1, 0x22);
-
-                if (floorClip[x] <= ceilingClip[x])
-                {
-                    columnsToFill--;
-                }
-                //VLine(x, y1, y2 - y1, colour);
-//                   columnsToFill--;
-            }
-            else
-            {
-                ceilingClip[x] = y1 - 1;
-                floorClip[x] = y2;
-            }
-        }
-
-    fullyclipped:
-        fxupper += upperstep;
-        fxlower += lowerstep;
-        fxtx += txstep;
-    }
 }
 
 // View space vertex positions
@@ -305,21 +164,27 @@ const walltexture_t* draw_walltexture;
 uint8_t draw_wallcolour;
 uint8_t draw_floorcolour;
 uint8_t draw_ceilingcolour;
-int16_t draw_shadingoffset;
+int16_t draw_shading;
 bool draw_fillfloor, draw_fillceiling, draw_fillwall;
+
+void R_StoreWallRangeSimple(int16_t left, int16_t right);
 
 void R_StoreWallRange(int16_t left, int16_t right)
 {
-//    int16_t deltaupper_fx = (ss_upper2_fx - ss_upper1_fx) / ss_deltax;
-//    int16_t deltalower_fx = (ss_lower2_fx - ss_lower1_fx) / ss_deltax;
-//    int16_t upper_fx = ss_upper1_fx;
-//    int16_t lower_fx = ss_lower1_fx;
+    if (ss_x2 - ss_x1 <= 2 || ((ss_lower1_fx - ss_upper1_fx) < (6 << 8) && (ss_lower2_fx - ss_upper2_fx) < (6 << 8)))
+    {
+        R_StoreWallRangeSimple(left, right);
+        return;
+    }
+
     int16_t deltaupper_fx = (ss_upper2_fx - ss_upper1_fx) / ss_deltax;
     int16_t deltalower_fx = (ss_lower2_fx - ss_lower1_fx) / ss_deltax;
     int32_t upper_fx = ss_upper1_fx;
     int32_t lower_fx = ss_lower1_fx;
     int32_t deltatx_fx = ((vs_tx2 - vs_tx1) << 8) / ss_deltax;
     int32_t tx_fx = vs_tx1 << 8;
+
+    const uint32_t* columns = draw_walltexture->columns[draw_shading];
 
     if (left > ss_x1)
     {
@@ -335,15 +200,27 @@ void R_StoreWallRange(int16_t left, int16_t right)
         int16_t bottom = lower_fx >> 8;
         int16_t clipTop = ceilingClip[x];
         int16_t clipBottom = floorClip[x];
-        int16_t ty = vs_ty1;
+        int16_t ty, step;
+        
+        if (draw_fillwall)
+        {
+            ty = vs_ty1;
+            int16_t scalediv = ((lower_fx - upper_fx) >> 8);
+            if (scalediv == 0)
+                scalediv = 1;
+            step = ((vs_ty2 - vs_ty1) << 8) / scalediv;
+            //step = ((vs_ty2 - vs_ty1) * reciprocal[scalediv]) >> 2;
+        }
+
 
         if (clipTop < clipBottom)
         {
             if (top <= clipTop)
             {
-                if (top != bottom)
+                if (top != bottom && draw_fillwall)
                 {
-                    ty = vs_ty1 + ((clipTop + 1) - top) * (vs_ty2 - vs_ty1) / (bottom - top);
+                    ty += (step * (clipTop - top)) >> 8;
+                    //ty = vs_ty1 + ((clipTop + 1) - top) * (vs_ty2 - vs_ty1) / (bottom - top);
                     //ty = ClipValue(top, bottom, vs_ty1, vs_ty2, clipTop + 1);
                 }
                 top = clipTop + 1;
@@ -399,16 +276,8 @@ void R_StoreWallRange(int16_t left, int16_t right)
                         floorClip[x] = top;
                     }
 
-                    int16_t scalediv = ((lower_fx - upper_fx) >> 8);
-                    if (scalediv == 0)
-                        scalediv = 1;
-
-                    int16_t texcoord = draw_shadingoffset + ((tx_fx >> 8) & (draw_walltexture->width - 1));
-                    //int16_t texcoord = draw_walltexture->width + ((int)(tx_fx / 256.0f) & (draw_walltexture->width - 1));
-                    TexturedLine(draw_walltexture, x, top, bottom - top, texcoord, ty, ((vs_ty2 - vs_ty1) << 8) / scalediv);
-                    //VLine(x, top, bottom - top, draw_wallcolour);
-                    
-                    //VLine(x, top, bottom - top, ((texcoord / 32) & 1) ? 0x77 : 0x88);
+                    int16_t texcoord = ((tx_fx >> 8) & (draw_walltexture->width - 1));
+                    TexturedLine(textureatlas + columns[texcoord], x, top, bottom - top, texcoord, ty, step);
                 }
                 else
                 {
@@ -416,14 +285,107 @@ void R_StoreWallRange(int16_t left, int16_t right)
                     floorClip[x] = bottom;
                 }
             }
-            //floorClip[x] = 0;
-            //ceilingClip[x] = VIEWPORT_HEIGHT - 1;
         }
 
         fullyclipped:
         upper_fx += deltaupper_fx;
         lower_fx += deltalower_fx;
         tx_fx += deltatx_fx;
+    }
+}
+
+void R_StoreWallRangeSimple(int16_t left, int16_t right)
+{
+    int16_t deltaupper_fx = (ss_upper2_fx - ss_upper1_fx) / ss_deltax;
+    int16_t deltalower_fx = (ss_lower2_fx - ss_lower1_fx) / ss_deltax;
+    int32_t upper_fx = ss_upper1_fx;
+    int32_t lower_fx = ss_lower1_fx;
+    uint8_t wallcolour = draw_walltexture->colour[draw_shading];
+
+    if (left > ss_x1)
+    {
+        int16_t diff = left - ss_x1;
+        upper_fx += deltaupper_fx * diff;
+        lower_fx += deltalower_fx * diff;
+    }
+
+    for (int16_t x = left; x <= right; x++)
+    {
+        int16_t top = upper_fx >> 8;
+        int16_t bottom = lower_fx >> 8;
+        int16_t clipTop = ceilingClip[x];
+        int16_t clipBottom = floorClip[x];
+
+        if (clipTop < clipBottom)
+        {
+            if (top <= clipTop)
+            {
+                top = clipTop + 1;
+            }
+            else
+            {
+                if (draw_fillceiling)
+                {
+                    if (top < clipBottom)
+                    {
+                        VLine(x, clipTop + 1, top - clipTop - 1, draw_ceilingcolour);
+                    }
+                    else
+                    {
+                        VLine(x, clipTop + 1, clipBottom - clipTop - 1, draw_ceilingcolour);
+                        ceilingClip[x] = floorClip[x] = 0;
+                        goto fullyclipped;
+                    }
+                }
+            }
+
+            if (bottom > clipBottom)
+            {
+                bottom = clipBottom;
+            }
+            else
+            {
+                if (draw_fillfloor)
+                {
+                    if (bottom > clipTop)
+                    {
+                        VLine(x, bottom, clipBottom - bottom, draw_floorcolour);
+                    }
+                    else
+                    {
+                        VLine(x, clipTop + 1, clipBottom - clipTop - 1, draw_floorcolour);
+                        ceilingClip[x] = floorClip[x] = 0;
+                        goto fullyclipped;
+                    }
+                }
+            }
+
+            if (top < bottom)
+            {
+                if (draw_fillwall)
+                {
+                    if (draw_fillceiling)
+                    {
+                        ceilingClip[x] = bottom - 1;
+                    }
+                    if (draw_fillfloor)
+                    {
+                        floorClip[x] = top;
+                    }
+
+                    VLine(x, top, bottom - top, wallcolour);
+                }
+                else
+                {
+                    ceilingClip[x] = top - 1;
+                    floorClip[x] = bottom;
+                }
+            }
+        }
+
+    fullyclipped:
+        upper_fx += deltaupper_fx;
+        lower_fx += deltalower_fx;
     }
 }
 
@@ -774,23 +736,20 @@ void R_Subsector(uint16_t subSectorNum)
         vs_tx1 += seg->offset;
         vs_tx2 += seg->offset;
 
-        texturequadparams_t quadparams;
-
         const side_t* side = seg->sidedef;
         const sector_t* sector = side->sector;
 
         draw_floorcolour = flats[sector->floorpic].colour[sector->lightlevel];
         draw_ceilingcolour = flats[sector->ceilingpic].colour[sector->lightlevel];
 
-        int16_t shading;
-
-        if (sector->lightlevel < 3)
-            shading = 0;
-        else if (sector->lightlevel <= 6)
+        draw_shading = sector->lightlevel;
+        if (draw_shading)
         {
-            shading = seg->angle < ANG45 || seg->angle >(ANG270 + ANG45) || (seg->angle > ANG90 + ANG45 && seg->angle < ANG180 + ANG45) ? 1 : 0;
+            if (seg->angle < ANG45 || seg->angle >(ANG270 + ANG45) || (seg->angle > ANG90 + ANG45 && seg->angle < ANG180 + ANG45))
+            {
+                draw_shading--;
+            }
         }
-        else shading = 1;
 
         vs_tx1 += side->textureoffset;
         vs_tx2 += side->textureoffset;
@@ -805,8 +764,6 @@ void R_Subsector(uint16_t subSectorNum)
             draw_fillwall = true;
             draw_fillceiling = true;
 
-            draw_shadingoffset = shading ? draw_walltexture->width : 0;
-
             vs_ty2 = sector->ceilingheight - sector->floorheight;
 
             if (linedef->flags & ML_DONTPEGBOTTOM)
@@ -820,10 +777,10 @@ void R_Subsector(uint16_t subSectorNum)
             }
 
             // TODO: make ScaleByDistanceY() return a fixed value instead of shifting here
-            ss_upper1_fx = (VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(sector->ceilingheight - viewz, vs_y1)) << 8;
-            ss_upper2_fx = (VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(sector->ceilingheight - viewz, vs_y2)) << 8;
-            ss_lower1_fx = (VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(sector->floorheight - viewz, vs_y1)) << 8;
-            ss_lower2_fx = (VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(sector->floorheight - viewz, vs_y2)) << 8;
+            ss_upper1_fx = VIEWPORT_HALF_HEIGHT_FX - ScaleByDistanceY(sector->ceilingheight - viewz, vs_y1);
+            ss_upper2_fx = VIEWPORT_HALF_HEIGHT_FX - ScaleByDistanceY(sector->ceilingheight - viewz, vs_y2);
+            ss_lower1_fx = VIEWPORT_HALF_HEIGHT_FX - ScaleByDistanceY(sector->floorheight - viewz, vs_y1);
+            ss_lower2_fx = VIEWPORT_HALF_HEIGHT_FX - ScaleByDistanceY(sector->floorheight - viewz, vs_y2);
 
             R_ClipSolidWallSegment(ss_x1, ss_x2);
             //R_DrawSolidSeg();
@@ -839,16 +796,15 @@ void R_Subsector(uint16_t subSectorNum)
                 draw_walltexture = &walltextures[side->toptexture];
                 //draw_wallcolour = walltextures[side->toptexture].colour[shading];
                 //draw_wallcolour = (uint8_t)(seg + 50);
-                draw_shadingoffset = shading ? draw_walltexture->width : 0;
 
                 draw_fillfloor = false;
                 draw_fillwall = true;
                 draw_fillceiling = true;
 
-                ss_upper1_fx = (VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(sector->ceilingheight - viewz, vs_y1)) << 8;
-                ss_upper2_fx = (VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(sector->ceilingheight - viewz, vs_y2)) << 8;
-                ss_lower1_fx = (VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(backsector->ceilingheight - viewz, vs_y1)) << 8;
-                ss_lower2_fx = (VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(backsector->ceilingheight - viewz, vs_y2)) << 8;
+                ss_upper1_fx = (VIEWPORT_HALF_HEIGHT_FX - ScaleByDistanceY(sector->ceilingheight - viewz, vs_y1));
+                ss_upper2_fx = (VIEWPORT_HALF_HEIGHT_FX - ScaleByDistanceY(sector->ceilingheight - viewz, vs_y2));
+                ss_lower1_fx = (VIEWPORT_HALF_HEIGHT_FX - ScaleByDistanceY(backsector->ceilingheight - viewz, vs_y1));
+                ss_lower2_fx = (VIEWPORT_HALF_HEIGHT_FX - ScaleByDistanceY(backsector->ceilingheight - viewz, vs_y2));
 
                 vs_ty2 = sector->ceilingheight - backsector->ceilingheight;
                 if (linedef->flags & ML_DONTPEGTOP)
@@ -869,7 +825,6 @@ void R_Subsector(uint16_t subSectorNum)
                 draw_walltexture = &walltextures[side->bottomtexture];
                 //draw_wallcolour = walltextures[side->bottomtexture].colour[shading];
                 //draw_wallcolour = (uint8_t)(seg + 100);
-                draw_shadingoffset = shading ? draw_walltexture->width : 0;
 
                 draw_fillfloor = true;
                 draw_fillwall = true;
@@ -888,10 +843,10 @@ void R_Subsector(uint16_t subSectorNum)
                 }
                 
 
-                ss_upper1_fx = (VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(backsector->floorheight - viewz, vs_y1)) << 8;
-                ss_upper2_fx = (VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(backsector->floorheight - viewz, vs_y2)) << 8;
-                ss_lower1_fx = (VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(sector->floorheight - viewz, vs_y1)) << 8;
-                ss_lower2_fx = (VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(sector->floorheight - viewz, vs_y2)) << 8;
+                ss_upper1_fx = (VIEWPORT_HALF_HEIGHT_FX - ScaleByDistanceY(backsector->floorheight - viewz, vs_y1));
+                ss_upper2_fx = (VIEWPORT_HALF_HEIGHT_FX - ScaleByDistanceY(backsector->floorheight - viewz, vs_y2));
+                ss_lower1_fx = (VIEWPORT_HALF_HEIGHT_FX - ScaleByDistanceY(sector->floorheight - viewz, vs_y1));
+                ss_lower2_fx = (VIEWPORT_HALF_HEIGHT_FX - ScaleByDistanceY(sector->floorheight - viewz, vs_y2));
                 R_ClipPassWallSegment(ss_x1, ss_x2);
             }
 
@@ -901,10 +856,10 @@ void R_Subsector(uint16_t subSectorNum)
                 draw_fillceiling = !hasupper;
                 draw_fillwall = false;
 
-                ss_upper1_fx = (VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(sector->ceilingheight - viewz, vs_y1)) << 8;
-                ss_upper2_fx = (VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(sector->ceilingheight - viewz, vs_y2)) << 8;
-                ss_lower1_fx = (VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(sector->floorheight - viewz, vs_y1)) << 8;
-                ss_lower2_fx = (VIEWPORT_HALF_HEIGHT - ScaleByDistanceY(sector->floorheight - viewz, vs_y2)) << 8;
+                ss_upper1_fx = VIEWPORT_HALF_HEIGHT_FX - ScaleByDistanceY(sector->ceilingheight - viewz, vs_y1);
+                ss_upper2_fx = VIEWPORT_HALF_HEIGHT_FX - ScaleByDistanceY(sector->ceilingheight - viewz, vs_y2);
+                ss_lower1_fx = VIEWPORT_HALF_HEIGHT_FX - ScaleByDistanceY(sector->floorheight - viewz, vs_y1);
+                ss_lower2_fx = VIEWPORT_HALF_HEIGHT_FX - ScaleByDistanceY(sector->floorheight - viewz, vs_y2);
                 R_ClipPassWallSegment(ss_x1, ss_x2);
             }
         }
@@ -1011,9 +966,9 @@ void R_ClearClipSegs(void)
 
 bool R_CheckBBox(const int16_t* bspcoord)
 {
-    int			boxx;
-    int			boxy;
-    int			boxpos;
+    int16_t			boxx;
+    int16_t			boxy;
+    int16_t			boxpos;
 
     int16_t		x1;
     int16_t		y1;
@@ -1215,7 +1170,7 @@ void R_RenderBSPNode(uint16_t nodenum)
     // Found a subsector?
     if (nodenum & NF_SUBSECTOR)
     {
-        if (nodenum == -1)
+        if (nodenum == 0xffff)
             R_Subsector(0);
         else
             R_Subsector(nodenum & (~NF_SUBSECTOR));

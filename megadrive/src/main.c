@@ -11,9 +11,9 @@ void srand(uint16_t seed);
 //#include "../../src/generated/E1M1.inc.h"
 //#include "../../src/generated/E1M2.inc.h"
 //#include "../../src/generated/E1M3.inc.h"
-#include "../../src/generated/E1M4.inc.h"
+//#include "../../src/generated/E1M4.inc.h"
 //#include "../../src/generated/E1M5.inc.h"
-//#include "../../src/generated/E1M6.inc.h"
+#include "../../src/generated/E1M6.inc.h"
 //#include "../../src/generated/E1M7.inc.h"
 //#include "../../src/generated/E1M8.inc.h"
 //#include "../../src/generated/E1M9.inc.h"
@@ -28,7 +28,7 @@ void srand(uint16_t seed);
 #define FRAMEBUFFER_Y ((28 - 4 - FRAMEBUFFER_HEIGHT_TILES) / 2)
 
 u8 framebuffer[FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT];
-u16 framebufferTiles[FRAMEBUFFER_WIDTH_TILES * FRAMEBUFFER_HEIGHT_TILES];
+//u16 framebufferTiles[FRAMEBUFFER_WIDTH_TILES * FRAMEBUFFER_HEIGHT_TILES];
 
 #include "../../src/generated/framebuffer.inc.h"
 
@@ -98,7 +98,7 @@ void putpixel(int x, int y, u8 colour)
     *ptr = colour;
 }
 
-void TexturedLineRef(const walltexture_t* texture, int16_t x, int16_t y, int16_t count, int16_t u, int16_t v, int16_t step)
+/*void TexturedLineRef(const walltexture_t* texture, int16_t x, int16_t y, int16_t count, int16_t u, int16_t v, int16_t step)
 {
   //  u &= (texture->width - 1);
 
@@ -115,7 +115,7 @@ void TexturedLineRef(const walltexture_t* texture, int16_t x, int16_t y, int16_t
         *ptr = texptr[(texcoord >> 8) & 127];
         ptr += 4;
     }
-}
+}*/
 
 
 void VLineRef(int x, int y, int count, uint8_t colour)
@@ -162,13 +162,13 @@ int main(bool hardReset)
 
     PAL_setColors(0, gamePalette, 16, CPU);
 
-    for (int y = 0; y < FRAMEBUFFER_HEIGHT_TILES; y++)
+    /*for (int y = 0; y < FRAMEBUFFER_HEIGHT_TILES; y++)
     {
         for (int x = 0; x < FRAMEBUFFER_WIDTH_TILES; x++)
         {
             framebufferTiles[y * FRAMEBUFFER_WIDTH_TILES + x] = TILE_USER_INDEX + x * FRAMEBUFFER_HEIGHT_TILES + y;
         }
-    }
+    }*/
     for (int y = 0; y < FRAMEBUFFER_HEIGHT; y++)
     {
         for (int x = 0; x < FRAMEBUFFER_WIDTH; x++)
@@ -204,12 +204,12 @@ int main(bool hardReset)
     u8 col = 0;
 
 //    SetLevel(0);
-    currentlevel = &map_E1M4;
+    currentlevel = &map_E1M6;
     viewx = currentlevel->things[0].x;
     viewy = currentlevel->things[0].y;
     viewangle = currentlevel->things[0].angle;
 
-    XGM_startPlay(xgm_e1m4);
+    XGM_startPlay(xgm_e1m6);
 
 
     u32 lasttick = getTick();

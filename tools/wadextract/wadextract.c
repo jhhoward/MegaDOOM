@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 		for (int n = 1; n < 10; n++)
 		{
 			sprintf(levelname, "E1M%d", n);
-			if (LoadMapDataFromWad(iwad, levelname, &mapdata))
+			if (LoadMapDataFromWad(pwad, levelname, &mapdata))
 			{
 				DumpMapToHeader(&mapdata, levelname);
 			}

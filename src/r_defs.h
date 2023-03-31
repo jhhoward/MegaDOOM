@@ -2,10 +2,14 @@
 
 #include "doomtypes.h"
 
-#define VIEWPORT_WIDTH 112
+#define VIEWPORT_WIDTH 112 // 112
+#define VIEWPORT_HEIGHT 112 // 128
 #define VIEWPORT_HALF_WIDTH (VIEWPORT_WIDTH / 2)
-#define VIEWPORT_HEIGHT 128
 #define VIEWPORT_HALF_HEIGHT (VIEWPORT_HEIGHT / 2)
+#define VIEWPORT_HALF_HEIGHT_FX (VIEWPORT_HALF_HEIGHT << 8)
+
+#define NUM_LIGHTING_LEVELS 4
+#define TEXTURE_DETAIL_SHIFT 1
 
 typedef struct
 {
@@ -165,11 +169,11 @@ typedef struct
 typedef struct
 {
     int width, height;
-    uint8_t colour[2];
-    const uint8_t* const* columns;
+    uint8_t colour[NUM_LIGHTING_LEVELS];
+    const uint32_t* columns[NUM_LIGHTING_LEVELS];
 } walltexture_t;
 
 typedef struct
 {
-    uint8_t colour[8];
+    uint8_t colour[NUM_LIGHTING_LEVELS];
 } flat_t;

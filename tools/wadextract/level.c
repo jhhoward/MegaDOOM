@@ -36,7 +36,7 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 			sector->ceilingheight,
 			LookupFlat(sector->floorpic),
 			LookupFlat(sector->ceilingpic),
-			sector->lightlevel >> 5,
+			sector->lightlevel >> 6,
 			sector->special,
 			sector->tag
 		);
@@ -130,7 +130,7 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 		mapsidedef_t* side = &mapdata->sides[n];
 
 		fprintf(fs, "\t{ ");
-		fprintf(fs, "%d, ", side->textureoffset);
+		fprintf(fs, "%d, ", side->textureoffset >> TEXTURE_DETAIL_SHIFT);
 		fprintf(fs, "%d, ", side->rowoffset);
 		fprintf(fs, "%d, ", LookupTexture(side->toptexture));
 		fprintf(fs, "%d, ", LookupTexture(side->bottomtexture));
@@ -149,7 +149,7 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 		fprintf(fs, "\t{ ");
 		fprintf(fs, "&%s_vertices[%d], ", levelname, seg->v1);
 		fprintf(fs, "&%s_vertices[%d], ", levelname, seg->v2);
-		fprintf(fs, "%d, ", seg->offset);
+		fprintf(fs, "%d, ", seg->offset >> TEXTURE_DETAIL_SHIFT);
 		fprintf(fs, "%d, ", seg->angle);
 		fprintf(fs, "&%s_sides[%d], ", levelname, mapdata->lines[seg->linedef].sidenum[seg->side]);
 		fprintf(fs, "&%s_lines[%d], ", levelname, seg->linedef);
@@ -157,6 +157,10 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 		int dx = mapdata->vertices[seg->v2].x - mapdata->vertices[seg->v1].x;
 		int dy = mapdata->vertices[seg->v2].y - mapdata->vertices[seg->v1].y;
 		int length = (int)sqrt((dx * dx) + (dy * dy));
+		if (TEXTURE_DETAIL_SHIFT)
+		{
+			length /= 2;
+		}
 		fprintf(fs, "%d", length);
 
 
