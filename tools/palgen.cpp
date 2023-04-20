@@ -7,9 +7,16 @@
 
 using namespace std;
 
+#define USE_SIMPLE_COLOR_DISTANCE 0
+
 #define NUM_OUTPUT_COLOURS 15
-#define MATCH_PAIR_THRESHOLD 220
+//#define MATCH_PAIR_THRESHOLD 220
+//#define MATCH_PAIR_THRESHOLD 200
+//#define MATCH_PAIR_THRESHOLD 80
+#define MATCH_PAIR_THRESHOLD 120
 #define USE_GAMMA_CORRECTION 0
+
+bool forceBlackAndWhite = true;
 
 uint8_t GammaToLinear(uint8_t x)
 {
@@ -49,6 +56,19 @@ void LinearToGamma(vector<uint8_t> colours)
 #endif
 }
 
+float CalcDistance(int r1, int g1, int b1, int r2, int g2, int b2)
+{
+	int rmean = (r1 + r2) / 2;
+	int r = r1 - r2;
+	int g = g1 - g2;
+	int b = b1 - b2;
+#if USE_SIMPLE_COLOR_DISTANCE
+	return r * r + g * g + b * b;
+#else
+	return (float)(sqrt((((512+rmean)*r*r)>>8) + 4*g*g + (((767-rmean)*b*b)>>8)));
+#endif
+}
+
 void GenerateMixColours(vector<uint8_t>& mixColours, vector<uint8_t>& paletteColours, vector<int>& outputColourIndices)
 {
 	mixColours.clear();
@@ -79,11 +99,12 @@ float CalculateDistance(vector<uint8_t>& mixColours, vector<uint8_t>& targetPale
 		
 		for(int c = 0; c < numMixColours; c++)
 		{
-			float distance = 0;
-			for(int i = 0; i < 3; i++)
-			{
-				distance += (mixColours[c * 4 + i] - targetPaletteColours[n * 4 + i]) * (mixColours[c * 4 + i] - targetPaletteColours[n * 4 + i]);
-			}
+			//float distance = 0;
+			//for(int i = 0; i < 3; i++)
+			//{
+			//	distance += (mixColours[c * 4 + i] - targetPaletteColours[n * 4 + i]) * (mixColours[c * 4 + i] - targetPaletteColours[n * 4 + i]);
+			//}
+			float distance = CalcDistance(mixColours[c * 4], mixColours[c * 4 + 1], mixColours[c * 4 + 2], targetPaletteColours[n * 4], targetPaletteColours[n * 4 + 1], targetPaletteColours[n * 4 + 2]);
 			
 			int pairDistance = 0;
 			int pairFirst = colourIndices[c / colourIndices.size()];
@@ -125,10 +146,60 @@ int main(int argc, char* argv[])
 
 	vector<uint8_t> targetPaletteColours;
 	
-	if(lodepng::decode(targetPaletteColours, width, height, "pal.png"))
+	if(argc == 2)
 	{
-		printf("Error opening palette file\n");
-		return 0;
+		vector<uint8_t> referencePaletteColours;
+		
+		if(lodepng::decode(referencePaletteColours, width, height, argv[1]))
+		{
+			printf("Error opening palette file\n");
+			return 0;
+		}
+		
+		for(int n = 0; n < referencePaletteColours.size() / 4; n++)
+		{
+			uint8_t r = referencePaletteColours[n * 4];
+			uint8_t g = referencePaletteColours[n * 4 + 1];
+			uint8_t b = referencePaletteColours[n * 4 + 2];
+			uint8_t a = referencePaletteColours[n * 4 + 3];
+			
+			if(a < 255)
+				continue;
+			
+			if(r == 0 && g == 255 && b == 255)
+				continue;
+			
+			bool found = false;
+			
+			for(int i = 0; i < targetPaletteColours.size() / 4; i++)
+			{
+				if(targetPaletteColours[i * 4] == r && targetPaletteColours[i * 4 + 1] == g && targetPaletteColours[i * 4 + 2] == b)
+				{
+					found = true;
+					break;
+				}
+			}
+			
+			if(!found)
+			{
+				targetPaletteColours.push_back(r);
+				targetPaletteColours.push_back(g);
+				targetPaletteColours.push_back(b);
+				targetPaletteColours.push_back(255);
+			}
+		}
+		width = targetPaletteColours.size() / 4;
+		height = 1;
+		
+		printf("Num input colours: %d\n", width);
+	}
+	else
+	{
+		if(lodepng::decode(targetPaletteColours, width, height, "pal.png"))
+		{
+			printf("Error opening palette file\n");
+			return 0;
+		}
 	}
 	GammaToLinear(targetPaletteColours);
 	
@@ -141,6 +212,12 @@ int main(int argc, char* argv[])
 		bestColourIndices.push_back(rand() % numPaletteColours);
 	}
 	
+	if(forceBlackAndWhite)
+	{
+		bestColourIndices[0] = 0;
+		bestColourIndices[1] = numPaletteColours - 1;
+	}
+	
 	vector<uint8_t> mixColours;
 	int iterations = 1000000;
 
@@ -149,7 +226,9 @@ int main(int argc, char* argv[])
 
 	float bestDistance = CalculateDistance(mixColours, targetPaletteColours, paletteColours, bestColourIndices);
 	
-	int colourIterator = 0;
+	int firstColourIterator = forceBlackAndWhite ? 2 : 0;
+	
+	int colourIterator = firstColourIterator;
 	int sourceIterator = 0;
 	bool hasChanges = false;
 	
@@ -183,7 +262,7 @@ int main(int argc, char* argv[])
 			{
 				if(hasChanges)
 				{
-					colourIterator = 0;
+					colourIterator = firstColourIterator;
 					hasChanges = false;
 					printf(".\n");
 				}
@@ -281,11 +360,13 @@ int main(int argc, char* argv[])
 		
 		for(int c = 0; c < numMixColours; c++)
 		{
-			float distance = 0;
-			for(int i = 0; i < 3; i++)
-			{
-				distance += (mixColours[c * 4 + i] - targetPaletteColours[n * 4 + i]) * (mixColours[c * 4 + i] - targetPaletteColours[n * 4 + i]);
-			}
+			//float distance = 0;
+			//for(int i = 0; i < 3; i++)
+			//{
+			//	distance += (mixColours[c * 4 + i] - targetPaletteColours[n * 4 + i]) * (mixColours[c * 4 + i] - targetPaletteColours[n * 4 + i]);
+			//}
+			float distance = CalcDistance(mixColours[c * 4], mixColours[c * 4 + 1], mixColours[c * 4 + 2], targetPaletteColours[n * 4], targetPaletteColours[n * 4 + 1], targetPaletteColours[n * 4 + 2]);
+
 			if(bestMixIndex == -1 || distance < bestMixDistance)
 			{
 				bestMixDistance = distance;

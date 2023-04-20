@@ -9,9 +9,12 @@
 
 #pragma warning(disable:4996)
 
+#define LIGHTING_BOOST 1.0f
+
 const bool dumppng = false;
 const bool crosshatchdither = false;
 const bool quantize = false;
+extern bool extractsingletexture;
 
 typedef struct
 {
@@ -317,23 +320,41 @@ void ExtractFlat(wad_file_t* wad, int index)
 	if (numflats < MAX_FLATS)
 	{
 		memcpy(flatnames[numflats].name, wad->files[index].name, 8);
-		for (int n = 0; n < NUM_LIGHTING_LEVELS; n++)
+
+		if (!memcmp(wad->files[index].name, "NUKAGE", 6))
 		{
-			float alpha = (n + 1) / (float)NUM_LIGHTING_LEVELS;
-			alpha *= 1.1f;
-			int rlit = (int)(r * alpha);
-			int glit = (int)(g * alpha);
-			int blit = (int)(b * alpha);
-			if (rlit > 255)
-				rlit = 255;
-			if (glit > 255)
-				glit = 255;
-			if (blit > 255)
-				blit = 255;
+			for (int n = 0; n < NUM_LIGHTING_LEVELS; n++)
+			{
+				flats[numflats].colour[n] = 0xd9;
+			}
+		}
+		else if (!memcmp(wad->files[index].name, "F_SKY1", 6))
+		{
+			for (int n = 0; n < NUM_LIGHTING_LEVELS; n++)
+			{
+				flats[numflats].colour[n] = 0;
+			}
+		}
+		else
+		{
+			for (int n = 0; n < NUM_LIGHTING_LEVELS; n++)
+			{
+				float alpha = (n + 1) / (float)NUM_LIGHTING_LEVELS;
+				alpha *= LIGHTING_BOOST;
+				int rlit = (int)(r * alpha);
+				int glit = (int)(g * alpha);
+				int blit = (int)(b * alpha);
+				if (rlit > 255)
+					rlit = 255;
+				if (glit > 255)
+					glit = 255;
+				if (blit > 255)
+					blit = 255;
 
-			uint32_t averagelit = 0xff000000 | (rlit) | (glit << 8) | (blit << 16);
+				uint32_t averagelit = 0xff000000 | (rlit) | (glit << 8) | (blit << 16);
 
-			flats[numflats].colour[n] = MatchBlendedColour(averagelit);
+				flats[numflats].colour[n] = MatchBlendedColour(averagelit);
+			}
 		}
 		numflats++;
 	}
@@ -374,6 +395,32 @@ void WriteFlatsToHeader()
 	fprintf(fs, "};\n");
 
 	fclose(fs);
+}
+
+void ExtractFlatsInfoOnly(wad_file_t* wad)
+{
+	int start = FindWadEntry(wad, "F_START", 0);
+	int end = FindWadEntry(wad, "F_END", 0);
+
+	if (start >= 0 && end > start)
+	{
+		for (int n = start + 1; n < end; n++)
+		{
+			char name[9];
+			name[8] = 0;
+			memcpy(name, wad->files[n].name, 8);
+			printf("%d : %s\n", n, name);
+
+			if (wad->files[n].lenData > 0)
+			{
+				if (numflats < MAX_FLATS)
+				{
+					memcpy(flatnames[numflats].name, wad->files[n].name, 8);
+					numflats++;
+				}
+			}
+		}
+	}
 }
 
 void ExtractFlats(wad_file_t* wad)
@@ -483,7 +530,7 @@ void WriteTexturesToHeader()
 		for (int l = 0; l < NUM_LIGHTING_LEVELS; l++)
 		{
 			float alpha = (l + 1) / (float)(NUM_LIGHTING_LEVELS);
-			alpha *= 1.1f;
+			alpha *= LIGHTING_BOOST;
 			for (int x = 0; x < compositetexture->width; x++)
 			{
 				for (int y = 0; y < compositetexture->height; y++)
@@ -550,7 +597,7 @@ void WriteTexturesToHeader()
 		for (int l = 0; l < NUM_LIGHTING_LEVELS; l++)
 		{
 			float alpha = (l + 1) / (float)(NUM_LIGHTING_LEVELS);
-			alpha *= 1.1f;
+			alpha *= LIGHTING_BOOST;
 			int r = (int)(alpha * (compositetexture->average & 0xff));
 			int g = (int)(alpha * ((compositetexture->average >> 8) & 0xff));
 			int b = (int)(alpha * ((compositetexture->average >> 16) & 0xff));
@@ -576,6 +623,33 @@ void WriteTexturesToHeader()
 	fclose(fs);
 }
 
+void ExtractTextureInfoOnly(wad_file_t* wad)
+{
+	int texture1 = FindWadEntry(wad, "TEXTURE1", 0);
+	if (texture1 >= 0)
+	{
+		wad_file_entry_t* entry = &wad->files[texture1];
+		uint8_t* data = wad->data + entry->offData;
+		uint32_t texturecount = *((uint32_t*)data);
+		printf("Num textures: %d\n", texturecount);
+		uint32_t* offsets = ((uint32_t*)data) + 1;
+
+		for (int n = 0; n < texturecount; n++)
+		{
+			if (numcompositetextures >= MAX_COMPOSITE_TEXTURES)
+				break;
+
+			maptexture_t* maptexture = (maptexture_t*)(data + offsets[n]);
+			printf("%s\n", maptexture->name);
+
+			compositetexture_t* compositetexture = &compositetextures[numcompositetextures++];
+			compositetexture->width = maptexture->width;
+			compositetexture->height = maptexture->height;
+			memcpy(compositetexture->name, maptexture->name, 8);
+		}
+	}
+}
+
 void ExtractTextures(wad_file_t* wad)
 {
 	int texture1 = FindWadEntry(wad, "TEXTURE1", 0);
@@ -593,6 +667,17 @@ void ExtractTextures(wad_file_t* wad)
 				break;
 
 			maptexture_t* maptexture = (maptexture_t*)(data + offsets[n]);
+
+			if (extractsingletexture)
+			{
+				if (numcompositetextures)
+				{
+					break;
+				}
+				if (memcmp(maptexture->name, "STARTAN1", 8))
+					continue;
+			}
+
 			printf("%s\n", maptexture->name);
 
 			compositetexture_t* compositetexture = &compositetextures[numcompositetextures++];
@@ -701,6 +786,50 @@ void ExtractTextures(wad_file_t* wad)
 		}
 	}
 
-//	WriteTexturesToHeader();
+	WriteTexturesToHeader();
 }
 
+void WriteSkybox(const char* imagepath, const char* outputpath)
+{
+	uint8_t* pixels;
+	unsigned width, height;
+
+	if (lodepng_decode32_file(&pixels, &width, &height, imagepath))
+	{
+		printf("Error opening sky file %s\n", imagepath);
+		return;
+	}
+
+	FILE* fs = fopen("../src/generated/skybox.inc.h", "w");
+
+	fprintf(fs, "const u8 skytexture[] = {\n");
+
+	uint32_t* pixels32 = (uint32_t*)(pixels);
+
+	int tilesheight = height / 8;
+	int tileswidth = width / 8;
+
+	for (int ty = 0; ty < tilesheight; ty++)
+	{
+		for(int tx = 0; tx < tileswidth; tx++)
+		{
+			for (int j = 0; j < 8; j++)
+			{
+				for (int i = 0; i < 8; i += 2)
+				{
+					int x = tx * 8 + i;
+					int y = ty * 8 + j;
+
+					uint8_t first = MatchPaletteColour(pixels32[y * width + x]);
+					uint8_t second = MatchPaletteColour(pixels32[y * width + x + 1]);
+					int combined = (first << 4) | (second);
+					fprintf(fs, "0x%x,", combined);
+				}
+			}
+		}
+	}
+
+	fprintf(fs, "\n};\n");
+
+	fclose(fs);
+}

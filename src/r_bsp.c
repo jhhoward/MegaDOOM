@@ -167,24 +167,35 @@ uint8_t draw_ceilingcolour;
 int16_t draw_shading;
 bool draw_fillfloor, draw_fillceiling, draw_fillwall;
 
+bool force_simple = false;
+
 void R_StoreWallRangeSimple(int16_t left, int16_t right);
 
 void R_StoreWallRange(int16_t left, int16_t right)
 {
-    if (ss_x2 - ss_x1 <= 2 || ((ss_lower1_fx - ss_upper1_fx) < (6 << 8) && (ss_lower2_fx - ss_upper2_fx) < (6 << 8)))
+    if (force_simple || ss_x2 - ss_x1 <= 2 || ((ss_lower1_fx - ss_upper1_fx) < (6 << 8) && (ss_lower2_fx - ss_upper2_fx) < (6 << 8)))
     {
         R_StoreWallRangeSimple(left, right);
         return;
     }
 
-    int16_t deltaupper_fx = (ss_upper2_fx - ss_upper1_fx) / ss_deltax;
-    int16_t deltalower_fx = (ss_lower2_fx - ss_lower1_fx) / ss_deltax;
+    int16_t ss_deltax_recip = reciprocal[ss_deltax];
+    //int16_t deltaupper_fx = (ss_upper2_fx - ss_upper1_fx) / ss_deltax;
+    //int16_t deltalower_fx = (ss_lower2_fx - ss_lower1_fx) / ss_deltax;
+    int16_t deltaupper_fx = (((ss_upper2_fx - ss_upper1_fx)) * ss_deltax_recip) >> 10;
+    int16_t deltalower_fx = (((ss_lower2_fx - ss_lower1_fx)) * ss_deltax_recip) >> 10;
     int32_t upper_fx = ss_upper1_fx;
     int32_t lower_fx = ss_lower1_fx;
     int32_t deltatx_fx = ((vs_tx2 - vs_tx1) << 8) / ss_deltax;
+//    int32_t deltatx_fx = ((vs_tx2 - vs_tx1) * ss_deltax_recip) >> 2;
     int32_t tx_fx = vs_tx1 << 8;
 
-    const uint32_t* columns = draw_walltexture->columns[draw_shading];
+    const uint32_t* columns = 0;
+    
+    if (draw_walltexture)
+    {
+        columns = draw_walltexture->columns[draw_shading];
+    }
 
     if (left > ss_x1)
     {
@@ -296,8 +307,11 @@ void R_StoreWallRange(int16_t left, int16_t right)
 
 void R_StoreWallRangeSimple(int16_t left, int16_t right)
 {
-    int16_t deltaupper_fx = (ss_upper2_fx - ss_upper1_fx) / ss_deltax;
-    int16_t deltalower_fx = (ss_lower2_fx - ss_lower1_fx) / ss_deltax;
+    int16_t ss_deltax_recip = reciprocal[ss_deltax];
+    //int16_t deltaupper_fx = (ss_upper2_fx - ss_upper1_fx) / ss_deltax;
+    //int16_t deltalower_fx = (ss_lower2_fx - ss_lower1_fx) / ss_deltax;
+    int16_t deltaupper_fx = (((ss_upper2_fx - ss_upper1_fx)) * ss_deltax_recip) >> 10;
+    int16_t deltalower_fx = (((ss_lower2_fx - ss_lower1_fx)) * ss_deltax_recip) >> 10;
     int32_t upper_fx = ss_upper1_fx;
     int32_t lower_fx = ss_lower1_fx;
     uint8_t wallcolour = draw_walltexture->colour[draw_shading];
@@ -1167,6 +1181,9 @@ void R_RenderBSPNode(uint16_t nodenum)
     const node_t* bsp;
     int		side;
 
+    if (solidsegs[0].last == 0x7fff)
+        return;
+
     // Found a subsector?
     if (nodenum & NF_SUBSECTOR)
     {
@@ -1185,7 +1202,7 @@ void R_RenderBSPNode(uint16_t nodenum)
     // Recursively divide front space.
     R_RenderBSPNode(bsp->children[side]);
 
-    if (columnsToFill <= 0)
+    if (solidsegs[0].last == 0x7fff)
         return;
 
     // Possibly divide back space.

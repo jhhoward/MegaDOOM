@@ -15,7 +15,17 @@
 #define FRAMEBUFFER_HEIGHT_TILES (FRAMEBUFFER_HEIGHT / 8)
 #define FRAMEBUFFER_TILE_BYTES (4 * 8)
 
+#define SCREEN_LAYOUT_WIDTH_TILES (256 / 8)
+#define SCREEN_LAYOUT_HEIGHT_TILES (224 / 8)
+
+#define SKY_WIDTH_TILES (FRAMEBUFFER_WIDTH_TILES)
+#define SKY_HEIGHT 96
+#define SKY_LAYOUT_WIDTH_TILES (SKY_WIDTH_TILES  * 2)
+#define SKY_LAYOUT_HEIGHT_TILES (SKY_HEIGHT / 8)
+
 #define TILE_USER_INDEX 16
+#define FRAMEBUFFER_START_TILE_INDEX (TILE_USER_INDEX + 1)
+#define SKY_START_TILE_INDEX (FRAMEBUFFER_START_TILE_INDEX + FRAMEBUFFER_WIDTH_TILES * FRAMEBUFFER_HEIGHT_TILES)
 
 int main()
 {
@@ -57,7 +67,7 @@ int main()
     fprintf(fs, "const int16_t distancescaley[] = {\n");
     for (int n = 0; n < 2048; n++)
     {
-        int result = n == 0 ? 0 : ((VIEWPORT_HALF_WIDTH * 3) << 8) / n;
+        int result = n == 0 ? 0 : ((int)(VIEWPORT_HALF_WIDTH * 3.0f) << 8) / n;
         fprintf(fs, "%d", result);
         if (n == 2047)
         {
@@ -111,12 +121,53 @@ int main()
     }
     fprintf(fs, "};\n\n");
 
-    fprintf(fs, "const u16 framebufferTiles[] = {\n");
-    for (int y = 0; y < FRAMEBUFFER_HEIGHT_TILES; y++)
+    //fprintf(fs, "const u16 framebufferTiles[] = {\n");
+    //for (int y = 0; y < FRAMEBUFFER_HEIGHT_TILES; y++)
+    //{
+    //    for (int x = 0; x < FRAMEBUFFER_WIDTH_TILES; x++)
+    //    {
+    //        int index = TILE_USER_INDEX + x * FRAMEBUFFER_HEIGHT_TILES + y;
+    //        fprintf(fs, "%d, ", index);
+    //    }
+    //}
+    //fprintf(fs, "\n};\n\n");
+
+    fprintf(fs, "const u16 screenLayoutTiles[] = {\n");
+    for (int y = 0; y < SCREEN_LAYOUT_HEIGHT_TILES; y++)
     {
-        for (int x = 0; x < FRAMEBUFFER_WIDTH_TILES; x++)
+        for (int x = 0; x < SCREEN_LAYOUT_WIDTH_TILES; x++)
         {
-            int index = TILE_USER_INDEX + x * FRAMEBUFFER_HEIGHT_TILES + y;
+            int i = x - (SCREEN_LAYOUT_WIDTH_TILES - FRAMEBUFFER_WIDTH_TILES) / 2;
+            int j = y;
+
+            if (i >= 0 && j >= 0 && i < FRAMEBUFFER_WIDTH_TILES && j < FRAMEBUFFER_HEIGHT_TILES)
+            {
+                int index = FRAMEBUFFER_START_TILE_INDEX + i * FRAMEBUFFER_HEIGHT_TILES + j;
+                fprintf(fs, "%d, ", index);
+            }
+            else
+            {
+                int index = TILE_USER_INDEX;
+                fprintf(fs, "%d, ", index);
+            }
+        }
+    }
+    fprintf(fs, "\n};\n\n");
+
+    // Skybox tile map
+    fprintf(fs, "const u16 skyLayoutTiles[] = {\n");
+    for (int y = 0; y < SKY_LAYOUT_HEIGHT_TILES; y++)
+    {
+        for (int x = 0; x < SKY_LAYOUT_WIDTH_TILES; x++)
+        {
+            int i = x % (SKY_WIDTH_TILES);
+            int j = y;
+            
+            int index = SKY_START_TILE_INDEX + j * SKY_WIDTH_TILES + i;
+
+            // Set palette 1
+            index |= (1 << 13);
+
             fprintf(fs, "%d, ", index);
         }
     }

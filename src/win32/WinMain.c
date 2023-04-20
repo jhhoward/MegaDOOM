@@ -6,6 +6,14 @@
 #include "generated/palette.inc.h"
 #include "DoomData.h"
 #include "generated/E1M1.inc.h"
+#include "generated/E1M2.inc.h"
+#include "generated/E1M3.inc.h"
+#include "generated/E1M4.inc.h"
+#include "generated/E1M5.inc.h"
+#include "generated/E1M6.inc.h"
+#include "generated/E1M7.inc.h"
+#include "generated/E1M8.inc.h"
+#include "generated/E1M9.inc.h"
 
 #include "generated/textures.inc.h"
 #include "generated/flats.inc.h"
@@ -221,8 +229,8 @@ void TexturedLine(const uint8_t* texptr, int16_t x, int16_t y, int16_t count, in
 		{
 			PutPixelImmediate(mainWindow.screenSurface, x, y * 2, gamePalette[colourPair & 0xf]);
 			PutPixelImmediate(mainWindow.screenSurface, x + 1, y * 2, gamePalette[colourPair >> 4]);
-			PutPixelImmediate(mainWindow.screenSurface, x, y * 2 + 1, gamePalette[colourPair & 0xf]);
-			PutPixelImmediate(mainWindow.screenSurface, x + 1, y * 2 + 1, gamePalette[colourPair >> 4]);
+			PutPixelImmediate(mainWindow.screenSurface, x, y * 2 + 1, gamePalette[colourPair >> 4]);
+			PutPixelImmediate(mainWindow.screenSurface, x + 1, y * 2 + 1, gamePalette[colourPair & 0xf]);
 		}
 
 		y++;
@@ -273,8 +281,8 @@ void VLine(int x, int y, int count, uint8_t colour)
 				PutPixelImmediate(mainWindow.screenSurface, x, y * 2, gamePalette[colour & 0xf]);
 				PutPixelImmediate(mainWindow.screenSurface, x + 1, y * 2, gamePalette[colour >> 4]);
 
-				PutPixelImmediate(mainWindow.screenSurface, x, y * 2 + 1, gamePalette[colour & 0xf]);
-				PutPixelImmediate(mainWindow.screenSurface, x + 1, y * 2 + 1, gamePalette[colour >> 4]);
+				PutPixelImmediate(mainWindow.screenSurface, x, y * 2 + 1, gamePalette[colour >> 4]);
+				PutPixelImmediate(mainWindow.screenSurface, x + 1, y * 2 + 1, gamePalette[colour & 0xf]);
 			}
 		}
 		y++;
