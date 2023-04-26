@@ -256,8 +256,9 @@ int main(bool hardReset)
     return 0;
 }
 
-void R_DrawColumn(void)
+void R_DrawColumnRef2(void)
 {
+
     int			count;
     //pixel_t* dest;
     fixed_t		frac;

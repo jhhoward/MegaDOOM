@@ -380,7 +380,7 @@ R_PointToDist
 ( fixed_t	x,
   fixed_t	y )
 {
-    int		angle;
+    angle_t	angle;
     fixed_t	dx;
     fixed_t	dy;
     fixed_t	temp;
@@ -408,10 +408,10 @@ R_PointToDist
 	frac = 0;
     }
 	
-    angle = (tantoangle[frac>>DBITS]+ANG90) >> ANGLETOFINESHIFT;
+    angle = tantoangle[frac>>DBITS] + ANG90;
 
     // use as cosine
-    dist = FixedDiv (dx, finesine[angle] );	
+    dist = FixedDiv (dx, finesine[angle >> ANGLETOFINESHIFT] );
 	
     return dist;
 }
@@ -482,8 +482,13 @@ fixed_t R_ScaleFromGlobalAngle (angle_t visangle)
     // both sines are allways positive
     sinea = finesine[anglea>>ANGLETOFINESHIFT];	
     sineb = finesine[angleb>>ANGLETOFINESHIFT];
-    num = FixedMul(projection,sineb)<<detailshift;
-    den = FixedMul(rw_distance,sinea);
+
+    num = FixedMul(projection, sineb) << detailshift;
+    den = FixedMul(rw_distance, sinea);
+
+    // TODO: projection and rw_distance could be 16 bit here
+    //num = FixedMul(projection >> 16,sineb)<<detailshift;
+    //den = FixedMul(rw_distance >> 16,sinea);
 
     if (den > num>>FRACBITS)
     {
@@ -586,7 +591,7 @@ void R_InitTextureMapping (void)
 	i = 0;
 	while (viewangletox[i]>x)
 	    i++;
-	xtoviewangle[x] = (i<<ANGLETOFINESHIFT)-ANG90;
+	xtoviewangle[x] = ((i<<ANGLETOFINESHIFT)-ANG90);
     }
     
     // Take out the fencepost cases from viewangletox.
@@ -858,6 +863,7 @@ void R_SetupFrame (player_t* player)
 #else
 void R_SetupFrame()
 {
+    viewangle &= 0xffff;
     viewsin = finesine[viewangle >> ANGLETOFINESHIFT];
     viewcos = finecosine[viewangle >> ANGLETOFINESHIFT];
 

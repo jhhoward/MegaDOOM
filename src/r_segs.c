@@ -50,7 +50,7 @@ int		midtexture;
 
 angle_t		rw_normalangle;
 // angle to line origin
-int		rw_angle1;	
+int16_t		rw_angle1;	
 
 //
 // regular wall
@@ -194,7 +194,7 @@ R_RenderMaskedSegRange
 //  textures.
 // CALLED: CORE LOOPING ROUTINE.
 //
-#define HEIGHTBITS		12 - (16 - FRACBITS)
+#define HEIGHTBITS		(12 - (16 - FRACBITS))
 #define HEIGHTUNIT		(1<<HEIGHTBITS)
 
 void R_RenderSegLoop (void)
@@ -258,8 +258,8 @@ void R_RenderSegLoop (void)
 	if (segtextured)
 	{
 	    // calculate texture offset
-	    angle = (rw_centerangle + xtoviewangle[rw_x])>>ANGLETOFINESHIFT;
-	    texturecolumn = rw_offset-FixedMul(finetangent[angle],rw_distance);
+	    angle = (rw_centerangle + xtoviewangle[rw_x]);
+	    texturecolumn = rw_offset-FixedMul(finetangent[angle >> ANGLETOFINESHIFT],rw_distance);
 	    texturecolumn >>= FRACBITS;
 	    // calculate lighting
 	    index = rw_scale>>LIGHTSCALESHIFT;
@@ -269,7 +269,15 @@ void R_RenderSegLoop (void)
 
 	    //dc_colormap = walllights[index];
 	    dc_x = rw_x;
-	    dc_iscale = 0xffffffffu / (unsigned)rw_scale;
+	    
+		dc_iscale = 0xffffffffu / (unsigned)rw_scale;
+		
+		// TODO: dc_iscale could be a LUT with 1024 entries to avoid the divide:
+		// int temp = ((rw_scale) >> 10) & 0x3ff;
+		// if (temp)
+		// 	dc_iscale = 0x3fffffu / temp;
+		// else
+		// 	dc_iscale = 1;
 	}
         else
         {
@@ -401,11 +409,12 @@ R_StoreWallRange
     
     // calculate rw_distance for scale calculation
     rw_normalangle = curline->angle + ANG90;
+
     //offsetangle = abs(rw_normalangle-rw_angle1);
 	{
-		int32_t temp = (int32_t)rw_normalangle - rw_angle1;
+		int16_t temp = (int16_t)rw_normalangle - rw_angle1;
 		if (temp < 0) temp = -temp;
-		offsetangle = (uint32_t)temp;
+		offsetangle = (angle_t)temp;
 	}
 	/*if (rw_normalangle > (angle_t)rw_angle1)
 	{
@@ -435,8 +444,9 @@ R_StoreWallRange
     
     if (stop > start )
     {
-	ds_p->scale2 = R_ScaleFromGlobalAngle (viewangle + xtoviewangle[stop]);
-	ds_p->scalestep = rw_scalestep = 
+		angle_t viewrelativeangle = viewangle + xtoviewangle[stop];
+		ds_p->scale2 = R_ScaleFromGlobalAngle (viewrelativeangle);
+		ds_p->scalestep = rw_scalestep = 
 	    (ds_p->scale2 - rw_scale) / (stop-start);
     }
     else
@@ -643,7 +653,7 @@ R_StoreWallRange
 	sineval = finesine[offsetangle >>ANGLETOFINESHIFT];
 	rw_offset = FixedMul (hyp, sineval);
 
-	if (rw_normalangle-rw_angle1 < ANG180)
+	if ((angle_t)(rw_normalangle-rw_angle1) < ANG180)
 	    rw_offset = -rw_offset;
 
 	rw_offset += sidedef->textureoffset + curline->offset;

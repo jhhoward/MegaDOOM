@@ -43,7 +43,7 @@
 
 
 // 0x100000000 to 0x2000
-#define ANGLETOFINESHIFT	19		
+#define ANGLETOFINESHIFT	3 // 19
 
 // Effective size is 10240.
 extern const fixed_t finesine[5*FINEANGLES/4];
@@ -60,25 +60,20 @@ extern const fixed_t finetangent[FINEANGLES/2];
 
 // Binary Angle Measument, BAM.
 
-#define ANG45           0x20000000
-#define ANG90           0x40000000
-#define ANG180          0x80000000
-#define ANG270          0xc0000000
-#define ANG_MAX         0xffffffff
+#define ANG45           0x2000 // 0000
+#define ANG90           0x4000 // 0000
+#define ANG180          0x8000 // 0000
+#define ANG270          0xc000 // 0000
+#define ANG_MAX         0xffff // ffff
 
 #define ANG1            (ANG45 / 45)
 #define ANG60           (ANG180 / 3)
-
-// Heretic code uses this definition as though it represents one 
-// degree, but it is not!  This is actually ~1.40 degrees.
-
-#define ANG1_X          0x01000000
 
 #define SLOPERANGE		2048
 #define SLOPEBITS		11
 #define DBITS			(FRACBITS-SLOPEBITS)
 
-typedef unsigned angle_t;
+typedef uint16_t angle_t;
 
 
 // Effective size is 2049;

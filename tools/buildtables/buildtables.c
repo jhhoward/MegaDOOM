@@ -52,7 +52,7 @@ int main()
     for (i = 0; i <= SLOPERANGE; i++)
     {
         float f = atan((float)i / SLOPERANGE) / (3.141592657 * 2);
-        t = 0xffffffff * f;
+        t = 0xffff * f;
         fprintf(fs, "%d, ", t);
     }
     fprintf(fs, "\n};\n");
@@ -129,7 +129,35 @@ int main()
     }
     fprintf(fs, "\tbreak;\n");
     fprintf(fs, "\t}\n");
-    fprintf(fs, "}\n");
+    fprintf(fs, "}\n\n");
+    
+    fprintf(fs, "void R_DrawColumn(void)\n");
+    fprintf(fs, "{\n");
+    fprintf(fs, "\tint count;\n");
+    fprintf(fs, "\tbyte texel;\n");
+    fprintf(fs, "\tfixed_t frac;\n");
+    fprintf(fs, "\tfixed_t fracstep;\n");
+    fprintf(fs, "\tcount = dc_yh - dc_yl;\n");
+    fprintf(fs, "\tif (count < 0) return;\n");
+    fprintf(fs, "\tu8* dest = framebuffer + framebufferx[dc_x];\n");
+    fprintf(fs, "\tdest += (dc_yl << 2);\n");
+    fprintf(fs, "\tfracstep = dc_iscale;\n");
+    fprintf(fs, "\tfrac = dc_texturemid + (dc_yl - centery) * fracstep;\n");
+
+    fprintf(fs, "\tswitch(count) {\n");
+    for (int y = FRAMEBUFFER_HEIGHT; y > 0; y--)
+    {
+        fprintf(fs, "\tcase %d:\n", y);
+        fprintf(fs, "\t\ttexel = dc_source[(frac >> FRACBITS) & 127];\n");
+        fprintf(fs, "\t\t*dest = texel;\n");
+        if (y > 0)
+        {
+            fprintf(fs, "\t\tdest += 4;\n");
+            fprintf(fs, "\t\tfrac += fracstep;\n");
+        }
+    }
+    fprintf(fs, "\t}\n");
+    fprintf(fs, "}\n\n");
 
     fclose(fs);
 

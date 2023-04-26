@@ -264,3 +264,660 @@ void VLine(int x, int y, int count, uint8_t colour)
 	break;
 	}
 }
+
+void R_DrawColumn(void)
+{
+	int count;
+	byte texel;
+	fixed_t frac;
+	fixed_t fracstep;
+	count = dc_yh - dc_yl;
+	if (count < 0) return;
+	u8* dest = framebuffer + framebufferx[dc_x];
+	dest += (dc_yl << 2);
+	fracstep = dc_iscale;
+	frac = dc_texturemid + (dc_yl - centery) * fracstep;
+	switch(count) {
+	case 128:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 127:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 126:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 125:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 124:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 123:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 122:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 121:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 120:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 119:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 118:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 117:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 116:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 115:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 114:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 113:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 112:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 111:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 110:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 109:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 108:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 107:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 106:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 105:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 104:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 103:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 102:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 101:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 100:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 99:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 98:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 97:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 96:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 95:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 94:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 93:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 92:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 91:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 90:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 89:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 88:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 87:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 86:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 85:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 84:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 83:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 82:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 81:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 80:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 79:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 78:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 77:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 76:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 75:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 74:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 73:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 72:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 71:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 70:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 69:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 68:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 67:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 66:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 65:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 64:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 63:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 62:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 61:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 60:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 59:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 58:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 57:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 56:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 55:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 54:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 53:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 52:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 51:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 50:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 49:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 48:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 47:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 46:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 45:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 44:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 43:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 42:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 41:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 40:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 39:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 38:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 37:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 36:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 35:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 34:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 33:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 32:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 31:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 30:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 29:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 28:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 27:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 26:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 25:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 24:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 23:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 22:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 21:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 20:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 19:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 18:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 17:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 16:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 15:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 14:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 13:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 12:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 11:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 10:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 9:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 8:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 7:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 6:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 5:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 4:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 3:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 2:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	case 1:
+		texel = dc_source[(frac >> FRACBITS) & 127];
+		*dest = texel;
+		dest += 4;
+		frac += fracstep;
+	}
+}
+

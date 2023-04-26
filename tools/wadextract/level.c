@@ -160,7 +160,7 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 		fprintf(fs, "&%s_vertices[%d], ", levelname, seg->v1);
 		fprintf(fs, "&%s_vertices[%d], ", levelname, seg->v2);
 		fprintf(fs, "%d, ", seg->offset);
-		fprintf(fs, "0x%x, ", seg->angle << 16);
+		fprintf(fs, "0x%x, ", seg->angle);
 		fprintf(fs, "&%s_sides[%d], ", levelname, mapdata->lines[seg->linedef].sidenum[seg->side]);
 		fprintf(fs, "&%s_lines[%d], ", levelname, seg->linedef);
 
