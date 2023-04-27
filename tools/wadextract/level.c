@@ -8,8 +8,8 @@
 #pragma warning(disable:4996)
 
 //#define MAP_FRACBITS FRACBITS
-#define MAP_FRACBITS FRACBITS
-//#define MAP_FRACBITS 2
+//#define MAP_FRACBITS FRACBITS
+#define MAP_FRACBITS 0
 
 void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 {

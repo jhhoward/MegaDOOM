@@ -250,6 +250,10 @@ void R_ClearClipSegs (void)
     newend = solidsegs+2;
 }
 
+#ifdef WIN32
+void DrawMapDebugLine(int x0, int y0, int x1, int y1, uint32_t colour);
+#endif
+
 //
 // R_AddLine
 // Clips the given segment
@@ -265,6 +269,16 @@ void R_AddLine (const seg_t*	line)
     angle_t		tspan;
     
     curline = line;
+
+#if WIN32
+#define MAP_SCALE 5
+    {
+        DrawMapDebugLine(320 + (line->v1->x - viewx) / MAP_SCALE, 
+                         200 - (line->v1->y - viewy) / MAP_SCALE,
+                         320 + (line->v2->x - viewx) / MAP_SCALE,
+                         200 - (line->v2->y - viewy) / MAP_SCALE, 0xffffffff);
+    }
+#endif
 
     // OPTIMIZE: quickly reject orthogonal back sides.
     angle1 = R_PointToAngle (line->v1->x, line->v1->y);

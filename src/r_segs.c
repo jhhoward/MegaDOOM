@@ -259,8 +259,12 @@ void R_RenderSegLoop (void)
 	{
 	    // calculate texture offset
 	    angle = (rw_centerangle + xtoviewangle[rw_x]);
-	    texturecolumn = rw_offset-FixedMul(finetangent[angle >> ANGLETOFINESHIFT],rw_distance);
-	    texturecolumn >>= FRACBITS;
+	    
+		//texturecolumn = rw_offset-FixedMul(finetangent[angle >> ANGLETOFINESHIFT],rw_distance);
+	    //texturecolumn >>= FRACBITS;
+		texturecolumn = rw_offset - ((finetangent[angle >> ANGLETOFINESHIFT] * rw_distance) >> FRACBITS);
+		//texturecolumn >>= FRACBITS;
+
 	    // calculate lighting
 	    index = rw_scale>>LIGHTSCALESHIFT;
 
@@ -374,8 +378,6 @@ void R_RenderSegLoop (void)
 }
 
 
-
-
 //
 // R_StoreWallRange
 // A wall segment will be drawn
@@ -411,11 +413,14 @@ R_StoreWallRange
     rw_normalangle = curline->angle + ANG90;
 
     //offsetangle = abs(rw_normalangle-rw_angle1);
+	
 	{
 		int16_t temp = (int16_t)rw_normalangle - rw_angle1;
 		if (temp < 0) temp = -temp;
 		offsetangle = (angle_t)temp;
 	}
+
+
 	/*if (rw_normalangle > (angle_t)rw_angle1)
 	{
 		offsetangle = rw_normalangle - (angle_t)rw_angle1;

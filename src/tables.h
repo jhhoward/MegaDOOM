@@ -73,6 +73,9 @@ extern const fixed_t finetangent[FINEANGLES/2];
 #define SLOPEBITS		11
 #define DBITS			(FRACBITS-SLOPEBITS)
 
+#define ANGLE_LOOKUP_TABLE_DIMENSION_BITS 8
+#define ANGLE_LOOKUP_TABLE_DIMENSION (1 << ANGLE_LOOKUP_TABLE_DIMENSION_BITS)
+
 typedef uint16_t angle_t;
 
 
@@ -85,6 +88,8 @@ extern const angle_t tantoangle[SLOPERANGE+1];
 // Utility function,
 //  called by R_PointToAngle.
 int SlopeDiv(unsigned int num, unsigned int den);
+
+angle_t VectorToAngle(unsigned int x, unsigned int y);
 
 
 #endif

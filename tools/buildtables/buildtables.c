@@ -57,6 +57,22 @@ int main()
     }
     fprintf(fs, "\n};\n");
 
+    // point to angle lookup
+    fprintf(fs, "const angle_t pointtoangle[ANGLE_LOOKUP_TABLE_DIMENSION * ANGLE_LOOKUP_TABLE_DIMENSION] = {\n");
+    for (int x = 0; x < ANGLE_LOOKUP_TABLE_DIMENSION; x++)
+    {
+        fprintf(fs, "\t ");
+        for (int y = 0; y < ANGLE_LOOKUP_TABLE_DIMENSION; y++)
+        {
+            float f = atan2(y, x) / (3.141592657 * 2);
+            t = 0xffff * f;
+            fprintf(fs, "%d, ", t);
+        }
+        fprintf(fs, "\n");
+    }
+    fprintf(fs, "};\n");
+
+
 #if 0
     // distancescale
     fprintf(fs, "const int16_t distancescale[] = {\n");

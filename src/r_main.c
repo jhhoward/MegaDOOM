@@ -271,6 +271,40 @@ R_PointOnSegSide
 
 
 
+#if 1
+angle_t
+R_PointToAngle
+( fixed_t	x,
+  fixed_t	y )
+{
+    x -= viewx;
+    y -= viewy;
+
+    if (x >= 0)
+    {
+        if (y >= 0)
+        {
+            return VectorToAngle(x, y);
+        }
+        else
+        {
+            return ANG_MAX - VectorToAngle(x, -y);
+        }
+    }
+    else
+    {
+        if (y >= 0)
+        {
+            return ANG180 - VectorToAngle(-x, y);
+        }
+        else
+        {
+            return ANG180 + VectorToAngle(-x, -y);
+        }
+    }
+}
+
+#else
 
 angle_t
 R_PointToAngle
@@ -356,7 +390,7 @@ R_PointToAngle
     }
     return 0;
 }
-
+#endif
 
 angle_t
 R_PointToAngle2
@@ -389,7 +423,7 @@ R_PointToDist
 	
     dx = abs(x - viewx);
     dy = abs(y - viewy);
-	
+
     if (dy>dx)
     {
 	temp = dx;
@@ -483,7 +517,9 @@ fixed_t R_ScaleFromGlobalAngle (angle_t visangle)
     sinea = finesine[anglea>>ANGLETOFINESHIFT];	
     sineb = finesine[angleb>>ANGLETOFINESHIFT];
 
-    num = FixedMul(projection, sineb) << detailshift;
+    //num = FixedMul(projection, sineb) << detailshift;
+    //den = FixedMul(rw_distance, sinea);
+    num = FixedMul(projection >> 16, sineb) << detailshift;
     den = FixedMul(rw_distance, sinea);
 
     // TODO: projection and rw_distance could be 16 bit here

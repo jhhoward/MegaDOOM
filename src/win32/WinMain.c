@@ -280,7 +280,7 @@ void DumpTexture(walltexture_t* tex)
 
 void RenderDebugMap(void)
 {
-#if 1
+#if 0
 	int centerX = debugMapWindow.width / 2;
 	int centerY = debugMapWindow.height / 2;
 	int range = debugMapWindow.width / 2;;
@@ -298,8 +298,8 @@ void RenderDebugMap(void)
 
 	int centerX = debugMapWindow.width / 2;
 	int centerY = debugMapWindow.height / 2;
-	DrawMapDebugLine(centerX, centerY, centerX + leftX, centerY + leftY);
-	DrawMapDebugLine(centerX, centerY, centerX + rightX, centerY + rightY);
+	DrawMapDebugLine(centerX, centerY, centerX + leftX, centerY + leftY, 0xffffff00);
+	DrawMapDebugLine(centerX, centerY, centerX + rightX, centerY + rightY, 0xffffff00);
 #endif
 }
 
@@ -318,6 +318,20 @@ int main(int argc, char* argv[])
 		SDL_SetWindowPosition(mainWindow.window, windowX - debugMapWindow.width / 2, windowY);
 		SDL_SetWindowPosition(debugMapWindow.window, windowX + debugMapWindow.width / 2, windowY);
 	}
+	
+	/*
+	viewx = viewy = 0;
+
+	for (int a = 0; a < 0xffff; a += 0xffff / 360)
+	{
+		printf("Angle: %d ", a);
+		int x = 100 * finecosine[a >> ANGLETOFINESHIFT];
+		int y = 100 * finesine[a >> ANGLETOFINESHIFT];
+		angle_t a = R_PointToAngle(x, y);
+		angle_t b = DirectionToAngle(x, y);
+		printf("Ref: %d  New: %d\n", a, b);
+	}
+	*/
 
 	//R_InitTables();
 	//R_ExecuteSetViewSize();
@@ -343,8 +357,10 @@ int main(int argc, char* argv[])
 	map = &loadedmap; 
 	map = &map_E1M1;
 
-	viewx = map->things[0].x << MAP_FRACBITS;
-	viewy = map->things[0].y << MAP_FRACBITS;
+//	viewx = map->things[0].x << MAP_FRACBITS;
+//	viewy = map->things[0].y << MAP_FRACBITS;
+	viewx = map->things[0].x;
+	viewy = map->things[0].y;
 	viewz = 64 << FRACBITS;
 
 	R_Init();
@@ -411,7 +427,7 @@ int main(int argc, char* argv[])
 			viewangle -= ANG1 * 5;
 		}
 
-		int movespeed = (FRACUNIT * 5);
+		int movespeed = 5; // (FRACUNIT * 5);
 		if (input & INPUT_UP)
 		{
 			viewx += FixedMul(finecosine[viewangle >> ANGLETOFINESHIFT], movespeed);

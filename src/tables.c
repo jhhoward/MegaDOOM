@@ -38,6 +38,30 @@
 #include "generated/tables.inc.h"
 #endif
 
+double atan2(double y, double x);
+
+angle_t VectorToAngle(unsigned int x, unsigned int y)
+{
+    //{
+    //    float f = atan2(y, x) / (3.141592657 * 2);
+    //    return 0xffff * f;
+    //}
+
+    while (x >= ANGLE_LOOKUP_TABLE_DIMENSION)
+    {
+        x >>= 1;
+        y >>= 1;
+    }
+    while (y >= ANGLE_LOOKUP_TABLE_DIMENSION)
+    {
+        x >>= 1;
+        y >>= 1;
+    }
+    
+    return pointtoangle[(x << ANGLE_LOOKUP_TABLE_DIMENSION_BITS) + y];
+}
+
+
 // to get a global angle from cartesian coordinates, the coordinates are
 // flipped until they are in the first octant of the coordinate system, then
 // the y (<=x) is scaled and divided by x to get a tangent (slope) value
