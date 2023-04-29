@@ -46,6 +46,7 @@ const sector_t*	backsector;
 drawseg_t	drawsegs[MAXDRAWSEGS];
 drawseg_t*	ds_p;
 
+int debuginviewsubsector;
 
 void
 R_StoreWallRange
@@ -276,7 +277,7 @@ void R_AddLine (const seg_t*	line)
         DrawMapDebugLine(320 + (line->v1->x - viewx) / MAP_SCALE, 
                          200 - (line->v1->y - viewy) / MAP_SCALE,
                          320 + (line->v2->x - viewx) / MAP_SCALE,
-                         200 - (line->v2->y - viewy) / MAP_SCALE, 0xffffffff);
+                         200 - (line->v2->y - viewy) / MAP_SCALE, debuginviewsubsector ? 0xffff00ff : 0xffffffff);
     }
 #endif
 
@@ -395,7 +396,7 @@ int	checkcoord[12][4] =
 };
 
 
-boolean R_CheckBBox (const int32_t*	bspcoord)
+boolean R_CheckBBox (const int16_t*	bspcoord)
 {
     int			boxx;
     int			boxy;
@@ -553,6 +554,10 @@ void R_Subsector (int num)
     //}
     //else
 	//ceilingplane = NULL;
+
+#if WIN32
+    debuginviewsubsector = R_PointInSubsector(viewx, viewy) == sub;
+#endif
 		
     R_AddSprites (frontsector);	
 

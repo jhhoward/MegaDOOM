@@ -446,8 +446,8 @@ typedef struct
 
 typedef struct
 {
-    int32_t x;
-    int32_t y;
+    int16_t x;
+    int16_t y;
 } vertex_t;
 
 struct line_s;
@@ -495,8 +495,8 @@ typedef struct line_s
     const vertex_t* v2;
 
     // Precalculated v2 - v1 for side checking.
-    int32_t	dx;
-    int32_t	dy;
+    int16_t	dx;
+    int16_t	dy;
 
     // Animation related.
     short	flags;
@@ -536,7 +536,7 @@ typedef struct
 
     int16_t	offset;
 
-    uint32_t	angle;
+    uint16_t	angle;
 
     const side_t* sidedef;
     const line_t* linedef;
@@ -557,13 +557,13 @@ typedef struct
 typedef struct
 {
     // Partition line.
-    int32_t	x;
-    int32_t	y;
-    int32_t	dx;
-    int32_t	dy;
+    int16_t	x;
+    int16_t	y;
+    int16_t	dx;
+    int16_t	dy;
 
     // Bounding box for each child.
-    int32_t	bbox[2][4];
+    int16_t	bbox[2][4];
 
     // If NF_SUBSECTOR its a subsector.
     uint16_t children[2];

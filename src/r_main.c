@@ -148,8 +148,8 @@ R_PointOnSide
   fixed_t	y,
   const node_t*	node )
 {
-    fixed_t	dx;
-    fixed_t	dy;
+    int16_t	dx;
+    int16_t	dy;
     fixed_t	left;
     fixed_t	right;
 	
@@ -170,25 +170,11 @@ R_PointOnSide
 	
     dx = (x - node->x);
     dy = (y - node->y);
-	
-    // Try to quickly decide by looking at sign bits.
-    if ( (node->dy ^ node->dx ^ dx ^ dy)&0x80000000 )
-    {
-	if  ( (node->dy ^ dx) & 0x80000000 )
-	{
-	    // (left is negative)
-	    return 1;
-	}
-	return 0;
-    }
 
-    left = FixedMul ( node->dy>>FRACBITS , dx );
-    right = FixedMul ( dy , node->dx>>FRACBITS );
-#else
     // Try to quickly decide by looking at sign bits.
-    if ((node->dy ^ node->dx ^ dx ^ dy) & 0x80000000)
+    if ((node->dy ^ node->dx ^ dx ^ dy) & 0x8000)
     {
-        if ((node->dy ^ dx) & 0x80000000)
+        if ((node->dy ^ dx) & 0x8000)
         {
             // (left is negative)
             return 1;
@@ -198,7 +184,6 @@ R_PointOnSide
 
     left = node->dy * dx;
     right = dy * node->dx;
-#endif
 	
     if (right < left)
     {
@@ -216,12 +201,12 @@ R_PointOnSegSide
   fixed_t	y,
   seg_t*	line )
 {
-    fixed_t	lx;
-    fixed_t	ly;
-    fixed_t	ldx;
-    fixed_t	ldy;
-    fixed_t	dx;
-    fixed_t	dy;
+    int16_t	lx;
+    int16_t	ly;
+    int16_t	ldx;
+    int16_t	ldy;
+    int16_t	dx;
+    int16_t	dy;
     fixed_t	left;
     fixed_t	right;
 	
@@ -250,9 +235,9 @@ R_PointOnSegSide
     dy = (y - ly);
 	
     // Try to quickly decide by looking at sign bits.
-    if ( (ldy ^ ldx ^ dx ^ dy)&0x80000000 )
+    if ( (ldy ^ ldx ^ dx ^ dy)&0x8000 )
     {
-	if  ( (ldy ^ dx) & 0x80000000 )
+	if  ( (ldy ^ dx) & 0x8000 )
 	{
 	    // (left is negative)
 	    return 1;
@@ -260,8 +245,10 @@ R_PointOnSegSide
 	return 0;
     }
 
-    left = FixedMul ( ldy>>FRACBITS , dx );
-    right = FixedMul ( dy , ldx>>FRACBITS );
+    //left = FixedMul ( ldy>>FRACBITS , dx );
+    //right = FixedMul ( dy , ldx>>FRACBITS );
+    left = ldy * dx;
+    right = dy * ldx;
 	
     if (right < left)
     {
