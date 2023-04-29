@@ -521,7 +521,7 @@ fixed_t R_ScaleFromGlobalAngle (angle_t visangle)
 
     //num = FixedMul(projection, sineb) << detailshift;
     //den = FixedMul(rw_distance, sinea);
-    num = FixedMul(projection >> 16, sineb) << detailshift;
+    num = FixedMul(projection >> FRACBITS, sineb) << detailshift;
     den = FixedMul(rw_distance, sinea);
 
     // TODO: projection and rw_distance could be 16 bit here

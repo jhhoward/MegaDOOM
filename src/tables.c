@@ -1894,7 +1894,7 @@ const fixed_t finesine[10240] =
 };
 #endif
 
-const fixed_t *finecosine = &finesine[FINEANGLES/4];
+const fixed16_t *finecosine = &finesine[FINEANGLES/4];
 
 #if !USE_GENERATED_TABLES
 const angle_t tantoangle[2049] =

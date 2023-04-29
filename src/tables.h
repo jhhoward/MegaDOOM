@@ -46,10 +46,10 @@
 #define ANGLETOFINESHIFT	3 // 19
 
 // Effective size is 10240.
-extern const fixed_t finesine[5*FINEANGLES/4];
+extern const fixed16_t finesine[5*FINEANGLES/4];
 
 // Re-use data, is just PI/2 pahse shift.
-extern const fixed_t *finecosine;
+extern const fixed16_t *finecosine;
 
 
 // Effective size is 4096.
