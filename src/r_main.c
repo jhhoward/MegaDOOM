@@ -434,22 +434,22 @@ R_PointToDist
     }
 
     // Fix crashes in udm1.wad
-
     if (dx != 0)
     {
-        frac = FixedDiv(dy, dx);
+        frac = (dy << FRACBITS) / dx;
     }
     else
     {
-	frac = 0;
+        frac = 0;
     }
-	
-    angle = tantoangle[frac>>DBITS] + ANG90;
+
+    angle = tantoangle[frac >> DBITS] + ANG90;
 
     // use as cosine
-    dist = FixedDiv (dx, finesine[angle >> ANGLETOFINESHIFT] );
-	
+    dist = (dx << FRACBITS) / finesine[angle >> ANGLETOFINESHIFT];
+
     return dist;
+
 }
 
 
@@ -521,26 +521,15 @@ fixed_t R_ScaleFromGlobalAngle (angle_t visangle)
 
     //num = FixedMul(projection, sineb) << detailshift;
     //den = FixedMul(rw_distance, sinea);
-    num = FixedMul(projection >> FRACBITS, sineb) << detailshift;
-    den = FixedMul(rw_distance, sinea);
+    num = (projection * sineb);
+    den = (rw_distance * sinea) >> FRACBITS;
 
-    // TODO: projection and rw_distance could be 16 bit here
-    //num = FixedMul(projection >> 16,sineb)<<detailshift;
-    //den = FixedMul(rw_distance >> 16,sinea);
-
-    if (den > num>>FRACBITS)
+    if (!den)
     {
-	scale = FixedDiv (num, den);
-
-	if (scale > 64*FRACUNIT)
-	    scale = 64*FRACUNIT;
-	else if (scale < 256)
-	    scale = 256;
+        return 64 * FRACUNIT;
     }
-    else
-	scale = 64*FRACUNIT;
-	
-    return scale;
+
+    return num / den;
 }
 
 
@@ -739,7 +728,7 @@ void R_ExecuteSetViewSize (void)
     centerx = viewwidth/2;
     centerxfrac = centerx<<FRACBITS;
     centeryfrac = centery<<FRACBITS;
-    projection = (centerxfrac * 12) / 5;
+    projection = (centerx * 12) / 5;
 
     //projection = centerx << 3;
 
