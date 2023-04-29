@@ -34,8 +34,8 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 	{
 		mapsector_t* sector = &mapdata->sectors[n];
 		fprintf(fs, "\t{ %d, %d, %d, %d, %d, %d, %d },\n",
-			sector->floorheight << FRACBITS,
-			sector->ceilingheight << FRACBITS,
+			sector->floorheight,
+			sector->ceilingheight,
 			LookupFlat(sector->floorpic),
 			LookupFlat(sector->ceilingpic),
 			sector->lightlevel >> 5,
@@ -160,7 +160,7 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 		fprintf(fs, "&%s_vertices[%d], ", levelname, seg->v1);
 		fprintf(fs, "&%s_vertices[%d], ", levelname, seg->v2);
 		fprintf(fs, "%d, ", seg->offset);
-		fprintf(fs, "0x%x, ", seg->angle);
+		fprintf(fs, "0x%x, ", (uint16_t) seg->angle);
 		fprintf(fs, "&%s_sides[%d], ", levelname, mapdata->lines[seg->linedef].sidenum[seg->side]);
 		fprintf(fs, "&%s_lines[%d], ", levelname, seg->linedef);
 

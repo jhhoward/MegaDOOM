@@ -361,7 +361,7 @@ int main(int argc, char* argv[])
 //	viewy = map->things[0].y << MAP_FRACBITS;
 	viewx = map->things[0].x;
 	viewy = map->things[0].y;
-	viewz = 64 << FRACBITS;
+	viewz = 64;
 
 	R_Init();
 	//SDL_SetWindowPosition(AppWindow, 1900 - DISPLAY_WIDTH * 2, 1020 - DISPLAY_HEIGHT);
@@ -440,11 +440,11 @@ int main(int argc, char* argv[])
 		}
 		if (input & INPUT_A)
 		{
-			viewz += 3 << FRACBITS;
+			viewz += 3;
 		}
 		if (input & INPUT_B)
 		{
-			viewz -= 3 << FRACBITS;
+			viewz -= 3;
 		}
 
 		ClearDisplayWindow(&debugMapWindow);

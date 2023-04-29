@@ -454,8 +454,8 @@ struct line_s;
 
 typedef	struct
 {
-    fixed_t	floorheight;
-    fixed_t	ceilingheight;
+    int16_t	floorheight;
+    int16_t	ceilingheight;
     int16_t	floorpic;
     int16_t	ceilingpic;
     int16_t	lightlevel;

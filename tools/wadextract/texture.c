@@ -459,7 +459,7 @@ void WriteTexturesToHeader()
 	fprintf(fs, "const fixed_t textureheight[] = { \n");
 	for (int n = 0; n < numcompositetextures; n++)
 	{
-		fprintf(fs, "0x%x, ", compositetextures[n].height << 16);
+		fprintf(fs, "0x%x, ", compositetextures[n].height);
 	}
 	fprintf(fs, "};\n");
 

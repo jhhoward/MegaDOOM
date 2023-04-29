@@ -21,7 +21,7 @@ int main()
 
     FILE* fs = fopen("tables.inc.h", "w");
 
-    fprintf(fs, "const fixed_t finesine[%d] = {\n\t", 5 * FINEANGLES / 4);
+    fprintf(fs, "const fixed16_t finesine[%d] = {\n\t", 5 * FINEANGLES / 4);
 
     // finesine table
     for (i = 0; i < 5 * FINEANGLES / 4; i++)

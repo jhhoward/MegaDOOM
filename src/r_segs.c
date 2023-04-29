@@ -296,7 +296,7 @@ void R_RenderSegLoop (void)
 	    // single sided line
 	    dc_yl = yl;
 	    dc_yh = yh;
-	    dc_texturemid = rw_midtexturemid;
+	    dc_texturemid = rw_midtexturemid << FRACBITS;
 	    dc_source = R_GetColumn(midtexture,texturecolumn&~1);
 	    colfunc ();
 	    ceilingclip[rw_x] = viewheight;
@@ -318,7 +318,7 @@ void R_RenderSegLoop (void)
 		{
 		    dc_yl = yl;
 		    dc_yh = mid;
-		    dc_texturemid = rw_toptexturemid;
+		    dc_texturemid = rw_toptexturemid << FRACBITS; 
 		    dc_source = R_GetColumn(toptexture,texturecolumn&~1);
 		    colfunc ();
 		    ceilingclip[rw_x] = mid;
@@ -347,7 +347,7 @@ void R_RenderSegLoop (void)
 		{
 		    dc_yl = mid;
 		    dc_yh = yh;
-		    dc_texturemid = rw_bottomtexturemid;
+		    dc_texturemid = rw_bottomtexturemid << FRACBITS;
 		    dc_source = R_GetColumn(bottomtexture,
 					    texturecolumn&~1);
 		    colfunc ();
@@ -706,32 +706,50 @@ R_StoreWallRange
 
     
     // calculate incremental stepping values for texture edges
-    worldtop >>= 4;
-    worldbottom >>= 4;
-	
-    topstep = -FixedMul (rw_scalestep, worldtop);
-    topfrac = (centeryfrac>>4) - FixedMul (worldtop, rw_scale);
+    //worldtop >>= 4;
+    //worldbottom >>= 4;
+	//
+    //topstep = -FixedMul (rw_scalestep, worldtop);
+    //topfrac = (centeryfrac>>4) - FixedMul (worldtop, rw_scale);
+	//
+    //bottomstep = -FixedMul (rw_scalestep,worldbottom);
+    //bottomfrac = (centeryfrac>>4) - FixedMul (worldbottom, rw_scale);
 
-    bottomstep = -FixedMul (rw_scalestep,worldbottom);
-    bottomfrac = (centeryfrac>>4) - FixedMul (worldbottom, rw_scale);
+	topstep = -((rw_scalestep * worldtop) >> 4);
+	topfrac = ((centeryfrac) - (worldtop * rw_scale)) >> 4;
 	
+	bottomstep = -((rw_scalestep * worldbottom) >> 4);
+	bottomfrac = ((centeryfrac) - (worldbottom * rw_scale)) >> 4;
+
     if (backsector)
     {	
-	worldhigh >>= 4;
-	worldlow >>= 4;
+//		worldhigh >>= 4;
+//		worldlow >>= 4;
+//
+//		if (worldhigh < worldtop)
+//		{
+//		    pixhigh = (centeryfrac>>4) - FixedMul (worldhigh, rw_scale);
+//		    pixhighstep = -FixedMul (rw_scalestep,worldhigh);
+//		}
+//		
+//		if (worldlow > worldbottom)
+//		{
+//		    pixlow = (centeryfrac>>4) - FixedMul (worldlow, rw_scale);
+//		    pixlowstep = -FixedMul (rw_scalestep,worldlow);
+//		}
 
-	if (worldhigh < worldtop)
-	{
-	    pixhigh = (centeryfrac>>4) - FixedMul (worldhigh, rw_scale);
-	    pixhighstep = -FixedMul (rw_scalestep,worldhigh);
+		if (worldhigh < worldtop)
+		{
+			pixhigh = ((centeryfrac) - (worldhigh * rw_scale)) >> 4;
+			pixhighstep = -((rw_scalestep * worldhigh) >> 4);
+		}
+
+		if (worldlow > worldbottom)
+		{
+			pixlow = ((centeryfrac) - (worldlow * rw_scale)) >> 4;
+			pixlowstep = -((rw_scalestep * worldlow) >> 4);
+		}
 	}
-	
-	if (worldlow > worldbottom)
-	{
-	    pixlow = (centeryfrac>>4) - FixedMul (worldlow, rw_scale);
-	    pixlowstep = -FixedMul (rw_scalestep,worldlow);
-	}
-    }
     
     // render it
     //if (markceiling)
