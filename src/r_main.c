@@ -184,6 +184,21 @@ R_PointOnSide
 
     left = FixedMul ( node->dy>>FRACBITS , dx );
     right = FixedMul ( dy , node->dx>>FRACBITS );
+#else
+    // Try to quickly decide by looking at sign bits.
+    if ((node->dy ^ node->dx ^ dx ^ dy) & 0x80000000)
+    {
+        if ((node->dy ^ dx) & 0x80000000)
+        {
+            // (left is negative)
+            return 1;
+        }
+        return 0;
+    }
+
+    left = node->dy * dx;
+    right = dy * node->dx;
+#endif
 	
     if (right < left)
     {
