@@ -55,6 +55,8 @@ extern const fixed16_t *finecosine;
 // Effective size is 4096.
 extern const fixed_t finetangent[FINEANGLES/2];
 
+extern const fixed_t scaledividetable[1024];
+
 // Gamma correction tables.
 //extern const byte gammatable[5][256];
 
@@ -89,7 +91,7 @@ extern const angle_t tantoangle[SLOPERANGE+1];
 //  called by R_PointToAngle.
 int SlopeDiv(unsigned int num, unsigned int den);
 
-angle_t VectorToAngle(unsigned int x, unsigned int y);
+angle_t VectorToAngle(uint16_t x, uint16_t y);
 
 
 #endif

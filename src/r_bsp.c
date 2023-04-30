@@ -50,8 +50,8 @@ int debuginviewsubsector;
 
 void
 R_StoreWallRange
-( int	start,
-  int	stop );
+( int16_t	start,
+  int16_t	stop );
 
 
 
@@ -73,8 +73,8 @@ void R_ClearDrawSegs (void)
 //
 typedef	struct
 {
-    int	first;
-    int last;
+    int16_t	first;
+    int16_t last;
     
 } cliprange_t;
 
@@ -102,8 +102,8 @@ cliprange_t	solidsegs[MAXSEGS];
 // 
 void
 R_ClipSolidWallSegment
-( int			first,
-  int			last )
+( int16_t			first,
+  int16_t			last )
 {
     cliprange_t*	next;
     cliprange_t*	start;
@@ -195,8 +195,8 @@ R_ClipSolidWallSegment
 //
 void
 R_ClipPassWallSegment
-( int	first,
-  int	last )
+( int16_t	first,
+  int16_t	last )
 {
     cliprange_t*	start;
 
@@ -244,10 +244,10 @@ R_ClipPassWallSegment
 //
 void R_ClearClipSegs (void)
 {
-    solidsegs[0].first = -0x7fffffff;
+    solidsegs[0].first = -0x7fff;
     solidsegs[0].last = -1;
     solidsegs[1].first = viewwidth;
-    solidsegs[1].last = 0x7fffffff;
+    solidsegs[1].last = 0x7fff;
     newend = solidsegs+2;
 }
 
@@ -262,8 +262,8 @@ void DrawMapDebugLine(int x0, int y0, int x1, int y1, uint32_t colour);
 //
 void R_AddLine (const seg_t*	line)
 {
-    int			x1;
-    int			x2;
+    int16_t			x1;
+    int16_t			x2;
     angle_t		angle1;
     angle_t		angle2;
     angle_t		span;
@@ -380,7 +380,7 @@ void R_AddLine (const seg_t*	line)
 // Returns true
 //  if some part of the bbox might be visible.
 //
-int	checkcoord[12][4] =
+int16_t	checkcoord[12][4] =
 {
     {3,0,2,1},
     {3,0,2,0},
@@ -398,14 +398,14 @@ int	checkcoord[12][4] =
 
 boolean R_CheckBBox (const int16_t*	bspcoord)
 {
-    int			boxx;
-    int			boxy;
-    int			boxpos;
+    int16_t			boxx;
+    int16_t			boxy;
+    int16_t			boxpos;
 
-    fixed_t		x1;
-    fixed_t		y1;
-    fixed_t		x2;
-    fixed_t		y2;
+    int16_t		x1;
+    int16_t		y1;
+    int16_t		x2;
+    int16_t		y2;
     
     angle_t		angle1;
     angle_t		angle2;
@@ -414,8 +414,8 @@ boolean R_CheckBBox (const int16_t*	bspcoord)
     
     cliprange_t*	start;
 
-    int			sx1;
-    int			sx2;
+    int16_t			sx1;
+    int16_t			sx2;
     
     // Find the corners of the box
     // that define the edges from current viewpoint.

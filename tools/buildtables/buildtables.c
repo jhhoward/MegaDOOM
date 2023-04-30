@@ -72,6 +72,12 @@ int main()
     }
     fprintf(fs, "};\n");
 
+    fprintf(fs, "const fixed_t scaledividetable[1024] = {\n\t");
+    for (i = 0; i < 1024; i++)
+    {
+        fprintf(fs, "%d, ", i == 0 ? 0xffff : 0xfffffu / i);
+    }
+    fprintf(fs, "\n};\n");
 
 #if 0
     // distancescale
@@ -165,6 +171,7 @@ int main()
     {
         fprintf(fs, "\tcase %d:\n", y);
         fprintf(fs, "\t\ttexel = dc_source[(frac >> FRACBITS) & 127];\n");
+//        fprintf(fs, "\t\ttexel = dc_source[(frac >> FRACBITS)];\n");
         fprintf(fs, "\t\t*dest = texel;\n");
         if (y > 0)
         {

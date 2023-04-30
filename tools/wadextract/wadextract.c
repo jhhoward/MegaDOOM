@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
 	//DumpMapToHeader(&mapdata, levelname);
 
 	wad_file_t* iwad = LoadWad("doom1.wad");
-	wad_file_t* pwad = LoadWad("test.wad");
+	wad_file_t* pwad = LoadWad("test2.wad");
 
 	if (iwad && pwad)
 	{
@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
 		ExtractTextures(iwad);
 
 		mapdata_t mapdata;
-		if (LoadMapDataFromWad(iwad, "E1M1", &mapdata))
+		if (LoadMapDataFromWad(pwad, "E1M1", &mapdata))
 		{
 			DumpMapToHeader(&mapdata, "E1M1");
 		}

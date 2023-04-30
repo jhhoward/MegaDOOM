@@ -274,14 +274,11 @@ void R_RenderSegLoop (void)
 	    //dc_colormap = walllights[index];
 	    dc_x = rw_x;
 	    
-		dc_iscale = 0xfffffffu / (unsigned)rw_scale;
+//		dc_iscale = 0xfffffffu / (unsigned)rw_scale;
 		
 		// TODO: dc_iscale could be a LUT with 1024 entries to avoid the divide:
-		// int temp = ((rw_scale) >> 10) & 0x3ff;
-		// if (temp)
-		// 	dc_iscale = 0x3fffffu / temp;
-		// else
-		// 	dc_iscale = 1;
+		 int16_t temp = ((rw_scale) >> 8) & 0x3ff;
+		 dc_iscale = scaledividetable[temp];
 	}
         else
         {
@@ -385,8 +382,8 @@ void R_RenderSegLoop (void)
 //
 void
 R_StoreWallRange
-( int	start,
-  int	stop )
+( int16_t	start,
+  int16_t	stop )
 {
     fixed_t		hyp;
     fixed_t		sineval;

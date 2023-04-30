@@ -171,10 +171,10 @@ int main(bool hardReset)
     u8 col = 0;
 
     map = &map_E1M1;
-    viewx = map->things[0].x << MAP_FRACBITS;
-    viewy = map->things[0].y << MAP_FRACBITS;
-    viewz = 64 << FRACBITS;
-    viewangle = map->things[0].angle << 16;
+    viewx = map->things[0].x;
+    viewy = map->things[0].y;
+    viewz = 64;
+    viewangle = map->things[0].angle;
 
     R_Init();
 
@@ -205,16 +205,16 @@ int main(bool hardReset)
                 viewangle -= ANG1 * 5;
             }
 
-            int movespeed = FRACUNIT * 5;
+            int movespeed = 5;
             if (input & BUTTON_UP)
             {
-                viewx += FixedMul(finecosine[viewangle >> ANGLETOFINESHIFT], movespeed);
-                viewy += FixedMul(finesine[viewangle >> ANGLETOFINESHIFT], movespeed);
+                viewx += (finecosine[viewangle >> ANGLETOFINESHIFT] * movespeed) >> FRACBITS;
+                viewy += (finesine[viewangle >> ANGLETOFINESHIFT] * movespeed) >> FRACBITS;
             }
             if (input & BUTTON_DOWN)
             {
-                viewx -= FixedMul(finecosine[viewangle >> ANGLETOFINESHIFT], movespeed);
-                viewy -= FixedMul(finesine[viewangle >> ANGLETOFINESHIFT], movespeed);
+                viewx -= (finecosine[viewangle >> ANGLETOFINESHIFT] * movespeed) >> FRACBITS;
+                viewy -= (finesine[viewangle >> ANGLETOFINESHIFT] * movespeed) >> FRACBITS;
             }
 
             //if (input & BUTTON_UP)
@@ -229,11 +229,11 @@ int main(bool hardReset)
             //}
             if (input & BUTTON_A)
             {
-                viewz += 3 << 16;
+                viewz += 3;
             }
             if (input & BUTTON_B)
             {
-                viewz -= 3 << 16;
+                viewz -= 3;
             }
         }
         lasttick = getTick();
@@ -298,7 +298,8 @@ void R_DrawColumnRef2(void)
         //  using a lighting/special effects LUT.
         //*dest = dc_colormap[dc_source[(frac >> FRACBITS) & 127]];
 
-        byte texel = dc_source[(frac >> FRACBITS) & 127];
+        //byte texel = dc_source[(frac >> FRACBITS) & 127];
+        byte texel = dc_source[(frac >> FRACBITS)];
         *dest = texel;
         dest += 4;
 

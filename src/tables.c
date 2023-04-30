@@ -40,7 +40,7 @@
 
 double atan2(double y, double x);
 
-angle_t VectorToAngle(unsigned int x, unsigned int y)
+angle_t VectorToAngle(uint16_t x, uint16_t y)
 {
     //{
     //    float f = atan2(y, x) / (3.141592657 * 2);

@@ -97,9 +97,9 @@ extern const map_t* map;
 //
 // POV data.
 //
-extern fixed_t		viewx;
-extern fixed_t		viewy;
-extern fixed_t		viewz;
+extern int16_t		viewx;
+extern int16_t		viewy;
+extern int16_t		viewz;
 
 extern angle_t		viewangle;
 //extern player_t*	viewplayer;
@@ -108,7 +108,7 @@ extern angle_t		viewangle;
 // ?
 extern angle_t		clipangle;
 
-extern int		viewangletox[FINEANGLES/2];
+extern int16_t		viewangletox[FINEANGLES/2];
 extern angle_t		xtoviewangle[SCREENWIDTH+1];
 //extern fixed_t		finetangent[FINEANGLES/2];
 

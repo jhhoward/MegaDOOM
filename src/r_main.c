@@ -58,7 +58,7 @@ int			centery;
 
 fixed_t			centerxfrac;
 fixed_t			centeryfrac;
-fixed_t			projection;
+int16_t			projection;
 
 // just for profiling purposes
 int			framecount;	
@@ -67,9 +67,9 @@ int			sscount;
 int			linecount;
 int			loopcount;
 
-fixed_t			viewx;
-fixed_t			viewy;
-fixed_t			viewz;
+int16_t			viewx;
+int16_t			viewy;
+int16_t			viewz;
 
 angle_t			viewangle;
 
@@ -90,7 +90,7 @@ angle_t			clipangle;
 // maps the visible view angles to screen X coordinates,
 // flattening the arc to a flat projection plane.
 // There will be many angles mapped to the same X. 
-int			viewangletox[FINEANGLES/2];
+int16_t			viewangletox[FINEANGLES/2];
 
 // The xtoviewangleangle[] table maps a screen pixel
 // to the lowest viewangle that maps back to x ranges
@@ -144,8 +144,8 @@ R_AddPointToBox
 //
 int
 R_PointOnSide
-( fixed_t	x,
-  fixed_t	y,
+( int16_t	x,
+  int16_t	y,
   const node_t*	node )
 {
     int16_t	dx;
@@ -197,8 +197,8 @@ R_PointOnSide
 
 int
 R_PointOnSegSide
-( fixed_t	x,
-  fixed_t	y,
+( int16_t	x,
+  int16_t	y,
   seg_t*	line )
 {
     int16_t	lx;
@@ -276,8 +276,8 @@ R_PointOnSegSide
 #if 1
 angle_t
 R_PointToAngle
-( fixed_t	x,
-  fixed_t	y )
+( int16_t	x,
+  int16_t	y )
 {
     x -= viewx;
     y -= viewy;
@@ -396,10 +396,10 @@ R_PointToAngle
 
 angle_t
 R_PointToAngle2
-( fixed_t	x1,
-  fixed_t	y1,
-  fixed_t	x2,
-  fixed_t	y2 )
+( int16_t	x1,
+  int16_t	y1,
+  int16_t	x2,
+  int16_t	y2 )
 {	
     viewx = x1;
     viewy = y1;
@@ -411,17 +411,17 @@ R_PointToAngle2
 #define abs(x) ((x) < 0 ? (-(x)) : (x))
 #endif
 
-fixed_t
+int16_t
 R_PointToDist
-( fixed_t	x,
-  fixed_t	y )
+( int16_t	x,
+  int16_t	y )
 {
     angle_t	angle;
-    fixed_t	dx;
-    fixed_t	dy;
-    fixed_t	temp;
-    fixed_t	dist;
-    fixed_t     frac;
+    int16_t	dx;
+    int16_t	dy;
+    int16_t	temp;
+    int16_t	dist;
+    int16_t frac;
 	
     dx = abs(x - viewx);
     dy = abs(y - viewy);
