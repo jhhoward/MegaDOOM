@@ -51,8 +51,9 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 	{
 		mapsubsector_t* subsector = &mapdata->subsectors[n];
 
-		maplinedef_t* line = &mapdata->lines[mapdata->segs[subsector->firstseg].linedef];
-		int sectornum = mapdata->sides[line->sidenum[0]].sector;
+		mapseg_t* firstseg = &mapdata->segs[subsector->firstseg];
+		maplinedef_t* line = &mapdata->lines[firstseg->linedef];
+		int sectornum = mapdata->sides[line->sidenum[firstseg->side]].sector;
 		//if (line->sidenum[0] != -1)
 		//	fprintf(fs, "&%s_sectors[%d], ", levelname, mapdata->sides[line->sidenum[0]].sector);
 
@@ -170,13 +171,13 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 		//fprintf(fs, "%d, ", length);
 
 		maplinedef_t* line = &mapdata->lines[seg->linedef];
-		if (line->sidenum[0] != -1)
-			fprintf(fs, "&%s_sectors[%d], ", levelname, mapdata->sides[line->sidenum[0]].sector);
+		if (line->sidenum[seg->side] != -1)
+			fprintf(fs, "&%s_sectors[%d], ", levelname, mapdata->sides[line->sidenum[seg->side]].sector);
 		else
 			fprintf(fs, "0, ");
 
-		if (line->sidenum[1] != -1)
-			fprintf(fs, "&%s_sectors[%d]", levelname, mapdata->sides[line->sidenum[1]].sector);
+		if (line->sidenum[!seg->side] != -1)
+			fprintf(fs, "&%s_sectors[%d]", levelname, mapdata->sides[line->sidenum[!seg->side]].sector);
 		else
 			fprintf(fs, "0");
 

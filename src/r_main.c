@@ -692,6 +692,15 @@ R_SetViewSize (void)
     setsizeneeded = true;
 }
 
+void R_DrawColumnNoTexture(void)
+{
+    int count = dc_yh - dc_yl;
+    if (count < 0)
+        return;
+
+    VLine(dc_x, dc_yl, count, 0x22);
+}
+
 
 //
 // R_ExecuteSetViewSize
@@ -728,7 +737,7 @@ void R_ExecuteSetViewSize (void)
     centerx = viewwidth/2;
     centerxfrac = centerx<<FRACBITS;
     centeryfrac = centery<<FRACBITS;
-    projection = (centerx * 12) / 5;
+    projection = (centerx * 6) / 5;
 
     //projection = centerx << 3;
 

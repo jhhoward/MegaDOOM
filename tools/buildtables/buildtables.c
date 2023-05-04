@@ -9,7 +9,7 @@
 #define M_PI 3.141592654
 
 #define FRAMEBUFFER_WIDTH SCREENWIDTH
-#define FRAMEBUFFER_HEIGHT SCREENHEIGHT
+#define FRAMEBUFFER_HEIGHT (SCREENHEIGHT * 2)
 #define FRAMEBUFFER_HEIGHT_TILES (FRAMEBUFFER_HEIGHT / 8)
 #define FRAMEBUFFER_TILE_BYTES (4 * 8)
 
@@ -142,12 +142,13 @@ int main()
     fprintf(fs, "void VLine(int x, int y, int count, uint8_t colour)\n");
     fprintf(fs, "{\n");
     fprintf(fs, "\tu8* ptr = framebuffer + framebufferx[x];\n");
-    fprintf(fs, "\tptr += (y << 2);\n");
+    fprintf(fs, "\tptr += (y << 3);\n");
     fprintf(fs, "\tswitch(count) {");
-    for (int y = FRAMEBUFFER_HEIGHT; y > 0; y--)
+    for (int y = FRAMEBUFFER_HEIGHT / 2; y > 0; y--)
     {
         fprintf(fs, "\tcase %d:\n", y);
-        fprintf(fs, "\tptr[%d] = colour;\n", (y - 1) * 4);
+        fprintf(fs, "\tptr[%d] = colour;\n", (y - 1) * 8);
+        fprintf(fs, "\tptr[%d] = colour;\n", (y - 1) * 8 + 4);
     }
     fprintf(fs, "\tbreak;\n");
     fprintf(fs, "\t}\n");
@@ -162,16 +163,18 @@ int main()
     fprintf(fs, "\tcount = dc_yh - dc_yl;\n");
     fprintf(fs, "\tif (count < 0) return;\n");
     fprintf(fs, "\tu8* dest = framebuffer + framebufferx[dc_x];\n");
-    fprintf(fs, "\tdest += (dc_yl << 2);\n");
+    fprintf(fs, "\tdest += (dc_yl << 3);\n");
     fprintf(fs, "\tfracstep = dc_iscale;\n");
     fprintf(fs, "\tfrac = dc_texturemid + (dc_yl - centery) * fracstep;\n");
 
     fprintf(fs, "\tswitch(count) {\n");
-    for (int y = FRAMEBUFFER_HEIGHT; y > 0; y--)
+    for (int y = FRAMEBUFFER_HEIGHT / 2; y > 0; y--)
     {
         fprintf(fs, "\tcase %d:\n", y);
-        fprintf(fs, "\t\ttexel = dc_source[(frac >> FRACBITS) & 127];\n");
-//        fprintf(fs, "\t\ttexel = dc_source[(frac >> FRACBITS)];\n");
+//        fprintf(fs, "\t\ttexel = dc_source[(frac >> FRACBITS) & 127];\n");
+        fprintf(fs, "\t\ttexel = dc_source[(frac >> FRACBITS)];\n");
+        fprintf(fs, "\t\t*dest = texel;\n");
+        fprintf(fs, "\t\tdest += 4;\n");
         fprintf(fs, "\t\t*dest = texel;\n");
         if (y > 0)
         {

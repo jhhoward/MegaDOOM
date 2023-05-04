@@ -58,8 +58,8 @@ int16_t		rw_angle1;
 int		rw_x;
 int		rw_stopx;
 angle_t		rw_centerangle;
-fixed_t		rw_offset;
-fixed_t		rw_distance;
+int16_t		rw_offset;
+int16_t		rw_distance;
 fixed_t		rw_scale;
 fixed_t		rw_scalestep;
 fixed_t		rw_midtexturemid;
@@ -227,8 +227,7 @@ void R_RenderSegLoop (void)
 
 	    if (top <= bottom)
 	    {
-			VLine(rw_x, top, bottom - top + 1, 0x77);
-
+			VLine(rw_x, top, bottom - top + 1, flats[frontsector->ceilingpic].colour[frontsector->lightlevel]);
 		//ceilingplane->top[rw_x] = top;
 		//ceilingplane->bottom[rw_x] = bottom;
 	    }
@@ -247,7 +246,7 @@ void R_RenderSegLoop (void)
 		top = ceilingclip[rw_x]+1;
 	    if (top <= bottom)
 	    {
-			VLine(rw_x, top, bottom - top + 1, 0x88);
+			VLine(rw_x, top, bottom - top + 1, flats[frontsector->floorpic].colour[frontsector->lightlevel]);
 
 		//floorplane->top[rw_x] = top;
 		//floorplane->bottom[rw_x] = bottom;

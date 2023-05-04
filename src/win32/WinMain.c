@@ -8,6 +8,7 @@
 #include "DoomData.h"
 #include "../project/E1M1.inc.h"
 #include "generated/textures.inc.h"
+#include "generated/flats.inc.h"
 
 // For MD:
 // - Preprocess WAD and extract data
@@ -241,7 +242,7 @@ void VLine(int x, int y, int count, uint8_t colour)
 		}
 		else
 		{
-			if (true)
+			if (false)
 			{
 				PutPixelImmediate(mainWindow.screenSurface, x, y, gamePalette[colour & 0xf]);
 				PutPixelImmediate(mainWindow.screenSurface, x + 1, y, gamePalette[colour >> 4]);
@@ -251,8 +252,8 @@ void VLine(int x, int y, int count, uint8_t colour)
 				PutPixelImmediate(mainWindow.screenSurface, x, y * 2, gamePalette[colour & 0xf]);
 				PutPixelImmediate(mainWindow.screenSurface, x + 1, y * 2, gamePalette[colour >> 4]);
 
-				PutPixelImmediate(mainWindow.screenSurface, x, y * 2 + 1, gamePalette[colour & 0xf]);
-				PutPixelImmediate(mainWindow.screenSurface, x + 1, y * 2 + 1, gamePalette[colour >> 4]);
+				PutPixelImmediate(mainWindow.screenSurface, x + 1, y * 2 + 1, gamePalette[colour & 0xf]);
+				PutPixelImmediate(mainWindow.screenSurface, x, y * 2 + 1, gamePalette[colour >> 4]);
 			}
 		}
 		y++;
@@ -447,6 +448,12 @@ int main(int argc, char* argv[])
 			viewz -= 3;
 		}
 
+		const subsector_t* subsector = R_PointInSubsector(viewx, viewy);
+		if (subsector)
+		{
+			viewz = subsector->sector->floorheight + 41;
+		}
+
 		ClearDisplayWindow(&debugMapWindow);
 		ClearDisplayWindow(&mainWindow);
 
@@ -500,7 +507,7 @@ void R_DrawColumn(void)
 	// Use ylookup LUT to avoid multiply with ScreenWidth.
 	// Use columnofs LUT for subwindows?
 	//dest = ylookup[dc_yl] + columnofs[dc_x];
-	uint32_t* dest = &((uint32_t*)(mainWindow.screenSurface->pixels))[dc_yl * mainWindow.width + 2 * dc_x];
+	uint32_t* dest = &((uint32_t*)(mainWindow.screenSurface->pixels))[2 * dc_yl * mainWindow.width + 2 * dc_x];
 
 	// Determine scaling,
 	//  which is the only mapping to be done.
@@ -520,6 +527,10 @@ void R_DrawColumn(void)
 		//byte pixelpair = 0x77;
 		dest[0] = gamePalette[pixelpair & 0xf];
 		dest[1] = gamePalette[pixelpair >> 4];
+		dest += mainWindow.screenSurface->pitch / sizeof(uint32_t);
+
+		dest[1] = gamePalette[pixelpair & 0xf];
+		dest[0] = gamePalette[pixelpair >> 4];
 		dest += mainWindow.screenSurface->pitch / sizeof(uint32_t);
 
 		//dest += SCREENWIDTH;

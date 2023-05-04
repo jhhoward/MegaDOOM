@@ -91,6 +91,13 @@ int16_t LookupTexture(char name[8])
 			return n + 1;
 		}
 	}
+	for (int n = 0; n < numcompositetextures; n++)
+	{
+		if (DoesNameMatch("STARTAN1", compositetextures[n].name))
+		{
+			return n + 1;
+		}
+	}
 	return 1;
 }
 
@@ -315,23 +322,41 @@ void ExtractFlat(wad_file_t* wad, int index)
 	if (numflats < MAX_FLATS)
 	{
 		memcpy(flatnames[numflats].name, wad->files[index].name, 8);
-		for (int n = 0; n < 8; n++)
+
+		if (!memcmp(wad->files[index].name, "NUKAGE", 6))
 		{
-			float alpha = (n + 1) / 8.0f;
-			alpha *= 1.1f;
-			int rlit = (int)(r * alpha);
-			int glit = (int)(g * alpha);
-			int blit = (int)(b * alpha);
-			if (rlit > 255)
-				rlit = 255;
-			if (glit > 255)
-				glit = 255;
-			if (blit > 255)
-				blit = 255;
+			for (int n = 0; n < 8; n++)
+			{
+				flats[numflats].colour[n] = 0xd9;
+			}
+		}
+		else if (!memcmp(wad->files[index].name, "F_SKY1", 6))
+		{
+			for (int n = 0; n < 8; n++)
+			{
+				flats[numflats].colour[n] = 0;
+			}
+		}
+		else
+		{
+			for (int n = 0; n < 8; n++)
+			{
+				float alpha = (n + 1) / (float)8;
+				alpha *= 1.1f;
+				int rlit = (int)(r * alpha);
+				int glit = (int)(g * alpha);
+				int blit = (int)(b * alpha);
+				if (rlit > 255)
+					rlit = 255;
+				if (glit > 255)
+					glit = 255;
+				if (blit > 255)
+					blit = 255;
 
-			uint32_t averagelit = 0xff000000 | (rlit) | (glit << 8) | (blit << 16);
+				uint32_t averagelit = 0xff000000 | (rlit) | (glit << 8) | (blit << 16);
 
-			flats[numflats].colour[n] = MatchBlendedColour(averagelit);
+				flats[numflats].colour[n] = MatchBlendedColour(averagelit);
+			}
 		}
 		numflats++;
 	}

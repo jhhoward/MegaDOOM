@@ -21,11 +21,12 @@ void srand(uint16_t seed);
 #include "../../src/r_things.c"
 #include "../../project/E1M1.inc.h"
 #include "../../src/generated/textures.inc.h"
+#include "../../src/generated/flats.inc.h"
 //#include "../../project/E1M2.inc.h"
 #include "music.h"
 
 #define FRAMEBUFFER_WIDTH SCREENWIDTH
-#define FRAMEBUFFER_HEIGHT SCREENHEIGHT
+#define FRAMEBUFFER_HEIGHT (SCREENHEIGHT * 2)
 #define FRAMEBUFFER_TILE_BYTES (4 * 8)
 #define FRAMEBUFFER_WIDTH_TILES (FRAMEBUFFER_WIDTH / 4)
 #define FRAMEBUFFER_HEIGHT_TILES (FRAMEBUFFER_HEIGHT / 8)
@@ -180,7 +181,7 @@ int main(bool hardReset)
 
     u32 lasttick = getTick();
 
-    XGM_startPlay(xgm_e1m1);
+    XGM_startPlay(xgm_e1m6);
      
     while(TRUE)
     {
@@ -236,6 +237,13 @@ int main(bool hardReset)
                 viewz -= 3;
             }
         }
+
+        const subsector_t* subsector = R_PointInSubsector(viewx, viewy);
+        if (subsector)
+        {
+            viewz = subsector->sector->floorheight + 41;
+        }
+
         lasttick = getTick();
 
         //for (int n = 0; n < FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT; n++)

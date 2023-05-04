@@ -55,6 +55,7 @@ extern int		firstflat;
 extern int*		flattranslation;	
 extern const int		texturetranslation[];	
 
+extern const flat_t	flats[];
 
 // Sprite....
 extern int		firstspritelump;
@@ -112,7 +113,7 @@ extern int16_t		viewangletox[FINEANGLES/2];
 extern angle_t		xtoviewangle[SCREENWIDTH+1];
 //extern fixed_t		finetangent[FINEANGLES/2];
 
-extern fixed_t		rw_distance;
+extern int16_t		rw_distance;
 extern angle_t		rw_normalangle;
 
 
