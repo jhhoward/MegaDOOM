@@ -9,9 +9,13 @@
 
 #pragma warning(disable:4996)
 
+#define LIGHTING_BOOST 1.0f
+#define TEXTURE_DETAIL_SHIFT 0
+
 const bool dumppng = false;
 const bool crosshatchdither = false;
 const bool quantize = false;
+extern bool extractsingletexture;
 
 typedef struct
 {
@@ -59,6 +63,8 @@ typedef struct
 	char name[8];
 	uint32_t* pixels;
 	int width, height;
+	uint32_t average;
+	int* atlaspositions;
 } compositetexture_t;
 
 #define MAX_FLATS 256
@@ -325,24 +331,24 @@ void ExtractFlat(wad_file_t* wad, int index)
 
 		if (!memcmp(wad->files[index].name, "NUKAGE", 6))
 		{
-			for (int n = 0; n < 8; n++)
+			for (int n = 0; n < NUM_LIGHTING_LEVELS; n++)
 			{
 				flats[numflats].colour[n] = 0xd9;
 			}
 		}
 		else if (!memcmp(wad->files[index].name, "F_SKY1", 6))
 		{
-			for (int n = 0; n < 8; n++)
+			for (int n = 0; n < NUM_LIGHTING_LEVELS; n++)
 			{
 				flats[numflats].colour[n] = 0;
 			}
 		}
 		else
 		{
-			for (int n = 0; n < 8; n++)
+			for (int n = 0; n < NUM_LIGHTING_LEVELS; n++)
 			{
-				float alpha = (n + 1) / (float)8;
-				alpha *= 1.1f;
+				float alpha = (n + 1) / (float)NUM_LIGHTING_LEVELS;
+				alpha *= LIGHTING_BOOST;
 				int rlit = (int)(r * alpha);
 				int glit = (int)(g * alpha);
 				int blit = (int)(b * alpha);
@@ -388,7 +394,7 @@ void WriteFlatsToHeader()
 	for (int n = 0; n < numflats; n++)
 	{
 		fprintf(fs, "\t{ {");
-		for (int i = 0; i < 8; i++)
+		for (int i = 0; i < NUM_LIGHTING_LEVELS; i++)
 		{
 			fprintf(fs, "0x%x, ", flats[n].colour[i]);
 		}
@@ -397,6 +403,32 @@ void WriteFlatsToHeader()
 	fprintf(fs, "};\n");
 
 	fclose(fs);
+}
+
+void ExtractFlatsInfoOnly(wad_file_t* wad)
+{
+	int start = FindWadEntry(wad, "F_START", 0);
+	int end = FindWadEntry(wad, "F_END", 0);
+
+	if (start >= 0 && end > start)
+	{
+		for (int n = start + 1; n < end; n++)
+		{
+			char name[9];
+			name[8] = 0;
+			memcpy(name, wad->files[n].name, 8);
+			printf("%d : %s\n", n, name);
+
+			if (wad->files[n].lenData > 0)
+			{
+				if (numflats < MAX_FLATS)
+				{
+					memcpy(flatnames[numflats].name, wad->files[n].name, 8);
+					numflats++;
+				}
+			}
+		}
+	}
 }
 
 void ExtractFlats(wad_file_t* wad)
@@ -423,21 +455,90 @@ void ExtractFlats(wad_file_t* wad)
 	WriteFlatsToHeader();
 }
 
+int FindOrAddToAtlas(uint8_t* atlas, int* atlassize, int* entrypoints, int* numentrypoints, uint8_t* pixels, int numpixels)
+{
+	for (int entry = 0; entry < *numentrypoints; entry++)
+	{
+		int start = entrypoints[entry];
+		int entrylength;
+		if (entry == *numentrypoints - 1)
+		{
+			entrylength = *atlassize - start;
+		}
+		else
+		{
+			entrylength = entrypoints[entry + 1] - start;
+		}
+		if (numpixels > entrylength)
+		{
+			continue;
+		}
+
+		bool found = true;
+
+		for (int x = 0; x < numpixels; x++)
+		{
+			if (atlas[start + x] != pixels[x])
+			{
+				found = false;
+				break;
+			}
+		}
+
+		if (found)
+		{
+			return start;
+		}
+	}
+
+	// Not in atlas so add
+	int result = *atlassize;
+	entrypoints[*numentrypoints] = result;
+	(*numentrypoints)++;
+
+	memcpy(atlas + result, pixels, numpixels);
+
+	*atlassize += numpixels;
+
+	return result;
+}
+
 void WriteTexturesToHeader()
 {
 	FILE* fs = fopen("../src/generated/textures.inc.h", "w");
 	char texname[9];
 	texname[8] = '\0';
 
+	uint8_t* textureatlas;
+	int textureatlassize = 0;
+
+	int* entrypoints;
+	int numentrypoints = 0;
+	int maxentrypoints = 0;
+
+	int maximumatlassize = 0;
 	for (int n = 0; n < numcompositetextures; n++)
 	{
 		compositetexture_t* compositetexture = &compositetextures[n];
-		memcpy(texname, compositetexture->name, 8);
-		fprintf(fs, "const uint8_t texturedata_%s[] = {\n", texname);
+		maximumatlassize += compositetexture->width * compositetexture->height * NUM_LIGHTING_LEVELS;
+		maxentrypoints += compositetexture->width * NUM_LIGHTING_LEVELS;
+	}
 
-		for (int l = 0; l < 2; l++)
+	textureatlas = (uint8_t*)malloc(maximumatlassize);
+	entrypoints = (int*)malloc(maxentrypoints * sizeof(int));
+
+	printf("Generating texture atlas");
+	for (int n = 0; n < numcompositetextures; n++)
+	{
+		compositetexture_t* compositetexture = &compositetextures[n];
+		uint8_t temppixels[128];
+
+		compositetexture->atlaspositions = malloc(sizeof(int) * compositetexture->width * NUM_LIGHTING_LEVELS);
+
+		for (int l = 0; l < NUM_LIGHTING_LEVELS; l++)
 		{
-			float alpha = (l + 1) / 2.0f;
+			float alpha = (l + 1) / (float)(NUM_LIGHTING_LEVELS);
+			alpha *= LIGHTING_BOOST;
 			for (int x = 0; x < compositetexture->width; x++)
 			{
 				for (int y = 0; y < compositetexture->height; y++)
@@ -449,6 +550,7 @@ void WriteTexturesToHeader()
 					int rlit = (int)(r * alpha);
 					int glit = (int)(g * alpha);
 					int blit = (int)(b * alpha);
+
 					if (rlit > 255)
 						rlit = 255;
 					if (glit > 255)
@@ -456,46 +558,104 @@ void WriteTexturesToHeader()
 					if (blit > 255)
 						blit = 255;
 
-					uint32_t averagelit = 0xff000000 | (rlit) | (glit << 8) | (blit << 16);
-
-					int palettedPixel = MatchBlendedColour(averagelit);
-					fprintf(fs, "0x%x,", palettedPixel);
+					uint32_t litpixel = 0xff000000 | (rlit) | (glit << 8) | (blit << 16);
+					temppixels[y] = MatchBlendedColour(litpixel);
 				}
+
+				compositetexture->atlaspositions[l * compositetexture->width + x] = FindOrAddToAtlas(textureatlas, &textureatlassize, entrypoints, &numentrypoints, temppixels, compositetexture->height);
+
+				//if (TEXTURE_DETAIL_SHIFT)
+				//{
+				//	x++;
+				//}
 			}
 		}
+		printf(".");
+	}
 
-		fprintf(fs, "};\n");
-		fprintf(fs, "const uint8_t* const texturecolumns_%s[] = {\n", texname);
-		for (int x = 0; x < compositetexture->width * 2; x++)
+	printf("\n");
+	printf("Uncompressed atlas size: %d bytes. Compressed atlas size: %d bytes. Ratio = %d%%\n", maximumatlassize, textureatlassize, (textureatlassize * 100) / maximumatlassize);
+
+	fprintf(fs, "const uint8_t textureatlas[] = {\n");
+	for (int n = 0; n < textureatlassize; n++)
+	{
+		fprintf(fs, "0x%x,", textureatlas[n]);
+	}
+	fprintf(fs, "\n};\n\n");
+
+	for (int n = 0; n < numcompositetextures; n++)
+	{
+		compositetexture_t* compositetexture = &compositetextures[n];
+		memcpy(texname, compositetexture->name, 8);
+		fprintf(fs, "const uint32_t tc_%s[] = {\n", texname);
+		for (int x = 0; x < compositetexture->width * NUM_LIGHTING_LEVELS; x++)
 		{
-			fprintf(fs, "&texturedata_%s[%d], ", texname, x * compositetexture->height);
+			fprintf(fs, "0x%x,", compositetexture->atlaspositions[x]);
 		}
 		fprintf(fs, "};\n");
 	}
-
-	fprintf(fs, "const walltexture_t walltextures[] = { { 0, 0, 0 },\n");
+	
+	fprintf(fs, "const walltexture_t walltextures[] = { { 0, 0, { 0, 0, 0, 0 }, {0, 0, 0, 0} },\n");
 	for (int n = 0; n < numcompositetextures; n++)
 	{
-		memcpy(texname, compositetextures[n].name, 8);
-		fprintf(fs, "\t{ %d, %d, texturecolumns_%s },\n", compositetextures[n].width, compositetextures[n].height, texname);
-	}
-	fprintf(fs, "};\n");
+		compositetexture_t* compositetexture = &compositetextures[n];
+		memcpy(texname, compositetexture->name, 8);
 
-	fprintf(fs, "const fixed_t textureheight[] = { \n");
-	for (int n = 0; n < numcompositetextures; n++)
-	{
-		fprintf(fs, "0x%x, ", compositetextures[n].height);
-	}
-	fprintf(fs, "};\n");
+		fprintf(fs, "\t{ %d, %d, {", compositetexture->width, compositetexture->height);
+		for (int l = 0; l < NUM_LIGHTING_LEVELS; l++)
+		{
+			float alpha = (l + 1) / (float)(NUM_LIGHTING_LEVELS);
+			alpha *= LIGHTING_BOOST;
+			int r = (int)(alpha * (compositetexture->average & 0xff));
+			int g = (int)(alpha * ((compositetexture->average >> 8) & 0xff));
+			int b = (int)(alpha * ((compositetexture->average >> 16) & 0xff));
 
-	fprintf(fs, "const int texturetranslation[] = { \n");
-	for (int n = 0; n < numcompositetextures + 1; n++)
-	{
-		fprintf(fs, "0x%x, ", n);
+			if (r > 255) r = 255;
+			if (g > 255) g = 255;
+			if (b > 255) b = 255;
+
+			int averagelit = MatchBlendedColour(0xff000000 | (b << 16) | (g << 8) | r);
+
+			fprintf(fs, "0x%x,", averagelit);
+		}
+		fprintf(fs, "},{");
+		
+		for (int l = 0; l < NUM_LIGHTING_LEVELS; l++)
+		{ 
+			fprintf(fs, "&tc_%s[%d],", texname, compositetexture->width * l);
+		}
+		fprintf(fs, "} },\n");
 	}
 	fprintf(fs, "};\n");
 
 	fclose(fs);
+}
+
+void ExtractTextureInfoOnly(wad_file_t* wad)
+{
+	int texture1 = FindWadEntry(wad, "TEXTURE1", 0);
+	if (texture1 >= 0)
+	{
+		wad_file_entry_t* entry = &wad->files[texture1];
+		uint8_t* data = wad->data + entry->offData;
+		uint32_t texturecount = *((uint32_t*)data);
+		printf("Num textures: %d\n", texturecount);
+		uint32_t* offsets = ((uint32_t*)data) + 1;
+
+		for (int n = 0; n < texturecount; n++)
+		{
+			if (numcompositetextures >= MAX_COMPOSITE_TEXTURES)
+				break;
+
+			maptexture_t* maptexture = (maptexture_t*)(data + offsets[n]);
+			printf("%s\n", maptexture->name);
+
+			compositetexture_t* compositetexture = &compositetextures[numcompositetextures++];
+			compositetexture->width = maptexture->width;
+			compositetexture->height = maptexture->height;
+			memcpy(compositetexture->name, maptexture->name, 8);
+		}
+	}
 }
 
 void ExtractTextures(wad_file_t* wad)
@@ -515,6 +675,17 @@ void ExtractTextures(wad_file_t* wad)
 				break;
 
 			maptexture_t* maptexture = (maptexture_t*)(data + offsets[n]);
+
+			if (extractsingletexture)
+			{
+				if (numcompositetextures)
+				{
+					break;
+				}
+				if (memcmp(maptexture->name, "STARTAN1", 8))
+					continue;
+			}
+
 			printf("%s\n", maptexture->name);
 
 			compositetexture_t* compositetexture = &compositetextures[numcompositetextures++];
@@ -555,6 +726,36 @@ void ExtractTextures(wad_file_t* wad)
 				}
 			}
 
+			// Calculate average
+			{
+				int r = 0, g = 0, b = 0;
+				for (int n = 0; n < compositetexture->width * compositetexture->height; n++)
+				{
+					uint32_t pixel = compositetexture->pixels[n];
+					r += (pixel & 0xff);
+					g += (pixel >> 8) & 0xff;
+					b += (pixel >> 16) & 0xff;
+				}
+
+				r /= compositetexture->width * compositetexture->height;
+				g /= compositetexture->width * compositetexture->height;
+				b /= compositetexture->width * compositetexture->height;
+
+				compositetexture->average = 0xff000000 | (b << 16) | (g << 8) | (r);
+			}
+
+			if (TEXTURE_DETAIL_SHIFT)
+			{
+				for (int y = 0; y < compositetexture->height; y++)
+				{
+					for (int x = 0; x < compositetexture->width / 2; x++)
+					{
+						compositetexture->pixels[y * (compositetexture->width / 2) + x] = compositetexture->pixels[y * compositetexture->width + 2 * x];
+					}
+				}
+				compositetexture->width /= 2;
+			}
+
 			if (dumppng)
 			{
 				if (quantize)
@@ -593,6 +794,50 @@ void ExtractTextures(wad_file_t* wad)
 		}
 	}
 
-	//WriteTexturesToHeader();
+	WriteTexturesToHeader();
 }
 
+void WriteSkybox(const char* imagepath, const char* outputpath)
+{
+	uint8_t* pixels;
+	unsigned width, height;
+
+	if (lodepng_decode32_file(&pixels, &width, &height, imagepath))
+	{
+		printf("Error opening sky file %s\n", imagepath);
+		return;
+	}
+
+	FILE* fs = fopen("../src/generated/skybox.inc.h", "w");
+
+	fprintf(fs, "const u8 skytexturedata[] = {\n");
+
+	uint32_t* pixels32 = (uint32_t*)(pixels);
+
+	int tilesheight = height / 8;
+	int tileswidth = width / 8;
+
+	for (int ty = 0; ty < tilesheight; ty++)
+	{
+		for(int tx = 0; tx < tileswidth; tx++)
+		{
+			for (int j = 0; j < 8; j++)
+			{
+				for (int i = 0; i < 8; i += 2)
+				{
+					int x = tx * 8 + i;
+					int y = ty * 8 + j;
+
+					uint8_t first = MatchPaletteColour(pixels32[y * width + x]);
+					uint8_t second = MatchPaletteColour(pixels32[y * width + x + 1]);
+					int combined = (first << 4) | (second);
+					fprintf(fs, "0x%x,", combined);
+				}
+			}
+		}
+	}
+
+	fprintf(fs, "\n};\n");
+
+	fclose(fs);
+}

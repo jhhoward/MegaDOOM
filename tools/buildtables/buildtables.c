@@ -9,9 +9,22 @@
 #define M_PI 3.141592654
 
 #define FRAMEBUFFER_WIDTH SCREENWIDTH
+#define FRAMEBUFFER_WIDTH_TILES (FRAMEBUFFER_WIDTH / 4)
 #define FRAMEBUFFER_HEIGHT (SCREENHEIGHT * 2)
 #define FRAMEBUFFER_HEIGHT_TILES (FRAMEBUFFER_HEIGHT / 8)
 #define FRAMEBUFFER_TILE_BYTES (4 * 8)
+
+#define SCREEN_LAYOUT_WIDTH_TILES (256 / 8)
+#define SCREEN_LAYOUT_HEIGHT_TILES (224 / 8)
+
+#define SKY_WIDTH_TILES (FRAMEBUFFER_WIDTH_TILES)
+#define SKY_HEIGHT 96
+#define SKY_LAYOUT_WIDTH_TILES (SKY_WIDTH_TILES  * 2)
+#define SKY_LAYOUT_HEIGHT_TILES (SKY_HEIGHT / 8)
+
+#define TILE_USER_INDEX 16
+#define FRAMEBUFFER_START_TILE_INDEX (TILE_USER_INDEX + 1)
+#define SKY_START_TILE_INDEX (FRAMEBUFFER_START_TILE_INDEX + FRAMEBUFFER_WIDTH_TILES * FRAMEBUFFER_HEIGHT_TILES)
 
 int main()
 {
@@ -139,6 +152,46 @@ int main()
     }
     fprintf(fs, "};\n\n");
 
+    fprintf(fs, "const u16 screenLayoutTiles[] = {\n");
+    for (int y = 0; y < SCREEN_LAYOUT_HEIGHT_TILES; y++)
+    {
+        for (int x = 0; x < SCREEN_LAYOUT_WIDTH_TILES; x++)
+        {
+            int i = x - (SCREEN_LAYOUT_WIDTH_TILES - FRAMEBUFFER_WIDTH_TILES) / 2;
+            int j = y;
+
+            if (i >= 0 && j >= 0 && i < FRAMEBUFFER_WIDTH_TILES && j < FRAMEBUFFER_HEIGHT_TILES)
+            {
+                int index = FRAMEBUFFER_START_TILE_INDEX + i * FRAMEBUFFER_HEIGHT_TILES + j;
+                fprintf(fs, "%d, ", index);
+            }
+            else
+            {
+                int index = TILE_USER_INDEX;
+                fprintf(fs, "%d, ", index);
+            }
+        }
+    }
+    fprintf(fs, "\n};\n\n");
+
+    // Skybox tile map
+    fprintf(fs, "const u16 skyLayoutTiles[] = {\n");
+    for (int y = 0; y < SKY_LAYOUT_HEIGHT_TILES; y++)
+    {
+        for (int x = 0; x < SKY_LAYOUT_WIDTH_TILES; x++)
+        {
+            int i = x % (SKY_WIDTH_TILES);
+            int j = y;
+            
+            int index = SKY_START_TILE_INDEX + j * SKY_WIDTH_TILES + i;
+
+            // Set palette 1
+            index |= (1 << 13);
+
+            fprintf(fs, "%d, ", index);
+        }
+    }
+    fprintf(fs, "\n};\n\n");
     fprintf(fs, "void VLine(int x, int y, int count, uint8_t colour)\n");
     fprintf(fs, "{\n");
     fprintf(fs, "\tu8* ptr = framebuffer + framebufferx[x];\n");

@@ -7,6 +7,8 @@ uint16_t rand(void);
 void srand(uint16_t seed);
 
 #include "../../src/generated/palette.inc.h"
+#include "../../src/generated/skypalette.inc.h"
+#include "../../src/generated/skybox.inc.h"
 #include "../../src/r_bsp.c"
 #include "../../src/tables.c"
 #include "../../src/r_main.c"
@@ -19,10 +21,9 @@ void srand(uint16_t seed);
 #include "../../src/r_draw.c"
 #include "../../src/r_sky.c"
 #include "../../src/r_things.c"
-#include "../../project/E1M1.inc.h"
+#include "../../src/generated/E1M1.inc.h"
 #include "../../src/generated/textures.inc.h"
 #include "../../src/generated/flats.inc.h"
-//#include "../../project/E1M2.inc.h"
 #include "music.h"
 
 #define FRAMEBUFFER_WIDTH SCREENWIDTH
@@ -32,9 +33,20 @@ void srand(uint16_t seed);
 #define FRAMEBUFFER_HEIGHT_TILES (FRAMEBUFFER_HEIGHT / 8)
 #define FRAMEBUFFER_X ((32 - FRAMEBUFFER_WIDTH_TILES) / 2)
 #define FRAMEBUFFER_Y ((28 - 4 - FRAMEBUFFER_HEIGHT_TILES) / 2)
+#define FRAMEBUFFER_START_TILE_INDEX (TILE_USER_INDEX + 1)
+
+#define SCREEN_LAYOUT_WIDTH_TILES (256 / 8)
+#define SCREEN_LAYOUT_HEIGHT_TILES (224 / 8)
+
+#define SKY_START_TILE_INDEX (FRAMEBUFFER_START_TILE_INDEX + FRAMEBUFFER_WIDTH_TILES * FRAMEBUFFER_HEIGHT_TILES)
+#define SKY_WIDTH_TILES (FRAMEBUFFER_WIDTH_TILES)
+#define SKY_HEIGHT 96
+#define SKY_HEIGHT_TILES (SKY_HEIGHT / 8)
+#define SKY_LAYOUT_WIDTH_TILES (SKY_WIDTH_TILES  * 2)
+#define SKY_LAYOUT_HEIGHT_TILES (SKY_HEIGHT / 8)
 
 u8 framebuffer[FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT];
-u16 framebufferTiles[FRAMEBUFFER_WIDTH_TILES * FRAMEBUFFER_HEIGHT_TILES];
+//u16 framebufferTiles[FRAMEBUFFER_WIDTH_TILES * FRAMEBUFFER_HEIGHT_TILES];
 
 #include "../../src/generated/framebuffer.inc.h"
 
@@ -43,9 +55,29 @@ const TileSet framebufferTileSet =
     COMPRESSION_NONE, FRAMEBUFFER_WIDTH_TILES * FRAMEBUFFER_HEIGHT_TILES, (u32*)framebuffer
 };
 
-const TileMap framebufferTileMap =
+//const TileMap framebufferTileMap =
+//{
+//    COMPRESSION_NONE, FRAMEBUFFER_WIDTH_TILES, FRAMEBUFFER_HEIGHT_TILES, framebufferTiles
+//};
+const TileMap screenLayoutTileMap =
 {
-    COMPRESSION_NONE, FRAMEBUFFER_WIDTH_TILES, FRAMEBUFFER_HEIGHT_TILES, framebufferTiles
+    COMPRESSION_NONE, SCREEN_LAYOUT_WIDTH_TILES, SCREEN_LAYOUT_HEIGHT_TILES , (u16*) screenLayoutTiles
+};
+
+const TileMap skyLayoutTileMap =
+{
+    COMPRESSION_NONE, SKY_LAYOUT_WIDTH_TILES, SKY_LAYOUT_HEIGHT_TILES , (u16*) skyLayoutTiles
+};
+
+const u32 blankTile[] = { 0x11111111,0x11111111,0x11111111,0x11111111,0x11111111,0x11111111,0x11111111,0x11111111,0x11111111,0x11111111,0x11111111,0x11111111,0x11111111,0x11111111,0x11111111,0x11111111};
+const TileSet blankTileSet =
+{
+    COMPRESSION_NONE, 1, (u32*) blankTile
+};
+
+const TileSet skyTileSet =
+{
+    COMPRESSION_NONE, SKY_WIDTH_TILES * SKY_HEIGHT_TILES, (u32*)skytexturedata
 };
 
 void DrawMapDebugLine(int x0, int y0, int x1, int y1, uint32_t colour)
@@ -129,37 +161,21 @@ int main(bool hardReset)
 //    VDP_drawText("Hello world !", 12, 12);
 
     PAL_setColors(0, gamePalette, 16, CPU);
+    PAL_setColors(16, skyPalette, 16, CPU);
 
-    for (int y = 0; y < FRAMEBUFFER_HEIGHT_TILES; y++)
-    {
-        for (int x = 0; x < FRAMEBUFFER_WIDTH_TILES; x++)
-        {
-            framebufferTiles[y * FRAMEBUFFER_WIDTH_TILES + x] = TILE_USER_INDEX + x * FRAMEBUFFER_HEIGHT_TILES + y;
-        }
-    }
-    for (int y = 0; y < FRAMEBUFFER_HEIGHT; y++)
-    {
-        for (int x = 0; x < FRAMEBUFFER_WIDTH; x++)
-        {
-            //putpixel(x, y, (u8)x);
-        }
-    }
-    for (int n = 0; n < FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT; n++)
-    {
-        u8 z = (n >> 5) & 0xf;
+//    VDP_setTileMap(BG_A, &framebufferTileMap, 0, 0, FRAMEBUFFER_WIDTH_TILES, FRAMEBUFFER_HEIGHT_TILES, CPU);
+    VDP_setTileMap(BG_A, &screenLayoutTileMap, 0, 0, SCREEN_LAYOUT_WIDTH_TILES, SCREEN_LAYOUT_HEIGHT_TILES, DMA);
+    VDP_setTileMap(BG_B, &skyLayoutTileMap, 0, 0, SKY_LAYOUT_WIDTH_TILES, SKY_LAYOUT_HEIGHT_TILES, DMA);
 
-        framebuffer[n] = z | (z << 4);
-    }
-
-    VDP_setTileMap(BG_A, &framebufferTileMap, 0, 0, FRAMEBUFFER_WIDTH_TILES, FRAMEBUFFER_HEIGHT_TILES, CPU);
 //    VDP_setTileMap(BG_A, &framebufferTileMap, FRAMEBUFFER_X, FRAMEBUFFER_Y, FRAMEBUFFER_WIDTH_TILES, FRAMEBUFFER_HEIGHT_TILES, CPU);
 
-    for (int n = 0; n < 64; n++)
-    {
-        putpixel(n, n, 0xdd);
-    }
+    //for (int n = 0; n < 64; n++)
+    //{
+    //    putpixel(n, n, 0xdd);
+    //}
     //    
-    VDP_loadTileSet(&framebufferTileSet, TILE_USER_INDEX, CPU);
+    //VDP_loadTileSet(&framebufferTileSet, FRAMEBUFFER_START_TILE_INDEX, CPU);
+
     //VDP_setTileMapData(VDP_BG_A, (u16*) framebuffer, TILE_USER_INDEX, FRAMEBUFFER_HEIGHT_TILES * FRAMEBUFFER_WIDTH_TILES, 2, CPU);
 
     //VDP_setVerticalScroll(BG_A, -(224 - 32 - VIEWPORT_HEIGHT) / 2);
@@ -181,7 +197,10 @@ int main(bool hardReset)
 
     u32 lasttick = getTick();
 
-    XGM_startPlay(xgm_e1m6);
+    XGM_startPlay(xgm_e1m1);
+
+    VDP_loadTileSet(&blankTileSet, TILE_USER_INDEX, CPU);
+    VDP_loadTileSet(&skyTileSet, SKY_START_TILE_INDEX, DMA);
      
     while(TRUE)
     {
@@ -252,9 +271,10 @@ int main(bool hardReset)
 //        R_RenderView();
         R_RenderPlayerView();
 
+        VDP_setHorizontalScroll(BG_B, (((viewangle& (ANG90 - 1))* FRAMEBUFFER_WIDTH * 2) >> 14) - (FRAMEBUFFER_WIDTH * 2));
 
 //        VDP_loadTileSet(&framebufferTileSet, TILE_USER_INDEX, DMA_QUEUE);
-        VDP_loadTileSet(&framebufferTileSet, TILE_USER_INDEX, DMA);
+        VDP_loadTileSet(&framebufferTileSet, FRAMEBUFFER_START_TILE_INDEX, DMA);
 
         // always call this method at the end of the frame
         //SYS_doVBlankProcess();

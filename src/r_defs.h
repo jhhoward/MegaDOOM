@@ -50,7 +50,7 @@
 
 #define MAXDRAWSEGS		256
 
-
+#define NUM_LIGHTING_LEVELS 4
 
 
 #if 0
@@ -601,12 +601,16 @@ typedef struct
 typedef struct
 {
     int width, height;
-    const uint8_t* const* columns;
+    uint8_t colour[NUM_LIGHTING_LEVELS];
+    const uint32_t* columns[NUM_LIGHTING_LEVELS];
 } walltexture_t;
+
+extern const walltexture_t walltextures[];
+extern const uint8_t textureatlas[];
 
 typedef struct
 {
-    uint8_t colour[8];
+    uint8_t colour[NUM_LIGHTING_LEVELS];
 } flat_t;
 
 //

@@ -481,13 +481,13 @@ R_StoreWallRange
     if (!backsector)
     {
 	// single sided line
-	midtexture = texturetranslation[sidedef->midtexture];
+	midtexture = sidedef->midtexture;
 	// a single sided line is terminal, so it must mark ends
 	markfloor = markceiling = true;
 	if (linedef->flags & ML_DONTPEGBOTTOM)
 	{
 	    vtop = frontsector->floorheight +
-		textureheight[sidedef->midtexture];
+		walltextures[sidedef->midtexture].height;
 	    // bottom of texture at bottom
 	    rw_midtexturemid = vtop - viewz;	
 	}
@@ -595,7 +595,7 @@ R_StoreWallRange
 	if (worldhigh < worldtop)
 	{
 	    // top texture
-	    toptexture = texturetranslation[sidedef->toptexture];
+	    toptexture = sidedef->toptexture;
 	    if (linedef->flags & ML_DONTPEGTOP)
 	    {
 		// top of texture at top
@@ -605,7 +605,7 @@ R_StoreWallRange
 	    {
 		vtop =
 		    backsector->ceilingheight
-		    + textureheight[sidedef->toptexture];
+		    + walltextures[sidedef->toptexture].height;
 		
 		// bottom of texture
 		rw_toptexturemid = vtop - viewz;	
@@ -614,7 +614,7 @@ R_StoreWallRange
 	if (worldlow > worldbottom)
 	{
 	    // bottom texture
-	    bottomtexture = texturetranslation[sidedef->bottomtexture];
+	    bottomtexture = sidedef->bottomtexture;
 
 	    if (linedef->flags & ML_DONTPEGBOTTOM )
 	    {

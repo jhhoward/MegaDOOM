@@ -14,7 +14,7 @@
 void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 {
 	char filename[50];
-	sprintf_s(filename, 50, "%s.inc.h", levelname);
+	sprintf_s(filename, 50, "../src/generated/%s.inc.h", levelname);
 
 	FILE* fs = fopen(filename, "w");
 
@@ -38,7 +38,7 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 			sector->ceilingheight,
 			LookupFlat(sector->floorpic),
 			LookupFlat(sector->ceilingpic),
-			sector->lightlevel >> 5,
+			sector->lightlevel >> 6,
 			sector->special,
 			sector->tag
 		);

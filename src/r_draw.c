@@ -129,8 +129,6 @@ void R_InitTranslationTables(void)
 
 }
 
-extern const walltexture_t walltextures[];
-
 // Retrieve column data for span blitting.
 byte*
 R_GetColumn
@@ -138,7 +136,8 @@ R_GetColumn
     int		col)
 {
     int width = walltextures[tex].width;
-    return (byte*) walltextures[tex].columns[width + (col & (width - 1))];
+    const uint32_t* columns = walltextures[tex].columns[3];
+    return (byte*)(textureatlas + columns[(col & (width - 1))]);
 }
 
 #if 0

@@ -9,6 +9,11 @@
 
 #pragma warning(disable:4996)
 
+bool extractlevels = true;
+bool extractsingletexture = true;
+bool extracttextures = true;
+bool writeskybox = true;
+
 int main(int argc, char* argv[])
 {
 	if (argc != 2)
@@ -30,18 +35,42 @@ int main(int argc, char* argv[])
 	
 	if (iwad && pwad)
 	{
-		InitPalettes(iwad);
+		LoadGamePalette(iwad);
+		LoadMegadrivePalette("../assets/megadoompal.png", "../src/generated/palette.inc.h", "gamePalette");
+		//LoadMegadrivePalette("../tools/megadoompal7.png", "../src/generated/palette.inc.h", "gamePalette");
 
-		ExtractPatches(iwad);
-		ExtractFlats(iwad);
-		ExtractTextures(iwad);
-
-		mapdata_t mapdata;
-		if (LoadMapDataFromWad(iwad, "E1M6", &mapdata))
+		if (extracttextures)
 		{
-			DumpMapToHeader(&mapdata, "E1M1");
+			ExtractPatches(iwad);
+			ExtractFlats(iwad);
+			ExtractTextures(iwad);
+		}
+		else if (extractlevels)
+		{
+			ExtractFlatsInfoOnly(iwad);
+			ExtractTextureInfoOnly(iwad);
 		}
 
+		if (extractlevels)
+		{
+			mapdata_t mapdata;
+			char levelname[9];
+			memset(levelname, 0, 9);
+			for (int n = 1; n < 10; n++)
+			{
+				sprintf(levelname, "E1M%d", n);
+				if (LoadMapDataFromWad(iwad, levelname, &mapdata))
+				{
+					DumpMapToHeader(&mapdata, levelname);
+				}
+			}
+		}
+
+		if (writeskybox)
+		{
+			LoadMegadrivePalette("../assets/skypal.png", "../src/generated/skypalette.inc.h", "skyPalette");
+			WriteSkybox("../assets/SKY1MD.png", "../src/generated/skybox.inc.h");
+		}
 	}
 	return 0;
 }

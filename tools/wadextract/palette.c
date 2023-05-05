@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <math.h>
 #include "win32/wad.h"
 #include "win32/lodepng.h"
 
@@ -36,11 +37,52 @@ void LoadGamePalette(wad_file_t* wad)
 	}
 }
 
-#define MATCH_PAIR_THRESHOLD 200
+#define MATCH_PAIR_THRESHOLD 300
+//#define MATCH_PAIR_THRESHOLD 200
+//#define MATCH_PAIR_THRESHOLD 80
+#define USE_SIMPLE_COLOR_DISTANCE 1
+
+float CalcDistance(int r1, int g1, int b1, int r2, int g2, int b2)
+{
+	int rmean = (r1 + r2) / 2;
+	int r = r1 - r2;
+	int g = g1 - g2;
+	int b = b1 - b2;
+#if USE_SIMPLE_COLOR_DISTANCE
+	return (float)((r * r) + (g * g) + (b * b));
+#else
+	return (float)(sqrt((((512 + rmean) * r * r) >> 8) + 4 * g * g + (((767 - rmean) * b * b) >> 8)));
+#endif
+}
+
+uint8_t MatchPaletteColour(uint32_t input)
+{
+	if ((input & 0xff000000) == 0)
+	{
+		return 0;
+	}
+
+	int closest = -1;
+	float closestdistance = 0;
+	uint8_t* channelValues = (uint8_t*)(&input);
+
+	for (int n = 1; n < 16; n++)
+	{
+		uint8_t* palValues = (uint8_t*)(&megadrivepalette[n]);
+		float distance = CalcDistance(channelValues[0], channelValues[1], channelValues[2], palValues[0], palValues[1], palValues[2]);
+		if (closest == -1 || distance < closestdistance)
+		{
+			closest = n;
+			closestdistance = distance;
+		}
+	}
+
+	return (uint8_t)closest;
+}
 
 uint8_t MatchBlendedColour(uint32_t input)
 {
-	int bestMixDistance = 0;
+	float bestMixDistance = 0;
 	int bestMixIndex = -1;
 	uint8_t* mixColours = (uint8_t*)(megadriveblendpalette);
 	uint8_t* palette = (uint8_t*)(megadrivepalette);
@@ -54,12 +96,14 @@ uint8_t MatchBlendedColour(uint32_t input)
 	{
 		if (blendpalettevalid[n])
 		{
-			float distance = 0;
-			for (int i = 0; i < 3; i++)
-			{
-				uint8_t channelValue = ((uint8_t*)&input)[i];
-				distance += (mixColours[n * 4 + i] - channelValue) * (mixColours[n * 4 + i] - channelValue);
-			}
+			//float distance = 0;
+			//for (int i = 0; i < 3; i++)
+			//{
+			//	uint8_t channelValue = ((uint8_t*)&input)[i];
+			//	distance += (mixColours[n * 4 + i] - channelValue) * (mixColours[n * 4 + i] - channelValue);
+			//}
+			uint8_t* channelValues = (uint8_t*)(&input);
+			float distance = CalcDistance(mixColours[n * 4], mixColours[n * 4 + 1], mixColours[n * 4 + 2], channelValues[0], channelValues[1], channelValues[2]);
 
 			int pairDistance = 0;
 			int pairFirst = n / 16;
@@ -113,25 +157,24 @@ void GenerateBlendPalette()
 		}
 	}
 
-	lodepng_encode32_file("blend.png", (uint8_t*) megadriveblendpalette, 16, 16);
+	//lodepng_encode32_file("blend.png", (uint8_t*) megadriveblendpalette, 16, 16);
 }
 
-void LoadMegadrivePalette()
+void LoadMegadrivePalette(const char* imagepath, const char* outputpath, const char* varname)
 {
 	uint8_t* paletteColours;
 	unsigned width, height;
 
-//	if (lodepng_decode32_file(&paletteColours, &width, &height, "../tools/tandypal.png"))
-	if (lodepng_decode32_file(&paletteColours, &width, &height, "../tools/megadoompal.png"))
+	if (lodepng_decode32_file(&paletteColours, &width, &height, imagepath))
 	{
 		printf("Error opening palette file\n");
 		return;
 	}
 
-	FILE* fs = fopen("../src/generated/palette.inc.h", "wb");
+	FILE* fs = fopen(outputpath, "wb");
 
 	fprintf(fs, "#ifdef WIN32\n");
-	fprintf(fs, "const uint32_t gamePalette[] = {\n\t0xff000000, ");
+	fprintf(fs, "const uint32_t %s[] = {\n\t0xff000000, ", varname);
 	for (unsigned n = 0; n < width; n++)
 	{
 		uint32_t colour = paletteColours[n * 4] | (paletteColours[n * 4 + 1] << 8) | (paletteColours[n * 4 + 2] << 16) | 0xff000000;
@@ -152,7 +195,7 @@ void LoadMegadrivePalette()
 	}
 	fprintf(fs, "};\n");
 	fprintf(fs, "#else\n");
-	fprintf(fs, "const uint16_t gamePalette[] = {\n\t0x0, ");
+	fprintf(fs, "const uint16_t %s[] = {\n\t0x2222, ", varname);
 	for (unsigned n = 0; n < width; n++)
 	{
 		uint32_t colour = RGB8_8_8_TO_VDPCOLOR(paletteColours[n * 4], paletteColours[n * 4 + 1], paletteColours[n * 4 + 2]);
@@ -170,11 +213,7 @@ void LoadMegadrivePalette()
 	fprintf(fs, "#endif\n");
 
 	fclose(fs);
-}
 
-void InitPalettes(wad_file_t* wad)
-{
-	LoadGamePalette(wad);
-	LoadMegadrivePalette();
 	GenerateBlendPalette();
 }
+
