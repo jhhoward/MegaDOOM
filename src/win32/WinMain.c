@@ -6,7 +6,7 @@
 #include "r_local.h"
 #include "generated/palette.inc.h"
 #include "DoomData.h"
-#include "../project/E1M1.inc.h"
+#include "generated/E1M1.inc.h"
 #include "generated/textures.inc.h"
 #include "generated/flats.inc.h"
 
@@ -201,7 +201,7 @@ void TexturedLine(const walltexture_t* texture, int16_t x, int16_t y, int16_t co
 		//int texcoord = (int)(alpha * 128);
 		texcoord += step;
 //		uint8_t colourPair = (texture->columns[u])[(texcoord >> 16) & 127];
-		uint8_t colourPair = (texture->columns[u])[(int)(texcoord >> 8) & 127];
+		uint8_t colourPair = (texturecolumns + texture->columns[u])[(int)(texcoord >> 8) & 127];
 		PutPixelImmediate(mainWindow.screenSurface, x, y, gamePalette[colourPair & 0xf]);
 		PutPixelImmediate(mainWindow.screenSurface, x + 1, y, gamePalette[colourPair >> 4]);
 		y++;
@@ -266,7 +266,7 @@ void DumpTexture(walltexture_t* tex)
 	{
 		for (int y = 0; y < tex->height; y++)
 		{
-			uint8_t data = (tex->columns[x])[y];
+			uint8_t data = (texturecolumns + tex->columns[x])[y];
 			if (x & 1)
 			{
 				PutPixelImmediate(mainWindow.screenSurface, x, y, gamePalette[data & 0xf]);

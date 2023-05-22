@@ -38,7 +38,7 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 			sector->ceilingheight,
 			LookupFlat(sector->floorpic),
 			LookupFlat(sector->ceilingpic),
-			sector->lightlevel >> 6,
+			sector->lightlevel >> 5,
 			sector->special,
 			sector->tag
 		);

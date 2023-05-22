@@ -10,9 +10,11 @@
 #pragma warning(disable:4996)
 
 bool extractlevels = true;
-bool extractsingletexture = true;
-bool extracttextures = true;
+bool extractsingletexture = false;
+bool extracttextures = false;
 bool writeskybox = true;
+
+void TestDumpSprites(wad_file_t* wad);
 
 int main(int argc, char* argv[])
 {
@@ -65,6 +67,8 @@ int main(int argc, char* argv[])
 				}
 			}
 		}
+
+		//TestDumpSprites(iwad);
 
 		if (writeskybox)
 		{

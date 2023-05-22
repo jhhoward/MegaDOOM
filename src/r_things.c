@@ -22,15 +22,15 @@
 //#include <stdio.h>
 //#include <stdlib.h>
 
-#if 0
+#if 1
 
-#include "deh_main.h"
-#include "doomdef.h"
-
-#include "i_swap.h"
-#include "i_system.h"
-#include "z_zone.h"
-#include "w_wad.h"
+//#include "deh_main.h"
+//#include "doomdef.h"
+//
+//#include "i_swap.h"
+//#include "i_system.h"
+//#include "z_zone.h"
+//#include "w_wad.h"
 
 #include "r_local.h"
 
@@ -69,7 +69,7 @@ typedef struct
 fixed_t		pspritescale;
 fixed_t		pspriteiscale;
 
-lighttable_t**	spritelights;
+//lighttable_t**	spritelights;
 
 // constant arrays
 //  used for psprite clipping and initializing clipping
@@ -91,7 +91,7 @@ int		maxframe;
 char*		spritename;
 
 
-
+#if 0
 
 //
 // R_InstallSpriteLump
@@ -273,7 +273,7 @@ void R_InitSpriteDefs (char** namelist)
 
 }
 
-
+#endif
 
 
 //
@@ -298,7 +298,7 @@ void R_InitSprites (char** namelist)
 	negonearray[i] = -1;
     }
 	
-    R_InitSpriteDefs (namelist);
+    //R_InitSpriteDefs (namelist);
 }
 
 
@@ -395,11 +395,12 @@ R_DrawVisSprite
     column_t*		column;
     int			texturecolumn;
     fixed_t		frac;
-    patch_t*		patch;
+    patch_t*		patch = (patch_t*)(1);
 	
 	
-    patch = W_CacheLumpNum (vis->patch+firstspritelump, PU_CACHE);
+    //patch = W_CacheLumpNum (vis->patch+firstspritelump, PU_CACHE);
 
+#if 0
     dc_colormap = vis->colormap;
     
     if (!dc_colormap)
@@ -413,6 +414,7 @@ R_DrawVisSprite
 	dc_translation = translationtables - 256 +
 	    ( (vis->mobjflags & MF_TRANSLATION) >> (MF_TRANSSHIFT-8) );
     }
+#endif
 	
     dc_iscale = abs(vis->xiscale)>>detailshift;
     dc_texturemid = vis->texturemid;
@@ -427,16 +429,18 @@ R_DrawVisSprite
 	if (texturecolumn < 0 || texturecolumn >= SHORT(patch->width))
 	    I_Error ("R_DrawSpriteRange: bad texturecolumn");
 #endif
-	column = (column_t *) ((byte *)patch +
-			       LONG(patch->columnofs[texturecolumn]));
-	R_DrawMaskedColumn (column);
+	//column = (column_t *) ((byte *)patch +
+	//		       LONG(patch->columnofs[texturecolumn]));
+    column = (column_t*)((byte*)patch +
+        (int)(patch->columnofs[texturecolumn]));
+    R_DrawMaskedColumn (column);
     }
 
     colfunc = basecolfunc;
 }
 
 
-
+#if 0
 //
 // R_ProjectSprite
 // Generates a vissprite for a thing
@@ -596,7 +600,7 @@ void R_ProjectSprite (mobj_t* thing)
     }	
 }
 
-
+#endif
 
 
 //
@@ -605,6 +609,7 @@ void R_ProjectSprite (mobj_t* thing)
 //
 void R_AddSprites (const sector_t* sec)
 {
+#if 0
     mobj_t*		thing;
     int			lightnum;
 
@@ -630,9 +635,10 @@ void R_AddSprites (const sector_t* sec)
     // Handle all things in sector.
     for (thing = sec->thinglist ; thing ; thing = thing->snext)
 	R_ProjectSprite (thing);
+#endif
 }
 
-
+#if 0
 //
 // R_DrawPSprite
 //
@@ -768,6 +774,7 @@ void R_DrawPlayerSprites (void)
     }
 }
 
+#endif
 
 
 
@@ -975,13 +982,12 @@ void R_DrawMasked (void)
     
     // draw the psprites on top of everything
     //  but does not draw on side views
-    if (!viewangleoffset)		
-	R_DrawPlayerSprites ();
+    //if (!viewangleoffset)		
+	//R_DrawPlayerSprites ();
 }
 
 
-
-#endif
+#else
 
 #include "r_defs.h"
 
@@ -1013,3 +1019,5 @@ void R_AddSprites(const sector_t* sec)
 void R_DrawMaskedColumn(column_t* column)
 {
 }
+
+#endif

@@ -37,9 +37,10 @@ void LoadGamePalette(wad_file_t* wad)
 	}
 }
 
-#define MATCH_PAIR_THRESHOLD 300
+//#define MATCH_PAIR_THRESHOLD 300
 //#define MATCH_PAIR_THRESHOLD 200
 //#define MATCH_PAIR_THRESHOLD 80
+#define MATCH_PAIR_THRESHOLD 300
 #define USE_SIMPLE_COLOR_DISTANCE 1
 
 float CalcDistance(int r1, int g1, int b1, int r2, int g2, int b2)

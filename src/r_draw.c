@@ -136,7 +136,7 @@ R_GetColumn
     int		col)
 {
     int width = walltextures[tex].width;
-    const uint32_t* columns = walltextures[tex].columns[3];
+    const uint32_t* columns = texturecolumns + walltextures[tex].columns[0];
     return (byte*)(textureatlas + columns[(col & (width - 1))]);
 }
 

@@ -50,7 +50,8 @@
 
 #define MAXDRAWSEGS		256
 
-#define NUM_LIGHTING_LEVELS 4
+#define NUM_LIGHTING_LEVELS 1
+#define NUM_FLAT_LIGHTING_LEVELS 8
 
 
 #if 0
@@ -602,16 +603,101 @@ typedef struct
 {
     int width, height;
     uint8_t colour[NUM_LIGHTING_LEVELS];
-    const uint32_t* columns[NUM_LIGHTING_LEVELS];
+    const uint32_t columns[NUM_LIGHTING_LEVELS];
 } walltexture_t;
 
 extern const walltexture_t walltextures[];
+extern const uint32_t texturecolumns[];
 extern const uint8_t textureatlas[];
 
 typedef struct
 {
-    uint8_t colour[NUM_LIGHTING_LEVELS];
+    uint8_t colour[NUM_FLAT_LIGHTING_LEVELS];
 } flat_t;
+
+
+// A vissprite_t is a thing
+//  that will be drawn during a refresh.
+// I.e. a sprite object that is partly visible.
+typedef struct vissprite_s
+{
+    // Doubly linked list.
+    struct vissprite_s* prev;
+    struct vissprite_s* next;
+
+    int			x1;
+    int			x2;
+
+    // for line side calculation
+    fixed_t		gx;
+    fixed_t		gy;
+
+    // global bottom / top for silhouette clipping
+    fixed_t		gz;
+    fixed_t		gzt;
+
+    // horizontal position of x1
+    fixed_t		startfrac;
+
+    fixed_t		scale;
+
+    // negative if flipped
+    fixed_t		xiscale;
+
+    fixed_t		texturemid;
+    int			patch;
+
+    // for color translation and shadow draw,
+    //  maxbright frames as well
+    //lighttable_t* colormap;
+
+    int			mobjflags;
+
+} vissprite_t;
+
+
+//	
+// Sprites are patches with a special naming convention
+//  so they can be recognized by R_InitSprites.
+// The base name is NNNNFx or NNNNFxFx, with
+//  x indicating the rotation, x = 0, 1-7.
+// The sprite and frame specified by a thing_t
+//  is range checked at run time.
+// A sprite is a patch_t that is assumed to represent
+//  a three dimensional object and may have multiple
+//  rotations pre drawn.
+// Horizontal flipping is used to save space,
+//  thus NNNNF2F5 defines a mirrored patch.
+// Some sprites will only have one picture used
+// for all views: NNNNF0
+//
+typedef struct
+{
+    // If false use 0 for any position.
+    // Note: as eight entries are available,
+    //  we might as well insert the same name eight times.
+    boolean	rotate;
+
+    // Lump to use for view angles 0-7.
+    short	lump[8];
+
+    // Flip bit (1 = flip) to use for view angles 0-7.
+    byte	flip[8];
+
+} spriteframe_t;
+
+
+
+//
+// A sprite definition:
+//  a number of animation frames.
+//
+typedef struct
+{
+    int			numframes;
+    spriteframe_t* spriteframes;
+
+} spritedef_t;
 
 //
 // ?

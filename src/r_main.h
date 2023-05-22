@@ -109,7 +109,7 @@ int
 R_PointOnSegSide
 ( int16_t	x,
   int16_t	y,
-  seg_t*	line );
+  const seg_t*	line );
 
 angle_t
 R_PointToAngle

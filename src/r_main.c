@@ -199,7 +199,7 @@ int
 R_PointOnSegSide
 ( int16_t	x,
   int16_t	y,
-  seg_t*	line )
+  const seg_t*	line )
 {
     int16_t	lx;
     int16_t	ly;
@@ -924,7 +924,7 @@ void R_RenderPlayerView(void)
     R_ClearClipSegs ();
     R_ClearDrawSegs ();
     R_ClearPlanes ();
-    //R_ClearSprites ();
+    R_ClearSprites ();
     
     // check for new console commands.
     //NetUpdate ();
@@ -940,7 +940,7 @@ void R_RenderPlayerView(void)
     // Check for new console commands.
     //NetUpdate ();
     
-    //R_DrawMasked ();
+    R_DrawMasked ();
 
     // Check for new console commands.
     //NetUpdate ();				
