@@ -16,11 +16,6 @@
 //	All the clipping: columns, horizontal spans, sky columns.
 //
 
-void VLine(int x, int y, int count, unsigned char colour);
-
-
-
-
 //#include <stdio.h>
 //#include <stdlib.h>
 
@@ -207,9 +202,15 @@ void R_RenderSegLoop (void)
     fixed_t		texturecolumn;
     int			top;
     int			bottom;
+	uint8_t ceilingcol, floorcol;
+
+	ceilingcol = flats[frontsector->ceilingpic].colour[frontsector->lightlevel];
+	floorcol = flats[frontsector->floorpic].colour[frontsector->lightlevel];
 
     for ( ; rw_x < rw_stopx ; rw_x++)
     {
+		dc_x = rw_x;
+
 	// mark floor / ceiling areas
 	yl = (topfrac+HEIGHTUNIT-1)>>HEIGHTBITS;
 
@@ -219,18 +220,14 @@ void R_RenderSegLoop (void)
 	
 	if (markceiling)
 	{
-	    top = ceilingclip[rw_x]+1;
-	    bottom = yl-1;
+	    dc_yl = ceilingclip[rw_x]+1;
+		dc_yh = yl - 1; 
 
-	    if (bottom >= floorclip[rw_x])
-		bottom = floorclip[rw_x]-1;
+	    if (dc_yh >= floorclip[rw_x])
+			dc_yh = floorclip[rw_x]-1;
 
-	    if (top <= bottom)
-	    {
-			VLine(rw_x, top, bottom - top + 1, flats[frontsector->ceilingpic].colour[frontsector->lightlevel]);
-		//ceilingplane->top[rw_x] = top;
-		//ceilingplane->bottom[rw_x] = bottom;
-	    }
+		dc_col = ceilingcol;
+		R_DrawVLine();
 	}
 		
 	yh = bottomfrac>>HEIGHTBITS;
@@ -240,17 +237,12 @@ void R_RenderSegLoop (void)
 
 	if (markfloor)
 	{
-	    top = yh+1;
-	    bottom = floorclip[rw_x]-1;
-	    if (top <= ceilingclip[rw_x])
-		top = ceilingclip[rw_x]+1;
-	    if (top <= bottom)
-	    {
-			VLine(rw_x, top, bottom - top + 1, flats[frontsector->floorpic].colour[frontsector->lightlevel]);
-
-		//floorplane->top[rw_x] = top;
-		//floorplane->bottom[rw_x] = bottom;
-	    }
+		dc_yl = yh + 1;
+	    dc_yh = floorclip[rw_x]-1;
+	    if (dc_yl <= ceilingclip[rw_x])
+			dc_yl = ceilingclip[rw_x]+1;
+		dc_col = floorcol;
+		R_DrawVLine();
 	}
 	
 	// texturecolumn and lighting are independent of wall tiers
@@ -271,7 +263,6 @@ void R_RenderSegLoop (void)
 		index = MAXLIGHTSCALE-1;
 
 	    //dc_colormap = walllights[index];
-	    dc_x = rw_x;
 	    
 //		dc_iscale = 0xfffffffu / (unsigned)rw_scale;
 		
@@ -294,7 +285,14 @@ void R_RenderSegLoop (void)
 	    dc_yh = yh;
 	    dc_texturemid = rw_midtexturemid << FRACBITS;
 	    dc_source = R_GetColumn(midtexture,texturecolumn&~1);
-	    colfunc ();
+	    
+#ifdef RENDER_UNTEXTURED
+		dc_col = 0xff;
+		R_DrawVLine();
+#else
+		colfunc();
+#endif
+
 	    ceilingclip[rw_x] = viewheight;
 	    floorclip[rw_x] = -1;
 	}
@@ -316,7 +314,14 @@ void R_RenderSegLoop (void)
 		    dc_yh = mid;
 		    dc_texturemid = rw_toptexturemid << FRACBITS; 
 		    dc_source = R_GetColumn(toptexture,texturecolumn&~1);
-		    colfunc ();
+
+#ifdef RENDER_UNTEXTURED
+			dc_col = 0xee;
+			R_DrawVLine();
+#else
+			colfunc();
+#endif
+
 		    ceilingclip[rw_x] = mid;
 		}
 		else
@@ -346,7 +351,14 @@ void R_RenderSegLoop (void)
 		    dc_texturemid = rw_bottomtexturemid << FRACBITS;
 		    dc_source = R_GetColumn(bottomtexture,
 					    texturecolumn&~1);
-		    colfunc ();
+
+#ifdef RENDER_UNTEXTURED
+			dc_col = 0xdd;
+			R_DrawVLine();
+#else
+			colfunc();
+#endif
+
 		    floorclip[rw_x] = mid;
 		}
 		else

@@ -214,6 +214,11 @@ void TexturedLine(const walltexture_t* texture, int16_t x, int16_t y, int16_t co
 
 void VLine(int x, int y, int count, uint8_t colour)
 {
+	if (y < 0 || y >= DISPLAY_HEIGHT)
+	{
+		return;
+	}
+
 	x *= 2;
 
 	while (count--)
@@ -227,7 +232,7 @@ void VLine(int x, int y, int count, uint8_t colour)
 			}
 
 			int bpp = mainWindow.screenSurface->format->BytesPerPixel;
-			Uint8* p = (Uint8*)mainWindow.screenSurface->pixels + y * mainWindow.screenSurface->pitch + x * bpp;
+			Uint8* p = (Uint8*)mainWindow.screenSurface->pixels + (y * 2) * mainWindow.screenSurface->pitch + x * bpp;
 
 			if (*(Uint32*)p)
 			{
@@ -235,25 +240,22 @@ void VLine(int x, int y, int count, uint8_t colour)
 			}
 		}
 
-		overdraw = false;
-		if (overdraw && ((y ^ x) & 1))
+		if (false)
 		{
-			PutPixelImmediate(mainWindow.screenSurface, x, y, 0xffff00ff);
+			PutPixelImmediate(mainWindow.screenSurface, x, y, gamePalette[colour & 0xf]);
+			PutPixelImmediate(mainWindow.screenSurface, x + 1, y, gamePalette[colour >> 4]);
 		}
 		else
 		{
-			if (false)
-			{
-				PutPixelImmediate(mainWindow.screenSurface, x, y, gamePalette[colour & 0xf]);
-				PutPixelImmediate(mainWindow.screenSurface, x + 1, y, gamePalette[colour >> 4]);
-			}
-			else
-			{
-				PutPixelImmediate(mainWindow.screenSurface, x, y * 2, gamePalette[colour & 0xf]);
-				PutPixelImmediate(mainWindow.screenSurface, x + 1, y * 2, gamePalette[colour >> 4]);
+			PutPixelImmediate(mainWindow.screenSurface, x, y * 2, gamePalette[colour & 0xf]);
+			PutPixelImmediate(mainWindow.screenSurface, x + 1, y * 2, gamePalette[colour >> 4]);
 
-				PutPixelImmediate(mainWindow.screenSurface, x + 1, y * 2 + 1, gamePalette[colour & 0xf]);
-				PutPixelImmediate(mainWindow.screenSurface, x, y * 2 + 1, gamePalette[colour >> 4]);
+			PutPixelImmediate(mainWindow.screenSurface, x + 1, y * 2 + 1, gamePalette[colour & 0xf]);
+			PutPixelImmediate(mainWindow.screenSurface, x, y * 2 + 1, gamePalette[colour >> 4]);
+
+			if (overdraw)
+			{
+				PutPixelImmediate(mainWindow.screenSurface, x, y * 2, 0xffff00ff);
 			}
 		}
 		y++;
@@ -481,6 +483,29 @@ int main(int argc, char* argv[])
 	}
 
 	return 0;
+}
+
+void R_DrawVLine(void)
+{
+	int count;
+
+	count = dc_yh - dc_yl;
+
+	if (count < 0)
+		return;
+
+	uint32_t* dest = &((uint32_t*)(mainWindow.screenSurface->pixels))[2 * dc_yl * mainWindow.width + 2 * dc_x];
+
+	do
+	{
+		dest[0] = gamePalette[dc_col & 0xf];
+		dest[1] = gamePalette[dc_col >> 4];
+		dest += mainWindow.screenSurface->pitch / sizeof(uint32_t);
+
+		dest[1] = gamePalette[dc_col & 0xf];
+		dest[0] = gamePalette[dc_col >> 4];
+		dest += mainWindow.screenSurface->pitch / sizeof(uint32_t);
+	} while (count--);
 }
 
 void R_DrawColumn(void)

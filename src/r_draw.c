@@ -41,6 +41,7 @@ int		columnofs[MAXWIDTH];
 int			dc_x;
 int			dc_yl;
 int			dc_yh;
+uint8_t     dc_col;
 fixed_t			dc_iscale;
 fixed_t			dc_texturemid;
 

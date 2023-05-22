@@ -192,16 +192,18 @@ int main()
         }
     }
     fprintf(fs, "\n};\n\n");
-    fprintf(fs, "void VLine(int x, int y, int count, uint8_t colour)\n");
+    fprintf(fs, "void R_DrawVLine(void)\n");
     fprintf(fs, "{\n");
-    fprintf(fs, "\tu8* ptr = framebuffer + framebufferx[x];\n");
-    fprintf(fs, "\tptr += (y << 3);\n");
+    fprintf(fs, "\tint16_t count = dc_yh - dc_yl;\n");
+    fprintf(fs, "\tif(count < 0) return;\n");
+    fprintf(fs, "\tu8* ptr = framebuffer + framebufferx[dc_x];\n");
+    fprintf(fs, "\tptr += (dc_yl << 3);\n");
     fprintf(fs, "\tswitch(count) {");
-    for (int y = FRAMEBUFFER_HEIGHT / 2; y > 0; y--)
+    for (int y = FRAMEBUFFER_HEIGHT / 2; y >= 0; y--)
     {
         fprintf(fs, "\tcase %d:\n", y);
-        fprintf(fs, "\tptr[%d] = colour;\n", (y - 1) * 8);
-        fprintf(fs, "\tptr[%d] = colour;\n", (y - 1) * 8 + 4);
+        fprintf(fs, "\tptr[%d] = dc_col;\n", (y) * 8);
+        fprintf(fs, "\tptr[%d] = dc_col;\n", (y) * 8 + 4);
     }
     fprintf(fs, "\tbreak;\n");
     fprintf(fs, "\t}\n");
@@ -209,7 +211,7 @@ int main()
     
     fprintf(fs, "void R_DrawColumn(void)\n");
     fprintf(fs, "{\n");
-    fprintf(fs, "\tint count;\n");
+    fprintf(fs, "\tint16_t count;\n");
     fprintf(fs, "\tbyte texel;\n");
     fprintf(fs, "\tfixed_t frac;\n");
     fprintf(fs, "\tfixed_t fracstep;\n");
@@ -221,7 +223,7 @@ int main()
     fprintf(fs, "\tfrac = dc_texturemid + (dc_yl - centery) * fracstep;\n");
 
     fprintf(fs, "\tswitch(count) {\n");
-    for (int y = FRAMEBUFFER_HEIGHT / 2; y > 0; y--)
+    for (int y = FRAMEBUFFER_HEIGHT / 2; y >= 0; y--)
     {
         fprintf(fs, "\tcase %d:\n", y);
 //        fprintf(fs, "\t\ttexel = dc_source[(frac >> FRACBITS) & 127];\n");
