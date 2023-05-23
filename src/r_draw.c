@@ -38,9 +38,9 @@ int		columnofs[MAXWIDTH];
 // Source is the top of the column to scale.
 //
 //lighttable_t* dc_colormap;
-int			dc_x;
-int			dc_yl;
-int			dc_yh;
+int16_t			dc_x;
+int16_t			dc_yl;
+int16_t			dc_yh;
 uint8_t     dc_col;
 fixed_t			dc_iscale;
 fixed_t			dc_texturemid;

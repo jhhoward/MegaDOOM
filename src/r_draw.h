@@ -24,9 +24,9 @@
 
 
 //extern lighttable_t*	dc_colormap;
-extern int		dc_x;
-extern int		dc_yl;
-extern int		dc_yh;
+extern int16_t	dc_x;
+extern int16_t	dc_yl;
+extern int16_t	dc_yh;
 extern uint8_t	dc_col;
 extern fixed_t		dc_iscale;
 extern fixed_t		dc_texturemid;

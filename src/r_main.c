@@ -737,7 +737,12 @@ void R_ExecuteSetViewSize (void)
     centerx = viewwidth/2;
     centerxfrac = centerx<<FRACBITS;
     centeryfrac = centery<<FRACBITS;
+
+#ifdef RENDER_DOUBLE_HEIGHT
     projection = (centerx * 6) / 5;
+#else
+    projection = (centerx * 12) / 5;
+#endif
 
     //projection = centerx << 3;
 

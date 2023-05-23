@@ -21,13 +21,19 @@ void srand(uint16_t seed);
 #include "../../src/r_draw.c"
 #include "../../src/r_sky.c"
 #include "../../src/r_things.c"
-#include "../../src/generated/E1M1.inc.h"
+#include "../../src/generated/E1M6.inc.h"
 #include "../../src/generated/textures.inc.h"
 #include "../../src/generated/flats.inc.h"
 #include "music.h"
 
 #define FRAMEBUFFER_WIDTH SCREENWIDTH
+
+#ifdef RENDER_DOUBLE_HEIGHT
 #define FRAMEBUFFER_HEIGHT (SCREENHEIGHT * 2)
+#else
+#define FRAMEBUFFER_HEIGHT (SCREENHEIGHT)
+#endif
+
 #define FRAMEBUFFER_TILE_BYTES (4 * 8)
 #define FRAMEBUFFER_WIDTH_TILES (FRAMEBUFFER_WIDTH / 4)
 #define FRAMEBUFFER_HEIGHT_TILES (FRAMEBUFFER_HEIGHT / 8)
@@ -187,7 +193,7 @@ int main(bool hardReset)
     int i = 0;
     u8 col = 0;
 
-    map = &map_E1M1;
+    map = &map_E1M6;
     viewx = map->things[0].x;
     viewy = map->things[0].y;
     viewz = 64;
@@ -197,7 +203,7 @@ int main(bool hardReset)
 
     u32 lasttick = getTick();
 
-    XGM_startPlay(xgm_e1m1);
+    XGM_startPlay(xgm_e1m6);
 
     VDP_loadTileSet(&blankTileSet, TILE_USER_INDEX, CPU);
     VDP_loadTileSet(&skyTileSet, SKY_START_TILE_INDEX, DMA);
@@ -225,7 +231,7 @@ int main(bool hardReset)
                 viewangle -= ANG1 * 5;
             }
 
-            int movespeed = 5;
+            int movespeed = 8;
             if (input & BUTTON_UP)
             {
                 viewx += (finecosine[viewangle >> ANGLETOFINESHIFT] * movespeed) >> FRACBITS;

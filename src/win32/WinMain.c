@@ -494,7 +494,11 @@ void R_DrawVLine(void)
 	if (count < 0)
 		return;
 
+#ifdef RENDER_DOUBLE_HEIGHT
 	uint32_t* dest = &((uint32_t*)(mainWindow.screenSurface->pixels))[2 * dc_yl * mainWindow.width + 2 * dc_x];
+#else
+	uint32_t* dest = &((uint32_t*)(mainWindow.screenSurface->pixels))[dc_yl * mainWindow.width + 2 * dc_x];
+#endif
 
 	do
 	{
@@ -502,9 +506,11 @@ void R_DrawVLine(void)
 		dest[1] = gamePalette[dc_col >> 4];
 		dest += mainWindow.screenSurface->pitch / sizeof(uint32_t);
 
+#ifdef RENDER_DOUBLE_HEIGHT
 		dest[1] = gamePalette[dc_col & 0xf];
 		dest[0] = gamePalette[dc_col >> 4];
 		dest += mainWindow.screenSurface->pitch / sizeof(uint32_t);
+#endif
 	} while (count--);
 }
 
@@ -532,12 +538,21 @@ void R_DrawColumn(void)
 	// Use ylookup LUT to avoid multiply with ScreenWidth.
 	// Use columnofs LUT for subwindows?
 	//dest = ylookup[dc_yl] + columnofs[dc_x];
+
+#ifdef RENDER_DOUBLE_HEIGHT
 	uint32_t* dest = &((uint32_t*)(mainWindow.screenSurface->pixels))[2 * dc_yl * mainWindow.width + 2 * dc_x];
+#else
+	uint32_t* dest = &((uint32_t*)(mainWindow.screenSurface->pixels))[dc_yl * mainWindow.width + 2 * dc_x];
+#endif
 
 	// Determine scaling,
 	//  which is the only mapping to be done.
 	fracstep = dc_iscale;
 	frac = dc_texturemid + (dc_yl - centery) * fracstep;
+
+#if RENDER_DOUBLE_STEP
+	fracstep <<= 1;
+#endif
 
 	// Inner loop that does the actual texture mapping,
 	//  e.g. a DDA-lile scaling.
@@ -554,12 +569,19 @@ void R_DrawColumn(void)
 		dest[1] = gamePalette[pixelpair >> 4];
 		dest += mainWindow.screenSurface->pitch / sizeof(uint32_t);
 
+#ifdef RENDER_DOUBLE_HEIGHT
 		dest[1] = gamePalette[pixelpair & 0xf];
 		dest[0] = gamePalette[pixelpair >> 4];
 		dest += mainWindow.screenSurface->pitch / sizeof(uint32_t);
+#endif
 
 		//dest += SCREENWIDTH;
+#if RENDER_DOUBLE_STEP
+		if(!(count & 1))
+			frac += fracstep;
+#else
 		frac += fracstep;
+#endif
 
 	} while (count--);
 }

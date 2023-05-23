@@ -195,13 +195,10 @@ R_RenderMaskedSegRange
 void R_RenderSegLoop (void)
 {
     angle_t		angle;
-    unsigned		index;
-    int			yl;
-    int			yh;
-    int			mid;
+    int16_t			yl;
+    int16_t			yh;
+    int16_t			mid;
     fixed_t		texturecolumn;
-    int			top;
-    int			bottom;
 	uint8_t ceilingcol, floorcol;
 
 	ceilingcol = flats[frontsector->ceilingpic].colour[frontsector->lightlevel];
@@ -257,10 +254,10 @@ void R_RenderSegLoop (void)
 		//texturecolumn >>= FRACBITS;
 
 	    // calculate lighting
-	    index = rw_scale>>LIGHTSCALESHIFT;
-
-	    if (index >=  MAXLIGHTSCALE )
-		index = MAXLIGHTSCALE-1;
+	    //index = rw_scale>>LIGHTSCALESHIFT;
+		//
+	    //if (index >=  MAXLIGHTSCALE )
+		//index = MAXLIGHTSCALE-1;
 
 	    //dc_colormap = walllights[index];
 	    
@@ -396,8 +393,8 @@ R_StoreWallRange
 ( int16_t	start,
   int16_t	stop )
 {
-    fixed_t		hyp;
-    fixed_t		sineval;
+    int16_t		hyp;
+    int16_t		sineval;
     angle_t		distangle, offsetangle;
     fixed_t		vtop;
     int			lightnum;
