@@ -42,7 +42,7 @@ int16_t			dc_x;
 int16_t			dc_yl;
 int16_t			dc_yh;
 uint8_t     dc_col;
-fixed_t			dc_iscale;
+ufixed16_t			dc_iscale;
 fixed_t			dc_texturemid;
 
 // first pixel in a column (possibly virtual) 

@@ -37,8 +37,8 @@ extern int		viewwindowy;
 
 
 
-extern int		centerx;
-extern int		centery;
+extern int16_t		centerx;
+extern int16_t		centery;
 
 extern fixed_t		centerxfrac;
 extern fixed_t		centeryfrac;

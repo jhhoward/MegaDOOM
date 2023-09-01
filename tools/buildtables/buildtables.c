@@ -91,10 +91,13 @@ int main()
     }
     fprintf(fs, "};\n");
 
-    fprintf(fs, "const fixed_t scaledividetable[1024] = {\n\t");
+    fprintf(fs, "const ufixed16_t scaledividetable[1024] = {\n\t");
     for (i = 0; i < 1024; i++)
     {
-        fprintf(fs, "%d, ", i == 0 ? 0xffff : 0xfffffu / i);
+        t = i == 0 ? 0xffff : 0xfffffu / i;
+        if (t > 65535)
+            t = 65535;
+        fprintf(fs, "%d, ", t);
     }
     fprintf(fs, "\n};\n");
 
@@ -236,7 +239,7 @@ int main()
     fprintf(fs, "\tint16_t count;\n");
     fprintf(fs, "\tbyte texel;\n");
     fprintf(fs, "\tfixed_t frac;\n");
-    fprintf(fs, "\tfixed_t fracstep;\n");
+    fprintf(fs, "\tufixed16_t fracstep;\n");
     fprintf(fs, "\tcount = dc_yh - dc_yl;\n");
     fprintf(fs, "\tif (count < 0) return;\n");
     fprintf(fs, "\tu8* dest = framebuffer + framebufferx[dc_x];\n");

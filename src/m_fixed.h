@@ -26,11 +26,12 @@
 //
 // Fixed point, 32bit as 16.16.
 //
-#define FRACBITS		14
+#define FRACBITS		12
 #define FRACUNIT		(1<<FRACBITS)
 
 typedef int fixed_t;
 typedef short fixed16_t;
+typedef unsigned short ufixed16_t;
 
 fixed_t FixedMul	(fixed_t a, fixed_t b);
 fixed_t FixedDiv	(fixed_t a, fixed_t b);

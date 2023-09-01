@@ -50,21 +50,21 @@ int16_t		rw_angle1;
 //
 // regular wall
 //
-int		rw_x;
-int		rw_stopx;
+int16_t		rw_x;
+int16_t		rw_stopx;
 angle_t		rw_centerangle;
 int16_t		rw_offset;
 int16_t		rw_distance;
 fixed_t		rw_scale;
 fixed_t		rw_scalestep;
-fixed_t		rw_midtexturemid;
-fixed_t		rw_toptexturemid;
-fixed_t		rw_bottomtexturemid;
+int16_t		rw_midtexturemid;
+int16_t		rw_toptexturemid;
+int16_t		rw_bottomtexturemid;
 
-int		worldtop;
-int		worldbottom;
-int		worldhigh;
-int		worldlow;
+int16_t		worldtop;
+int16_t		worldbottom;
+int16_t		worldhigh;
+int16_t		worldlow;
 
 fixed_t		pixhigh;
 fixed_t		pixlow;
@@ -191,6 +191,7 @@ R_RenderMaskedSegRange
 //
 #define HEIGHTBITS		(12 - (16 - FRACBITS))
 #define HEIGHTUNIT		(1<<HEIGHTBITS)
+#define PRECISIONBITS	4
 
 void R_RenderSegLoop (void)
 {
@@ -264,7 +265,9 @@ void R_RenderSegLoop (void)
 //		dc_iscale = 0xfffffffu / (unsigned)rw_scale;
 		
 		// TODO: dc_iscale could be a LUT with 1024 entries to avoid the divide:
-		 int16_t temp = ((rw_scale) >> 8) & 0x3ff;
+		int16_t temp = ((rw_scale) >> 4);// &0x3ff;
+		 if (temp > 1023)
+			 temp = 1023;
 		 dc_iscale = scaledividetable[temp];
 	}
         else
@@ -396,7 +399,7 @@ R_StoreWallRange
     int16_t		hyp;
     int16_t		sineval;
     angle_t		distangle, offsetangle;
-    fixed_t		vtop;
+    int16_t		vtop;
     int			lightnum;
 
     // don't overflow and crash
@@ -720,11 +723,11 @@ R_StoreWallRange
     //bottomstep = -FixedMul (rw_scalestep,worldbottom);
     //bottomfrac = (centeryfrac>>4) - FixedMul (worldbottom, rw_scale);
 
-	topstep = -((rw_scalestep * worldtop) >> 4);
-	topfrac = ((centeryfrac) - (worldtop * rw_scale)) >> 4;
+	topstep = -((rw_scalestep * worldtop) >> PRECISIONBITS);
+	topfrac = ((centeryfrac) - (worldtop * rw_scale)) >> PRECISIONBITS;
 	
-	bottomstep = -((rw_scalestep * worldbottom) >> 4);
-	bottomfrac = ((centeryfrac) - (worldbottom * rw_scale)) >> 4;
+	bottomstep = -((rw_scalestep * worldbottom) >> PRECISIONBITS);
+	bottomfrac = ((centeryfrac) - (worldbottom * rw_scale)) >> PRECISIONBITS;
 
     if (backsector)
     {	
@@ -745,14 +748,14 @@ R_StoreWallRange
 
 		if (worldhigh < worldtop)
 		{
-			pixhigh = ((centeryfrac) - (worldhigh * rw_scale)) >> 4;
-			pixhighstep = -((rw_scalestep * worldhigh) >> 4);
+			pixhigh = ((centeryfrac) - (worldhigh * rw_scale)) >> PRECISIONBITS;
+			pixhighstep = -((rw_scalestep * worldhigh) >> PRECISIONBITS);
 		}
 
 		if (worldlow > worldbottom)
 		{
-			pixlow = ((centeryfrac) - (worldlow * rw_scale)) >> 4;
-			pixlowstep = -((rw_scalestep * worldlow) >> 4);
+			pixlow = ((centeryfrac) - (worldlow * rw_scale)) >> PRECISIONBITS;
+			pixlowstep = -((rw_scalestep * worldlow) >> PRECISIONBITS);
 		}
 	}
     

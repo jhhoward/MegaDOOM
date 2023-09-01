@@ -55,7 +55,7 @@ extern const fixed16_t *finecosine;
 // Effective size is 4096.
 extern const fixed_t finetangent[FINEANGLES/2];
 
-extern const fixed_t scaledividetable[1024];
+extern const ufixed16_t scaledividetable[1024];
 
 // Gamma correction tables.
 //extern const byte gammatable[5][256];

@@ -28,8 +28,8 @@ extern const line_t*		linedef;
 extern const sector_t*	frontsector;
 extern const sector_t*	backsector;
 
-extern int		rw_x;
-extern int		rw_stopx;
+extern int16_t		rw_x;
+extern int16_t		rw_stopx;
 
 extern boolean		segtextured;
 

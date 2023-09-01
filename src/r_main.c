@@ -53,8 +53,8 @@ int			validcount = 1;
 //lighttable_t*		fixedcolormap;
 //extern lighttable_t**	walllights;
 
-int			centerx;
-int			centery;
+int16_t			centerx;
+int16_t			centery;
 
 fixed_t			centerxfrac;
 fixed_t			centeryfrac;
@@ -487,13 +487,12 @@ void R_InitPointToAngle (void)
 //
 fixed_t R_ScaleFromGlobalAngle (angle_t visangle)
 {
-    fixed_t		scale;
     angle_t		anglea;
     angle_t		angleb;
-    int			sinea;
-    int			sineb;
-    fixed_t		num;
-    int			den;
+    fixed16_t	sinea;
+    fixed16_t	sineb;
+    int32_t		num;
+    int32_t		den;
 
     // UNUSED
 #if 0
@@ -529,7 +528,10 @@ fixed_t R_ScaleFromGlobalAngle (angle_t visangle)
         return 64 * FRACUNIT;
     }
 
-    return num / den;
+//    uint16_t result = num / den;
+//    return result;
+
+    return (num / den);
 }
 
 

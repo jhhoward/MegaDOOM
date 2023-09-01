@@ -519,7 +519,7 @@ void R_DrawColumn(void)
 	int			count;
 	//pixel_t* dest;
 	fixed_t		frac;
-	fixed_t		fracstep;
+	ufixed16_t		fracstep;
 
 	count = dc_yh - dc_yl;
 
