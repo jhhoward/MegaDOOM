@@ -1,6 +1,8 @@
 #pragma once
 
-#include "doomtypes.h"
+#include <stdbool.h>
+#include <stdint.h>
+#include "doomtype.h"
 #include "r_defs.h"
 #include "DoomData.h"
 

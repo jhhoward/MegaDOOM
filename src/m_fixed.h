@@ -13,33 +13,29 @@
 // GNU General Public License for more details.
 //
 // DESCRIPTION:
-//	Refresh/render internal state variables (global).
+//	Fixed point arithemtics, implementation.
 //
 
 
-#ifndef __R_STATE__
-#define __R_STATE__
+#ifndef __M_FIXED__
+#define __M_FIXED__
 
-#include "doomtypes.h"
-#include "tables.h"
-#include "r_defs.h"
+
+
 
 //
-// POV data.
+// Fixed point, 32bit as 16.16.
 //
-extern int16_t		viewx;
-extern int16_t		viewy;
-extern int16_t		viewz;
+#define FRACBITS		12
+#define FRACUNIT		(1<<FRACBITS)
 
-extern angle_t		viewangle;
+typedef int fixed_t;
+typedef short fixed16_t;
+typedef unsigned short ufixed16_t;
 
-extern int16_t floorClip[VIEWPORT_WIDTH];
-extern int16_t ceilingClip[VIEWPORT_WIDTH];
-extern int16_t columnsToFill;
+fixed_t FixedMul	(fixed_t a, fixed_t b);
+fixed_t FixedDiv	(fixed_t a, fixed_t b);
 
-extern angle_t clipangle;
-extern angle_t negviewangle;
-extern int16_t viewcos;
-extern int16_t viewsin;
+
 
 #endif

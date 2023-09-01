@@ -1,5 +1,3 @@
-#include <memory.h>
-#include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
 #include "r_defs.h"
@@ -9,9 +7,13 @@
 
 #pragma warning(disable:4996)
 
+//#define MAP_FRACBITS FRACBITS
+//#define MAP_FRACBITS FRACBITS
+#define MAP_FRACBITS 0
+
 void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 {
-	char filename[100];
+	char filename[50];
 	sprintf_s(filename, 50, "../src/generated/%s.inc.h", levelname);
 
 	FILE* fs = fopen(filename, "w");
@@ -22,7 +24,7 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 	fprintf(fs, "const vertex_t %s_vertices[] = {\n", levelname);
 	for (int n = 0; n < mapdata->numVertices; n++)
 	{
-		fprintf(fs, "\t{%d,%d},\n", mapdata->vertices[n].x, mapdata->vertices[n].y);
+		fprintf(fs, "\t{%d,%d},\n", mapdata->vertices[n].x << MAP_FRACBITS, mapdata->vertices[n].y << MAP_FRACBITS);
 	}
 	fprintf(fs, "};\n");
 
@@ -36,7 +38,7 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 			sector->ceilingheight,
 			LookupFlat(sector->floorpic),
 			LookupFlat(sector->ceilingpic),
-			sector->lightlevel >> 6,
+			sector->lightlevel >> 5,
 			sector->special,
 			sector->tag
 		);
@@ -49,9 +51,18 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 	{
 		mapsubsector_t* subsector = &mapdata->subsectors[n];
 
-		fprintf(fs, "\t{ %d, %d },\n",
+		mapseg_t* firstseg = &mapdata->segs[subsector->firstseg];
+		maplinedef_t* line = &mapdata->lines[firstseg->linedef];
+		int sectornum = mapdata->sides[line->sidenum[firstseg->side]].sector;
+		//if (line->sidenum[0] != -1)
+		//	fprintf(fs, "&%s_sectors[%d], ", levelname, mapdata->sides[line->sidenum[0]].sector);
+
+
+		fprintf(fs, "\t{ %d, %d, &%s_sectors[%d] },\n",
 			subsector->numsegs,
-			subsector->firstseg);
+			subsector->firstseg,
+			levelname,
+			sectornum); // mapdata->sides[mapdata->segs[subsector->firstseg].side].sector);
 	}
 	fprintf(fs, "};\n");
 
@@ -62,10 +73,10 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 	{
 		mapnode_t* node = &mapdata->nodes[n];
 		fprintf(fs, "\t{ ");
-		fprintf(fs, "%d, ", node->x);
-		fprintf(fs, "%d, ", node->y);
-		fprintf(fs, "%d, ", node->dx);
-		fprintf(fs, "%d, ", node->dy);
+		fprintf(fs, "%d, ", node->x << MAP_FRACBITS);
+		fprintf(fs, "%d, ", node->y << MAP_FRACBITS);
+		fprintf(fs, "%d, ", node->dx << MAP_FRACBITS);
+		fprintf(fs, "%d, ", node->dy << MAP_FRACBITS);
 
 		fprintf(fs, "{ ");
 
@@ -75,7 +86,7 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 
 			for (int j = 0; j < 4; j++)
 			{
-				fprintf(fs, "%d, ", node->bbox[i][j]);
+				fprintf(fs, "%d, ", node->bbox[i][j] << MAP_FRACBITS);
 			}
 
 			fprintf(fs, "}, ");
@@ -100,8 +111,8 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 		fprintf(fs, "&%s_vertices[%d], ", levelname, line->v1);
 		fprintf(fs, "&%s_vertices[%d], ", levelname, line->v2);
 
-		fprintf(fs, "%d, ", mapdata->vertices[line->v2].x - mapdata->vertices[line->v1].x);
-		fprintf(fs, "%d, ", mapdata->vertices[line->v2].y - mapdata->vertices[line->v1].y);
+		fprintf(fs, "%d, ", (mapdata->vertices[line->v2].x - mapdata->vertices[line->v1].x) << MAP_FRACBITS);
+		fprintf(fs, "%d, ", (mapdata->vertices[line->v2].y - mapdata->vertices[line->v1].y) << MAP_FRACBITS);
 
 		fprintf(fs, "%d, ", line->flags);
 		fprintf(fs, "%d, ", line->special);
@@ -130,7 +141,7 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 		mapsidedef_t* side = &mapdata->sides[n];
 
 		fprintf(fs, "\t{ ");
-		fprintf(fs, "%d, ", side->textureoffset >> TEXTURE_DETAIL_SHIFT);
+		fprintf(fs, "%d, ", side->textureoffset);
 		fprintf(fs, "%d, ", side->rowoffset);
 		fprintf(fs, "%d, ", LookupTexture(side->toptexture));
 		fprintf(fs, "%d, ", LookupTexture(side->bottomtexture));
@@ -149,19 +160,26 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 		fprintf(fs, "\t{ ");
 		fprintf(fs, "&%s_vertices[%d], ", levelname, seg->v1);
 		fprintf(fs, "&%s_vertices[%d], ", levelname, seg->v2);
-		fprintf(fs, "%d, ", seg->offset >> TEXTURE_DETAIL_SHIFT);
-		fprintf(fs, "%d, ", seg->angle);
+		fprintf(fs, "%d, ", seg->offset);
+		fprintf(fs, "0x%x, ", (uint16_t) seg->angle);
 		fprintf(fs, "&%s_sides[%d], ", levelname, mapdata->lines[seg->linedef].sidenum[seg->side]);
 		fprintf(fs, "&%s_lines[%d], ", levelname, seg->linedef);
 
-		int dx = mapdata->vertices[seg->v2].x - mapdata->vertices[seg->v1].x;
-		int dy = mapdata->vertices[seg->v2].y - mapdata->vertices[seg->v1].y;
-		int length = (int)sqrt((dx * dx) + (dy * dy));
-		if (TEXTURE_DETAIL_SHIFT)
-		{
-			length /= 2;
-		}
-		fprintf(fs, "%d", length);
+		//int dx = mapdata->vertices[seg->v2].x - mapdata->vertices[seg->v1].x;
+		//int dy = mapdata->vertices[seg->v2].y - mapdata->vertices[seg->v1].y;
+		//int length = (int)sqrt((dx * dx) + (dy * dy));
+		//fprintf(fs, "%d, ", length);
+
+		maplinedef_t* line = &mapdata->lines[seg->linedef];
+		if (line->sidenum[seg->side] != -1)
+			fprintf(fs, "&%s_sectors[%d], ", levelname, mapdata->sides[line->sidenum[seg->side]].sector);
+		else
+			fprintf(fs, "0, ");
+
+		if (line->sidenum[!seg->side] != -1)
+			fprintf(fs, "&%s_sectors[%d]", levelname, mapdata->sides[line->sidenum[!seg->side]].sector);
+		else
+			fprintf(fs, "0");
 
 
 		fprintf(fs, "},\n");
@@ -193,7 +211,7 @@ void DumpMapToHeader(mapdata_t* mapdata, const char* levelname)
 	fprintf(fs, "\t%s_lines,\n", levelname);
 	fprintf(fs, "\t%s_sectors,\n", levelname);
 	fprintf(fs, "\t%s_things,\n", levelname);
-	fprintf(fs, "\t%d,\n", mapdata->numNodes - 1);
+	fprintf(fs, "\t%d,\n", mapdata->numNodes);
 	fprintf(fs, "};\n\n");
 
 	//side_t* sides;

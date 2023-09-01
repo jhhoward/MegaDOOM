@@ -1,4 +1,5 @@
-#include "doomtypes.h"
+#include <stdint.h>
+#include <stdbool.h>
 #include "tables.h"
 #include "r_defs.h"
 #include <stdio.h>
@@ -6,12 +7,16 @@
 #pragma warning(disable:4996)
 
 #define M_PI 3.141592654
-#define FRACBITS		8
-#define FRACUNIT		(1<<FRACBITS)
 
-#define FRAMEBUFFER_WIDTH VIEWPORT_WIDTH
+#define FRAMEBUFFER_WIDTH SCREENWIDTH
 #define FRAMEBUFFER_WIDTH_TILES (FRAMEBUFFER_WIDTH / 4)
-#define FRAMEBUFFER_HEIGHT VIEWPORT_HEIGHT
+
+#ifdef RENDER_DOUBLE_HEIGHT
+#define FRAMEBUFFER_HEIGHT (SCREENHEIGHT * 2)
+#else
+#define FRAMEBUFFER_HEIGHT SCREENHEIGHT
+#endif
+
 #define FRAMEBUFFER_HEIGHT_TILES (FRAMEBUFFER_HEIGHT / 8)
 #define FRAMEBUFFER_TILE_BYTES (4 * 8)
 
@@ -30,44 +35,78 @@
 int main()
 {
     int	i;
-    int16_t	t;
+    fixed_t	t;
     float	a;
 
     FILE* fs = fopen("tables.inc.h", "w");
 
-    fprintf(fs, "const int16_t finesine[10240] = {\n\t");
+    fprintf(fs, "const fixed16_t finesine[%d] = {\n\t", 5 * FINEANGLES / 4);
 
     // finesine table
     for (i = 0; i < 5 * FINEANGLES / 4; i++)
     {
         a = (float)((i + 0.5) * M_PI * 2 / FINEANGLES);
-        t = (int16_t)(FRACUNIT * sin(a));
+        t = (fixed_t)(FRACUNIT * sin(a));
         fprintf(fs, "%d, ", t);
     }
 
     fprintf(fs, "\n};\n");
 
-    // distancescale
-    fprintf(fs, "const int16_t distancescalex[] = {\n");
-    for (int n = 0; n < 2048; n++)
+    fprintf(fs, "const fixed_t finetangent[%d] = {\n\t", FINEANGLES / 2);
+    // viewangle tangent table
+    for (i = 0; i < FINEANGLES / 2; i++)
     {
-        int result = n == 0 ? 0 : (VIEWPORT_HALF_WIDTH << 10) / n;
-        fprintf(fs, "%d", result);
-        if (n == 2047)
-        {
-            fprintf(fs, "\n");
-        }
-        else
-        {
-            fprintf(fs, ", ");
-        }
+        a = (i - FINEANGLES / 4 + 0.5) * M_PI * 2 / FINEANGLES;
+        float fv = FRACUNIT * tan(a);
+        t = fv;
+        // t = (int)(t / 256) * 256;
+        fprintf(fs, "%d, ", t);
     }
-    fprintf(fs, "};\n\n");
+    fprintf(fs, "\n};\n");
 
-    fprintf(fs, "const int16_t distancescaley[] = {\n");
+    //
+    // slope (tangent) to angle lookup
+    //
+    fprintf(fs, "const angle_t tantoangle[%d] = {\n\t", SLOPERANGE + 1);
+    for (i = 0; i <= SLOPERANGE; i++)
+    {
+        float f = atan((float)i / SLOPERANGE) / (3.141592657 * 2);
+        t = 0xffff * f;
+        fprintf(fs, "%d, ", t);
+    }
+    fprintf(fs, "\n};\n");
+
+    // point to angle lookup
+    fprintf(fs, "const angle_t pointtoangle[ANGLE_LOOKUP_TABLE_DIMENSION * ANGLE_LOOKUP_TABLE_DIMENSION] = {\n");
+    for (int x = 0; x < ANGLE_LOOKUP_TABLE_DIMENSION; x++)
+    {
+        fprintf(fs, "\t ");
+        for (int y = 0; y < ANGLE_LOOKUP_TABLE_DIMENSION; y++)
+        {
+            float f = atan2(y, x) / (3.141592657 * 2);
+            t = 0xffff * f;
+            fprintf(fs, "%d, ", t);
+        }
+        fprintf(fs, "\n");
+    }
+    fprintf(fs, "};\n");
+
+    fprintf(fs, "const ufixed16_t scaledividetable[1024] = {\n\t");
+    for (i = 0; i < 1024; i++)
+    {
+        t = i == 0 ? 0xffff : 0xfffffu / i;
+        if (t > 65535)
+            t = 65535;
+        fprintf(fs, "%d, ", t);
+    }
+    fprintf(fs, "\n};\n");
+
+#if 0
+    // distancescale
+    fprintf(fs, "const int16_t distancescale[] = {\n");
     for (int n = 0; n < 2048; n++)
     {
-        int result = n == 0 ? 0 : ((int)(VIEWPORT_HALF_WIDTH * 3.0f) << 8) / n;
+        int result = n == 0 ? 0 : ((SCREENWIDTH / 2) << 10) / n;
         fprintf(fs, "%d", result);
         if (n == 2047)
         {
@@ -96,6 +135,7 @@ int main()
         }
     }
     fprintf(fs, "};\n\n");
+#endif
 
     fclose(fs);
 
@@ -120,17 +160,6 @@ int main()
         }
     }
     fprintf(fs, "};\n\n");
-
-    //fprintf(fs, "const u16 framebufferTiles[] = {\n");
-    //for (int y = 0; y < FRAMEBUFFER_HEIGHT_TILES; y++)
-    //{
-    //    for (int x = 0; x < FRAMEBUFFER_WIDTH_TILES; x++)
-    //    {
-    //        int index = TILE_USER_INDEX + x * FRAMEBUFFER_HEIGHT_TILES + y;
-    //        fprintf(fs, "%d, ", index);
-    //    }
-    //}
-    //fprintf(fs, "\n};\n\n");
 
     fprintf(fs, "const u16 screenLayoutTiles[] = {\n");
     for (int y = 0; y < SCREEN_LAYOUT_HEIGHT_TILES; y++)
@@ -172,38 +201,110 @@ int main()
         }
     }
     fprintf(fs, "\n};\n\n");
-
-    fprintf(fs, "void VLine(int x, int y, int count, uint8_t colour)\n");
+    fprintf(fs, "void R_DrawVLine(void)\n");
     fprintf(fs, "{\n");
-    fprintf(fs, "\tu8* ptr = framebuffer + framebufferx[x];\n");
-    fprintf(fs, "\tptr += (y << 2);\n");
+    fprintf(fs, "\tint16_t count = dc_yh - dc_yl;\n");
+    fprintf(fs, "\tif(count < 0) return;\n");
+    fprintf(fs, "\tu8* ptr = framebuffer + framebufferx[dc_x];\n");
+
+#ifdef RENDER_DOUBLE_HEIGHT
+    fprintf(fs, "\tptr += (dc_yl << 3);\n");
     fprintf(fs, "\tswitch(count) {");
-    for (int y = FRAMEBUFFER_HEIGHT; y > 0; y--)
+    for (int y = FRAMEBUFFER_HEIGHT / 2; y >= 0; y--)
     {
         fprintf(fs, "\tcase %d:\n", y);
-        fprintf(fs, "\tptr[%d] = colour;\n", (y - 1) * 4);
-//        fprintf(fs, "\t*ptr = colour; ptr += 4;\n");
+        fprintf(fs, "\tptr[%d] = dc_col;\n", (y) * 8);
+        fprintf(fs, "\tptr[%d] = dc_col;\n", (y) * 8 + 4);
     }
-    fprintf(fs, "\tbreak;\n");
-    fprintf(fs, "\t}\n");
-    fprintf(fs, "}\n");
-
-    fprintf(fs, "void TexturedLine(const uint8_t* texptr, int16_t x, int16_t y, int16_t count, int16_t u, int16_t v, int16_t step)\n");
-    fprintf(fs, "{\n");
-    fprintf(fs, "\tu8* ptr = framebuffer + framebufferx[x];\n");
-    fprintf(fs, "\tptr += (y << 2);\n");
-    fprintf(fs, "\tint texcoord = v << 8;\n");
-
+#else
+    fprintf(fs, "\tptr += (dc_yl << 2);\n");
     fprintf(fs, "\tswitch(count) {");
-    for (int y = FRAMEBUFFER_HEIGHT; y > 0; y--)
+    for (int y = FRAMEBUFFER_HEIGHT; y >= 0; y--)
     {
         fprintf(fs, "\tcase %d:\n", y);
-        fprintf(fs, "\t*ptr = texptr[(texcoord >> 8) & 127]; texcoord += step; ptr += 4;\n");
-        //        fprintf(fs, "\t*ptr = colour; ptr += 4;\n");
+//        fprintf(fs, "\tptr[%d] = dc_col;\n", (y) * 4);
+        fprintf(fs, "\t*ptr = dc_col;\n");
+        if (y > 0)
+        {
+            fprintf(fs, "\tptr += 4;\n");
+        }
     }
+#endif
     fprintf(fs, "\tbreak;\n");
     fprintf(fs, "\t}\n");
-    fprintf(fs, "}\n");
+    fprintf(fs, "}\n\n");
+    
+    fprintf(fs, "void R_DrawColumn(void)\n");
+    fprintf(fs, "{\n");
+    fprintf(fs, "\tint16_t count;\n");
+    fprintf(fs, "\tbyte texel;\n");
+    fprintf(fs, "\tfixed_t frac;\n");
+    fprintf(fs, "\tufixed16_t fracstep;\n");
+    fprintf(fs, "\tcount = dc_yh - dc_yl;\n");
+    fprintf(fs, "\tif (count < 0) return;\n");
+    fprintf(fs, "\tu8* dest = framebuffer + framebufferx[dc_x];\n");
+    fprintf(fs, "\tfracstep = dc_iscale;\n");
+    fprintf(fs, "\tfrac = dc_texturemid + (dc_yl - centery) * fracstep;\n");
+
+#ifdef RENDER_DOUBLE_HEIGHT
+    fprintf(fs, "\tdest += (dc_yl << 3);\n");
+
+    fprintf(fs, "\tswitch(count) {\n");
+    for (int y = FRAMEBUFFER_HEIGHT / 2; y >= 0; y--)
+    {
+        fprintf(fs, "\tcase %d:\n", y);
+//        fprintf(fs, "\t\ttexel = dc_source[(frac >> FRACBITS) & 127];\n");
+        fprintf(fs, "\t\ttexel = dc_source[(frac >> FRACBITS)];\n");
+        fprintf(fs, "\t\t*dest = texel;\n");
+        fprintf(fs, "\t\tdest += 4;\n");
+        fprintf(fs, "\t\t*dest = texel;\n");
+        if (y > 0)
+        {
+            fprintf(fs, "\t\tdest += 4;\n");
+            fprintf(fs, "\t\tfrac += fracstep;\n");
+        }
+    }
+#else
+    fprintf(fs, "\tdest += (dc_yl << 2);\n");
+
+#if RENDER_DOUBLE_STEP
+    fprintf(fs, "\t\ttexel = dc_source[(frac >> FRACBITS)];\n");
+    fprintf(fs, "\t\tfracstep <<= 1;\n");
+
+    fprintf(fs, "\tswitch(count) {\n");
+    for (int y = FRAMEBUFFER_HEIGHT; y >= 0; y--)
+    {
+        fprintf(fs, "\tcase %d:\n", y);
+        fprintf(fs, "\t\t*dest = texel;\n");
+        if (y > 0)
+        {
+            fprintf(fs, "\t\tdest += 4;\n");
+            if (y & 1)
+            {
+                fprintf(fs, "\t\ttexel = dc_source[(frac >> FRACBITS)];\n");
+                fprintf(fs, "\t\tfrac += fracstep;\n");
+            }
+        }
+    }
+#else
+    fprintf(fs, "\tswitch(count) {\n");
+    for (int y = FRAMEBUFFER_HEIGHT; y >= 0; y--)
+    {
+        fprintf(fs, "\tcase %d:\n", y);
+        //        fprintf(fs, "\t\ttexel = dc_source[(frac >> FRACBITS) & 127];\n");
+        fprintf(fs, "\t\ttexel = dc_source[(frac >> FRACBITS)];\n");
+        fprintf(fs, "\t\t*dest = texel;\n");
+        if (y > 0)
+        {
+            fprintf(fs, "\t\tdest += 4;\n");
+            fprintf(fs, "\t\tfrac += fracstep;\n");
+        }
+    }
+#endif
+
+#endif
+    fprintf(fs, "\t}\n");
+    fprintf(fs, "}\n\n");
 
     fclose(fs);
 

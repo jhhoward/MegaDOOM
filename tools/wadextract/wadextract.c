@@ -11,8 +11,10 @@
 
 bool extractlevels = true;
 bool extractsingletexture = false;
-bool extracttextures = true;
+bool extracttextures = false;
 bool writeskybox = true;
+
+void TestDumpSprites(wad_file_t* wad);
 
 int main(int argc, char* argv[])
 {
@@ -30,8 +32,9 @@ int main(int argc, char* argv[])
 	//DumpMapToHeader(&mapdata, levelname);
 
 	wad_file_t* iwad = LoadWad("doom1.wad");
-	wad_file_t* pwad = LoadWad("test.wad");
-
+	wad_file_t* pwad = LoadWad("test2.wad");
+//	wad_file_t* pwad = LoadWad("jaguartc_fix.wad");
+	
 	if (iwad && pwad)
 	{
 		LoadGamePalette(iwad);
@@ -64,6 +67,8 @@ int main(int argc, char* argv[])
 				}
 			}
 		}
+
+		//TestDumpSprites(iwad);
 
 		if (writeskybox)
 		{

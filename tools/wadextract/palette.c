@@ -37,9 +37,10 @@ void LoadGamePalette(wad_file_t* wad)
 	}
 }
 
-#define MATCH_PAIR_THRESHOLD 300
+//#define MATCH_PAIR_THRESHOLD 300
 //#define MATCH_PAIR_THRESHOLD 200
 //#define MATCH_PAIR_THRESHOLD 80
+#define MATCH_PAIR_THRESHOLD 300
 #define USE_SIMPLE_COLOR_DISTANCE 1
 
 float CalcDistance(int r1, int g1, int b1, int r2, int g2, int b2)
@@ -49,7 +50,7 @@ float CalcDistance(int r1, int g1, int b1, int r2, int g2, int b2)
 	int g = g1 - g2;
 	int b = b1 - b2;
 #if USE_SIMPLE_COLOR_DISTANCE
-	return (r * r) + (g * g) + (b * b);
+	return (float)((r * r) + (g * g) + (b * b));
 #else
 	return (float)(sqrt((((512 + rmean) * r * r) >> 8) + 4 * g * g + (((767 - rmean) * b * b) >> 8)));
 #endif
@@ -82,7 +83,7 @@ uint8_t MatchPaletteColour(uint32_t input)
 
 uint8_t MatchBlendedColour(uint32_t input)
 {
-	int bestMixDistance = 0;
+	float bestMixDistance = 0;
 	int bestMixIndex = -1;
 	uint8_t* mixColours = (uint8_t*)(megadriveblendpalette);
 	uint8_t* palette = (uint8_t*)(megadrivepalette);

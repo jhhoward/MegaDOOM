@@ -1,23 +1,14 @@
 #include <SDL.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include "lodepng.h"
 #include "tables.h"
 #include "r_local.h"
 #include "generated/palette.inc.h"
 #include "DoomData.h"
 #include "generated/E1M1.inc.h"
-#include "generated/E1M2.inc.h"
-#include "generated/E1M3.inc.h"
-#include "generated/E1M4.inc.h"
-#include "generated/E1M5.inc.h"
-#include "generated/E1M6.inc.h"
-#include "generated/E1M7.inc.h"
-#include "generated/E1M8.inc.h"
-#include "generated/E1M9.inc.h"
-
 #include "generated/textures.inc.h"
 #include "generated/flats.inc.h"
-
 
 // For MD:
 // - Preprocess WAD and extract data
@@ -147,9 +138,6 @@ void DrawDebugLine(int x0, int y0, int x1, int y1)
 	int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
 	int err = dx + dy, e2; /* error value e_xy */
 
-	x0 *= 2;
-	x1 *= 2;
-
 	for (;;) {  /* loop */
 		PutPixelImmediate(mainWindow.screenSurface, x0, y0, 0xffffffff);
 		if (x0 == x1 && y0 == y1) break;
@@ -158,9 +146,6 @@ void DrawDebugLine(int x0, int y0, int x1, int y1)
 		if (e2 <= dx) { err += dx; y0 += sy; } /* e_xy+e_y < 0 */
 	}
 }
-
-extern int16_t viewx, viewy;
-
 
 void OpenDisplayWindow(display_window_t* window, int width, int height, int zoom)
 {
@@ -201,9 +186,7 @@ void BlitDisplayWindow(display_window_t* window)
 
 }
 
-const bool halfheight = false;
-
-void TexturedLine(const uint8_t* texptr, int16_t x, int16_t y, int16_t count, int16_t u, int16_t v, int16_t step)
+void TexturedLine(const walltexture_t* texture, int16_t x, int16_t y, int16_t count, int16_t u, int16_t v, int16_t step)
 {
 	x *= 2;
 	//u &= (texture->width - 1);
@@ -218,21 +201,9 @@ void TexturedLine(const uint8_t* texptr, int16_t x, int16_t y, int16_t count, in
 		//int texcoord = (int)(alpha * 128);
 		texcoord += step;
 //		uint8_t colourPair = (texture->columns[u])[(texcoord >> 16) & 127];
-		uint8_t colourPair = texptr[(int)(texcoord >> 8) & 127];
-
-		if (!halfheight)
-		{
-			PutPixelImmediate(mainWindow.screenSurface, x, y, gamePalette[colourPair & 0xf]);
-			PutPixelImmediate(mainWindow.screenSurface, x + 1, y, gamePalette[colourPair >> 4]);
-		}
-		else
-		{
-			PutPixelImmediate(mainWindow.screenSurface, x, y * 2, gamePalette[colourPair & 0xf]);
-			PutPixelImmediate(mainWindow.screenSurface, x + 1, y * 2, gamePalette[colourPair >> 4]);
-			PutPixelImmediate(mainWindow.screenSurface, x, y * 2 + 1, gamePalette[colourPair >> 4]);
-			PutPixelImmediate(mainWindow.screenSurface, x + 1, y * 2 + 1, gamePalette[colourPair & 0xf]);
-		}
-
+		uint8_t colourPair = (texturecolumns + texture->columns[u])[(int)(texcoord >> 8) & 127];
+		PutPixelImmediate(mainWindow.screenSurface, x, y, gamePalette[colourPair & 0xf]);
+		PutPixelImmediate(mainWindow.screenSurface, x + 1, y, gamePalette[colourPair >> 4]);
 		y++;
 	}
 //	while (count--)
@@ -243,6 +214,11 @@ void TexturedLine(const uint8_t* texptr, int16_t x, int16_t y, int16_t count, in
 
 void VLine(int x, int y, int count, uint8_t colour)
 {
+	if (y < 0 || y >= DISPLAY_HEIGHT)
+	{
+		return;
+	}
+
 	x *= 2;
 
 	while (count--)
@@ -256,7 +232,7 @@ void VLine(int x, int y, int count, uint8_t colour)
 			}
 
 			int bpp = mainWindow.screenSurface->format->BytesPerPixel;
-			Uint8* p = (Uint8*)mainWindow.screenSurface->pixels + y * mainWindow.screenSurface->pitch + x * bpp;
+			Uint8* p = (Uint8*)mainWindow.screenSurface->pixels + (y * 2) * mainWindow.screenSurface->pitch + x * bpp;
 
 			if (*(Uint32*)p)
 			{
@@ -264,25 +240,22 @@ void VLine(int x, int y, int count, uint8_t colour)
 			}
 		}
 
-		overdraw = false;
-		if (overdraw && ((y ^ x) & 1))
+		if (false)
 		{
-			PutPixelImmediate(mainWindow.screenSurface, x, y, 0xffff00ff);
+			PutPixelImmediate(mainWindow.screenSurface, x, y, gamePalette[colour & 0xf]);
+			PutPixelImmediate(mainWindow.screenSurface, x + 1, y, gamePalette[colour >> 4]);
 		}
 		else
 		{
-			if (!halfheight)
-			{
-				PutPixelImmediate(mainWindow.screenSurface, x, y, gamePalette[colour & 0xf]);
-				PutPixelImmediate(mainWindow.screenSurface, x + 1, y, gamePalette[colour >> 4]);
-			}
-			else
-			{
-				PutPixelImmediate(mainWindow.screenSurface, x, y * 2, gamePalette[colour & 0xf]);
-				PutPixelImmediate(mainWindow.screenSurface, x + 1, y * 2, gamePalette[colour >> 4]);
+			PutPixelImmediate(mainWindow.screenSurface, x, y * 2, gamePalette[colour & 0xf]);
+			PutPixelImmediate(mainWindow.screenSurface, x + 1, y * 2, gamePalette[colour >> 4]);
 
-				PutPixelImmediate(mainWindow.screenSurface, x, y * 2 + 1, gamePalette[colour >> 4]);
-				PutPixelImmediate(mainWindow.screenSurface, x + 1, y * 2 + 1, gamePalette[colour & 0xf]);
+			PutPixelImmediate(mainWindow.screenSurface, x + 1, y * 2 + 1, gamePalette[colour & 0xf]);
+			PutPixelImmediate(mainWindow.screenSurface, x, y * 2 + 1, gamePalette[colour >> 4]);
+
+			if (overdraw)
+			{
+				PutPixelImmediate(mainWindow.screenSurface, x, y * 2, 0xffff00ff);
 			}
 		}
 		y++;
@@ -291,11 +264,11 @@ void VLine(int x, int y, int count, uint8_t colour)
 
 void DumpTexture(walltexture_t* tex)
 {
-	/*for (int x = 0; x < tex->width; x++)
+	for (int x = 0; x < tex->width; x++)
 	{
 		for (int y = 0; y < tex->height; y++)
 		{
-			uint8_t data = (tex->columns[x])[y];
+			uint8_t data = (texturecolumns + tex->columns[x])[y];
 			if (x & 1)
 			{
 				PutPixelImmediate(mainWindow.screenSurface, x, y, gamePalette[data & 0xf]);
@@ -305,12 +278,12 @@ void DumpTexture(walltexture_t* tex)
 				PutPixelImmediate(mainWindow.screenSurface, x, y, gamePalette[data >> 4]);
 			}
 		}
-	}*/
+	}
 }
 
 void RenderDebugMap(void)
 {
-#if 1
+#if 0
 	int centerX = debugMapWindow.width / 2;
 	int centerY = debugMapWindow.height / 2;
 	int range = debugMapWindow.width / 2;;
@@ -328,10 +301,12 @@ void RenderDebugMap(void)
 
 	int centerX = debugMapWindow.width / 2;
 	int centerY = debugMapWindow.height / 2;
-	DrawMapDebugLine(centerX, centerY, centerX + leftX, centerY + leftY);
-	DrawMapDebugLine(centerX, centerY, centerX + rightX, centerY + rightY);
+	DrawMapDebugLine(centerX, centerY, centerX + leftX, centerY + leftY, 0xffffff00);
+	DrawMapDebugLine(centerX, centerY, centerX + rightX, centerY + rightY, 0xffffff00);
 #endif
 }
+
+#define MAP_FRACBITS FRACBITS
 
 int main(int argc, char* argv[])
 {
@@ -346,8 +321,22 @@ int main(int argc, char* argv[])
 		SDL_SetWindowPosition(mainWindow.window, windowX - debugMapWindow.width / 2, windowY);
 		SDL_SetWindowPosition(debugMapWindow.window, windowX + debugMapWindow.width / 2, windowY);
 	}
+	
+	/*
+	viewx = viewy = 0;
 
-	R_InitTables();
+	for (int a = 0; a < 0xffff; a += 0xffff / 360)
+	{
+		printf("Angle: %d ", a);
+		int x = 100 * finecosine[a >> ANGLETOFINESHIFT];
+		int y = 100 * finesine[a >> ANGLETOFINESHIFT];
+		angle_t a = R_PointToAngle(x, y);
+		angle_t b = DirectionToAngle(x, y);
+		printf("Ref: %d  New: %d\n", a, b);
+	}
+	*/
+
+	//R_InitTables();
 	//R_ExecuteSetViewSize();
 
 	/*
@@ -363,17 +352,21 @@ int main(int argc, char* argv[])
 	}*/
 
 	mapdata_t mapdata;
-	map_t map;
+	map_t loadedmap;
 
 //	LoadMapFromWad(&mapdata, "doom1.wad", "E1M1");
 	LoadMapFromWad(&mapdata, "test.wad", "E1M1");
-	ExtractMapData(&mapdata, &map);
-	currentlevel = &map; 
-	currentlevel = &map_E1M1;
+	ExtractMapData(&mapdata, &loadedmap);
+	map = &loadedmap; 
+	map = &map_E1M1;
 
-	viewx = currentlevel->things[0].x;
-	viewy = currentlevel->things[0].y;
+//	viewx = map->things[0].x << MAP_FRACBITS;
+//	viewy = map->things[0].y << MAP_FRACBITS;
+	viewx = map->things[0].x;
+	viewy = map->things[0].y;
+	viewz = 64;
 
+	R_Init();
 	//SDL_SetWindowPosition(AppWindow, 1900 - DISPLAY_WIDTH * 2, 1020 - DISPLAY_HEIGHT);
 
 	/*
@@ -436,15 +429,17 @@ int main(int argc, char* argv[])
 			//viewx+= scrollSpeed;
 			viewangle -= ANG1 * 5;
 		}
+
+		int movespeed = 5; // (FRACUNIT * 5);
 		if (input & INPUT_UP)
 		{
-			viewx += finecosine[viewangle >> ANGLETOFINESHIFT] >> 5;
-			viewy += finesine[viewangle >> ANGLETOFINESHIFT] >> 5;
+			viewx += FixedMul(finecosine[viewangle >> ANGLETOFINESHIFT], movespeed);
+			viewy += FixedMul(finesine[viewangle >> ANGLETOFINESHIFT], movespeed);
 		}
 		if (input & INPUT_DOWN)
 		{
-			viewx -= finecosine[viewangle >> ANGLETOFINESHIFT] >> 5;
-			viewy -= finesine[viewangle >> ANGLETOFINESHIFT] >> 5;
+			viewx -= FixedMul(finecosine[viewangle >> ANGLETOFINESHIFT], movespeed);
+			viewy -= FixedMul(finesine[viewangle >> ANGLETOFINESHIFT], movespeed);
 		}
 		if (input & INPUT_A)
 		{
@@ -455,12 +450,19 @@ int main(int argc, char* argv[])
 			viewz -= 3;
 		}
 
+		const subsector_t* subsector = R_PointInSubsector(viewx, viewy);
+		if (subsector)
+		{
+			viewz = subsector->sector->floorheight + 41;
+		}
+
 		ClearDisplayWindow(&debugMapWindow);
 		ClearDisplayWindow(&mainWindow);
 
 		// Draw stuff here
 		//RenderBSPNode(0);
-		R_RenderView();
+		R_RenderPlayerView();
+		//R_RenderView();
 		RenderDebugMap();
 
 		for (int y = 0; y < 16; y++)
@@ -483,3 +485,103 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
+void R_DrawVLine(void)
+{
+	int count;
+
+	count = dc_yh - dc_yl;
+
+	if (count < 0)
+		return;
+
+#ifdef RENDER_DOUBLE_HEIGHT
+	uint32_t* dest = &((uint32_t*)(mainWindow.screenSurface->pixels))[2 * dc_yl * mainWindow.width + 2 * dc_x];
+#else
+	uint32_t* dest = &((uint32_t*)(mainWindow.screenSurface->pixels))[dc_yl * mainWindow.width + 2 * dc_x];
+#endif
+
+	do
+	{
+		dest[0] = gamePalette[dc_col & 0xf];
+		dest[1] = gamePalette[dc_col >> 4];
+		dest += mainWindow.screenSurface->pitch / sizeof(uint32_t);
+
+#ifdef RENDER_DOUBLE_HEIGHT
+		dest[1] = gamePalette[dc_col & 0xf];
+		dest[0] = gamePalette[dc_col >> 4];
+		dest += mainWindow.screenSurface->pitch / sizeof(uint32_t);
+#endif
+	} while (count--);
+}
+
+void R_DrawColumn(void)
+{
+	int			count;
+	//pixel_t* dest;
+	fixed_t		frac;
+	ufixed16_t		fracstep;
+
+	count = dc_yh - dc_yl;
+
+	// Zero length, column does not exceed a pixel.
+	if (count < 0)
+		return;
+
+#ifdef RANGECHECK
+	if ((unsigned)dc_x >= SCREENWIDTH
+		|| dc_yl < 0
+		|| dc_yh >= SCREENHEIGHT)
+		I_Error("R_DrawColumn: %i to %i at %i", dc_yl, dc_yh, dc_x);
+#endif
+
+	// Framebuffer destination address.
+	// Use ylookup LUT to avoid multiply with ScreenWidth.
+	// Use columnofs LUT for subwindows?
+	//dest = ylookup[dc_yl] + columnofs[dc_x];
+
+#ifdef RENDER_DOUBLE_HEIGHT
+	uint32_t* dest = &((uint32_t*)(mainWindow.screenSurface->pixels))[2 * dc_yl * mainWindow.width + 2 * dc_x];
+#else
+	uint32_t* dest = &((uint32_t*)(mainWindow.screenSurface->pixels))[dc_yl * mainWindow.width + 2 * dc_x];
+#endif
+
+	// Determine scaling,
+	//  which is the only mapping to be done.
+	fracstep = dc_iscale;
+	frac = dc_texturemid + (dc_yl - centery) * fracstep;
+
+#if RENDER_DOUBLE_STEP
+	fracstep <<= 1;
+#endif
+
+	// Inner loop that does the actual texture mapping,
+	//  e.g. a DDA-lile scaling.
+	// This is as fast as it gets.
+	do
+	{
+		// Re-map color indices from wall texture column
+		//  using a lighting/special effects LUT.
+		//*dest = dc_colormap[dc_source[(frac >> FRACBITS) & 127]];
+
+		byte pixelpair = dc_source[(frac >> FRACBITS) & 127];
+		//byte pixelpair = 0x77;
+		dest[0] = gamePalette[pixelpair & 0xf];
+		dest[1] = gamePalette[pixelpair >> 4];
+		dest += mainWindow.screenSurface->pitch / sizeof(uint32_t);
+
+#ifdef RENDER_DOUBLE_HEIGHT
+		dest[1] = gamePalette[pixelpair & 0xf];
+		dest[0] = gamePalette[pixelpair >> 4];
+		dest += mainWindow.screenSurface->pitch / sizeof(uint32_t);
+#endif
+
+		//dest += SCREENWIDTH;
+#if RENDER_DOUBLE_STEP
+		if(!(count & 1))
+			frac += fracstep;
+#else
+		frac += fracstep;
+#endif
+
+	} while (count--);
+}

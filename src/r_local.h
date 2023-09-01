@@ -1,6 +1,5 @@
 //
 // Copyright(C) 1993-1996 Id Software, Inc.
-// Copyright(C) 1993-2008 Raven Software
 // Copyright(C) 2005-2014 Simon Howard
 //
 // This program is free software; you can redistribute it and/or
@@ -13,22 +12,34 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
-// R_local.h
+// DESCRIPTION:
+//	Refresh (R_*) module, global header.
+//	All the rendering/drawing stuff is here.
+//
 
 #ifndef __R_LOCAL__
 #define __R_LOCAL__
 
-#include "doomtypes.h"
-#include "DoomData.h"
-#include "r_stat.h"
-#include "r_defs.h"
+// Binary Angles, sine/cosine/atan lookups.
+#include "tables.h"
 
-void R_RenderView(void);
-void R_ClearClipSegs(void);
+// Screen size related parameters.
+#include "doomdef.h"
 
-int R_PointOnSide(int16_t x, int16_t y, const node_t* node);
-void R_RenderBSPNode(uint16_t nodenum);
+// Include the refresh/render data structs.
+#include "r_data.h"
 
-extern const map_t* currentlevel;
 
-#endif
+
+//
+// Separate header file for each module.
+//
+#include "r_main.h"
+#include "r_bsp.h"
+#include "r_segs.h"
+#include "r_plane.h"
+#include "r_data.h"
+#include "r_things.h"
+#include "r_draw.h"
+
+#endif		// __R_LOCAL__
