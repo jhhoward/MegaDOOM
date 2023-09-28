@@ -15,6 +15,30 @@ void R_DrawVLine(void)
 	if(count < 0) return;
 	u8* ptr = framebuffer + framebufferx[dc_x];
 	ptr += (dc_yl << 2);
+
+#define ASM_VLINE
+
+#ifdef ASM_VLINE
+// 12 cycles per pixel
+	u16 jump_pixels = (144 - count);
+	u16 jump_adjusted_pixels = jump_pixels << 2; // adjust for the 4 bytes between each pixel
+	ptr -= jump_adjusted_pixels;  // adjust the destination back depending on how far we jump
+	ptr -= 1; // adjust back for the extra +1 offset in the loop 
+
+	__asm volatile(
+		"jmp code_table_%=(%%pc, %2.w)\t\n\
+		code_table_%=:\t\n\
+		.set off,0\t\n\
+		.rept 144\t\n\
+			move.b %1, 1+off(%0)\t\n\
+			.set off,off+4\t\n\
+		.endr\t\n\
+		"
+		: "+&a" (ptr)
+		: "d" (dc_col), "d" (jump_adjusted_pixels)
+	);
+#else 
+	// 16 cycles per pixel
 	switch(count) {	case 144:
 	*ptr = dc_col;
 	ptr += 4;
@@ -451,6 +475,7 @@ void R_DrawVLine(void)
 	*ptr = dc_col;
 	break;
 	}
+#endif
 }
 
 void R_DrawColumn(void)
@@ -463,8 +488,116 @@ void R_DrawColumn(void)
 	if (count < 0) return;
 	u8* dest = framebuffer + framebufferx[dc_x];
 	fracstep = dc_iscale;
-	frac = dc_texturemid + (dc_yl - centery) * fracstep;
+
+	s32 frac_part = (dc_yl - centery); // * fracstep;
+	// use a native multiply here to save a bunch of cycles (dc_yl - centery) and fracstep are both 16-bits, so this is ok
+	// gcc generally does not use this, and in the asm it is using a call to __mulsi (software 32x32 multiply)
+	__asm volatile(
+			"muls.w %1, %0"
+			: "+d" (frac_part)
+			: "d" (fracstep)
+		);
+	frac = dc_texturemid + frac_part;
+	
 	dest += (dc_yl << 2);
+	
+
+
+#define ASM_HALF_RES_TMAP
+
+#ifdef ASM_HALF_RES_TMAP
+	// 23 cycles per pixel :) (46 per pair of pixels)
+	// but the texel sampling resolution is halved in the vertical direction
+
+	// double the fracstep
+	// and halve the count	
+	fracstep <<= 1;
+	count >>= 1;
+
+	// put 12 subtexel bits in their own registers
+	// and the 16 texel bits in their own registers as well
+	u16 fracstep_low = (fracstep & 0b111111111111) << 4;
+	u16 fracstep_high = fracstep >> 12;
+	s16 frac_low = (frac & 0b111111111111) << 4;
+	s16 frac_high = frac >> 12;
+
+	// figure out how far to skip 
+	// e.g. if count is 0, jump past 72 iterations (max number of iterations), and exit
+	// if count is 71, jump past 1 iteration, and execute the remaining 71
+	u16 jump_pixel_pairs = (72 - count);
+	u16 jump_adjusted_pixel_pairs = jump_pixel_pairs << 3; // adjust for the 4 bytes between each pixel, 8 for pixel pairs
+	// adjust the destination back depending on how far we jump
+	// if we e.g. skip past 3 iterations, we'll be skipping 3 rows of pixel pairs (each 8 bytes), which means 24 bytes
+	// however, we always want to start our draw from the correct position at the top of the column, so we adjust back just once
+	// so that our skip offset and this backwards adjust offset cancel out
+
+	// what this does is allow us to not adjust the framebuffer pointer in each iteration (saving 8 cycles, at the cost of 4 more cycles on the first write on each iteration)
+	dest -= jump_adjusted_pixel_pairs;  
+
+
+	// we need each iteration to take exactly 16 bytes of code 
+	// so we add a 1 to the offset of both framebuffer accesses below
+	// and decrement it here
+
+	// otherwise, gcc would generate a (%aX) addressing mode rather than 0(%a0), breaking the alignment of the code table
+	dest -= 1;
+
+	// make sure jump is scaled another 2x, so it is 8x2, 16x total, the number of bytes of each iteration
+
+	// the way this works is that we store the subtexel and texel coordinates in two separate registers
+	// by using an add, and an addx in conjuction, the carry from the subtexel coordinate add can flow into the texel coordinate addx.
+	// this means we don't need to adjust the texel coordinate to look up the texel, it's already in the low 16-bits of it's own register
+
+	// as mentioned above, we have a fixed offset of +1 here, just to ensure that gcc generates the actual indexed indirect addressing mode, 
+	//and not omit it for the first write on the first iteration
+	u16 jump_iteration_bytes = jump_adjusted_pixel_pairs << 1;
+	__asm volatile(
+		"jmp code_table_%=(%%pc, %7.w)\t\n\
+		code_table_%=:\t\n\
+		.set off,0\t\n\
+		.rept 72\t\n\
+			move.b 0(%6, %1.w), %2\t\n\
+			move.b %2, 1+off(%3)\t\n\
+			move.b %2, 5+off(%3)\t\n\
+			.set off,off+8\t\n\
+			add.w %4, %0\t\n\
+			addx.w %5, %1\t\n\
+		.endr"
+		: "+&d" (frac_low), "+&d" (frac_high), "=&d" (texel), "+&a" (dest)
+		: "d" (fracstep_low), "d" (fracstep_high), "a" (dc_source), "d" (jump_iteration_bytes)
+	);
+#elif defined ASM_FULL_RES_TMAP	
+	// 30 cycles per pixel
+	// put 12 subtexel bits in their own registers
+	// and the 16 texel bits in their own registers as well
+	u16 fracstep_low = (fracstep & 0b111111111111) << 4;
+	u16 fracstep_high = fracstep >> 12;
+	s16 frac_low = (frac & 0b111111111111) << 4;
+	s16 frac_high = frac >> 12;
+	u16 jump_pixels = (144 - count);
+	u16 jump_adjusted_pixels = jump_pixels << 2; // adjust for the 4 bytes between each pixel
+	dest -= jump_adjusted_pixels;  // adjust the destination back depending on how far we jump
+	dest -= 1;
+	// each iteration is only 10 bytes here
+	u16 jump_iteration_bytes = ((jump_pixels + jump_adjusted_pixels) << 1);
+	__asm volatile(
+		"jmp code_table_%=(%%pc, %6.w)\t\n\
+		code_table_%=:\t\n\
+		.set off,0\t\n\
+		.rept 144\t\n\
+		move.b 0(%5, %1.w), 1+off(%2)\t\n\
+		.set off,off+4\t\n\
+		add.w %3, %0\t\n\
+		addx.w %4, %1\t\n\
+		.endr"
+		: "+&d" (frac_low), "+&d" (frac_high), "+&a" (dest)
+		: "d" (fracstep_low), "d" (fracstep_high), "a" (dc_source), "d" (jump_iteration_bytes)
+	);
+
+#else 
+
+#define FRACBITS 12
+	// 76 cycles per pixel
 	switch(count) {
 	case 144:
 		texel = dc_source[(frac >> FRACBITS)];
@@ -1190,5 +1323,6 @@ void R_DrawColumn(void)
 		texel = dc_source[(frac >> FRACBITS)];
 		*dest = texel;
 	}
+#endif 
 }
 
